@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a1e">
+<title>Compose - コード進行</title>
+<style>
+:root{--bg:#1a1a1e;--sf:#242428;--sf2:#2e2e34;--tx:#e8e6e3;--txd:#8a8a8e;--root:#e63946;--P4:#457b9d;--P5:#e9c46a;--m3:#2a9d8f;--m7:#06d6a0;--M7:#06d6a0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN',Meiryo,sans-serif;min-height:100vh;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+.app{max-width:1440px;margin:0 auto;padding:24px 32px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:14px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo i{width:36px;height:36px;background:linear-gradient(135deg,var(--P5),#f0d060);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;font-style:normal;box-shadow:0 3px 12px rgba(233,196,106,.3)}
+h1{font-size:1.15rem;font-weight:700;letter-spacing:-.3px}h1 em{color:var(--txd);font-weight:400;font-size:.78rem;margin-left:6px;font-style:normal}
+.ctrls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cg{display:flex;flex-direction:column;gap:3px}
+.cg label{font-size:.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--txd)}
+select{background:var(--sf2);color:var(--tx);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 28px 8px 10px;font-size:14px;cursor:pointer;appearance:none;-webkit-appearance:none;font-family:inherit;min-width:100px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%238a8a8e' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .2s}
+select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230,57,70,.15)}
+.gtabs{display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+.gtab{background:var(--sf2);color:var(--txd);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:7px 14px;font-family:inherit;font-size:.75rem;cursor:pointer;white-space:nowrap;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.gtab:hover{color:var(--tx);border-color:rgba(255,255,255,.12)}
+.gtab.on{color:var(--root);background:rgba(230,57,70,.1);border-color:var(--root)}
+.plist{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.pi{background:var(--sf);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.pi:hover{border-color:rgba(255,255,255,.12);transform:translateX(4px)}
+.pi.on{border-color:var(--root);background:rgba(230,57,70,.06)}
+.pi .pn{font-weight:600;font-size:.85rem}.pi .pd{font-size:.68rem;color:var(--txd);margin-top:2px}
+.pi .pc{font-size:.72rem;color:var(--P5);margin-top:4px}
+.prog{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;align-items:center;min-height:80px;padding:16px;background:var(--sf);border-radius:14px;border:1px solid rgba(255,255,255,.04)}
+.ccard{background:var(--sf2);border:2px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 16px;text-align:center;cursor:pointer;transition:all .15s;position:relative;min-width:70px;-webkit-tap-highlight-color:transparent;user-select:none}
+.ccard:hover{border-color:rgba(255,255,255,.2);transform:translateY(-3px)}
+.ccard.playing{border-color:var(--P5);background:rgba(233,196,106,.1);box-shadow:0 0 16px rgba(233,196,106,.2)}
+.ccard .cdeg{font-size:.6rem;color:var(--txd);margin-bottom:3px}
+.ccard .cname{font-size:1.05rem;font-weight:700}
+.ccard .cdel{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--root);color:#fff;border:none;font-size:.65rem;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
+.edit .ccard .cdel{display:flex}
+.cadd{width:28px;height:28px;border-radius:50%;background:transparent;border:2px dashed rgba(255,255,255,.15);color:var(--txd);font-size:1rem;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.cadd:hover{border-color:var(--root);color:var(--root)}
+.edit .cadd{display:flex}
+.pbc{display:flex;align-items:center;gap:12px;justify-content:center;margin:12px 0;flex-wrap:wrap}
+.pbtn{background:var(--root);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(230,57,70,.3);transition:transform .15s;-webkit-tap-highlight-color:transparent}
+.pbtn:hover{transform:scale(1.1)}.pbtn:active{transform:scale(.95)}.pbtn.pg{background:var(--txd)}
+.tc{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--txd)}
+.ts{-webkit-appearance:none;width:100px;height:4px;background:var(--sf2);border-radius:2px;outline:none}
+.ts::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--tx);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.db{background:var(--sf2);color:var(--txd);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px 12px;font-family:inherit;font-size:.72rem;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.db.on{background:rgba(230,57,70,.15);border-color:var(--root);color:var(--root)}
+.vc{display:flex;align-items:center;gap:5px}
+.vs{-webkit-appearance:none;width:70px;height:4px;background:var(--sf2);border-radius:2px;outline:none;cursor:pointer}
+.vs::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--tx);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+/* Modal */
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-bg.show{display:flex}
+.modal{background:var(--sf);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px;min-width:280px;max-width:90vw}
+.modal h3{font-size:.9rem;margin-bottom:12px}
+.modal-row{display:flex;gap:8px;margin-bottom:12px}
+.modal-row select,.modal-row input{flex:1;min-width:0}
+.modal-row input{background:var(--sf2);color:var(--tx);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+.modal-btns button{padding:8px 16px;border-radius:8px;border:none;font-family:inherit;font-size:.8rem;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn-ok{background:var(--root);color:#fff}.btn-cancel{background:var(--sf2);color:var(--tx)}
+/* Nav */
+.site-nav{display:flex;flex-wrap:wrap;gap:4px;padding:10px 16px;max-width:1440px;margin:0 auto}
+.nav-link{color:var(--txd);text-decoration:none;font-family:inherit;font-size:.75rem;padding:6px 14px;border-radius:8px;background:var(--sf2);border:1px solid rgba(255,255,255,.04);transition:all .2s;-webkit-tap-highlight-color:transparent}
+.nav-link:hover{color:var(--tx);border-color:rgba(255,255,255,.12)}
+.nav-link.active{color:#e63946;background:rgba(230,57,70,.1);border-color:#e63946}
+@media(max-width:768px){
+  .app{padding:12px;padding-top:env(safe-area-inset-top,12px)}
+  header{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:14px}
+  .logo{justify-content:center}h1{font-size:1rem}h1 em{display:none}
+  .ctrls{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .cg label{font-size:.55rem}
+  select{min-width:0;width:100%;padding:10px 26px 10px 8px;font-size:16px;border-radius:10px}
+  .prog{padding:10px;gap:6px}
+  .ccard{padding:8px 10px;min-width:58px}.ccard .cname{font-size:.9rem}
+  .pbc{gap:8px}
+  .site-nav{padding:8px 10px}.nav-link{font-size:.68rem;padding:5px 10px}
+}
+</style>
+</head>
+<body>
+<nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a>
+  <a href="index.html" class="nav-link">🎸 Fretboard</a>
+  <a href="practice.html" class="nav-link">🎵 Practice</a>
+  <a href="theory.html" class="nav-link">📖 Theory</a>
+  <a href="compose.html" class="nav-link active">🎼 Compose</a>
+  <a href="../tuner/index.html" class="nav-link" style="margin-left:auto">🎚 Tuner</a>
+  <a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a>
+  <a href="../studio/index.html" class="nav-link">🎹 Studio</a>
+  <a href="../tuner/index.html#advisor" class="nav-link">🎛 Advisor</a>
+</nav>
+<div class="app">
+  <header>
+    <div class="logo"><i>♪</i><h1>Compose <em>/ コード進行</em></h1></div>
+    <div class="ctrls"><div class="cg"><label>Key</label><select id="cp-k"></select></div></div>
+  </header>
+  <div class="gtabs" id="cp-gt"></div>
+  <div class="plist" id="cp-pl"></div>
+  <div class="pbc">
+    <button class="pbtn" id="cp-pb" onclick="cpTogPlay()">▶</button>
+    <div class="tc"><span>BPM</span><input type="range" class="ts" id="cp-bpm" min="40" max="200" value="90"><span id="cp-bv">90</span></div>
+    <div class="vc"><span>🔊</span><input type="range" class="vs" id="cp-vol" min="0" max="100" value="50"></div>
+    <button class="db" id="cp-lp" onclick="togLoop()">🔁 ループ</button>
+    <button class="db" id="cp-ed" onclick="togEdit()">✏️ 編集</button>
+  </div>
+  <div class="prog" id="cp-prog"><span style="color:var(--txd);font-size:.82rem">プリセットを選択してください</span></div>
+</div>
+<!-- Edit modal -->
+<div class="modal-bg" id="cp-modal">
+  <div class="modal">
+    <h3 id="md-title">コードを編集</h3>
+    <div class="modal-row">
+      <div class="cg"><label>Root</label><select id="md-root"></select></div>
+      <div class="cg"><label>Type</label><select id="md-type"></select></div>
+    </div>
+    <div class="modal-row">
+      <div class="cg" style="flex:1"><label>Degree Label</label><input id="md-deg" placeholder="例: I, ii, V7"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-ok" onclick="saveModal()">OK</button>
+    </div>
+  </div>
+</div>
+<script>
+var N=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+var FM={'C#':'D♭','D#':'E♭','F#':'G♭','G#':'A♭','A#':'B♭'};
+var CT={'':[0,4,7],'m':[0,3,7],'dim':[0,3,6],'aug':[0,4,8],'sus4':[0,5,7],'sus2':[0,2,7],'7':[0,4,7,10],'m7':[0,3,7,10],'M7':[0,4,7,11],'mM7':[0,3,7,11],'dim7':[0,3,6,9],'m7♭5':[0,3,6,10],'9':[0,2,4,7,10],'m9':[0,2,3,7,10],'M9':[0,2,4,7,11],'add9':[0,2,4,7],'6':[0,4,7,9],'m6':[0,3,7,9]};
+var CTK=Object.keys(CT);
+var CTL={'':'Major','m':'minor','dim':'dim','aug':'aug','sus4':'sus4','sus2':'sus2','7':'7','m7':'m7','M7':'M7','mM7':'mM7','dim7':'dim7','m7♭5':'m7♭5','9':'9','m9':'m9','M9':'M9','add9':'add9','6':'6','m6':'m6'};
+// Progressions: each chord [offset, type, degreeLabel]
+var PG={
+'Pop / ポップス':[
+  {n:'I-V-vi-IV',d:'世界で最も使われるポップス進行',c:[[0,'','I'],[7,'','V'],[9,'m','vi'],[5,'','IV']]},
+  {n:'vi-IV-I-V (小室進行)',d:'J-Pop / TM Network系',c:[[9,'m','vi'],[5,'','IV'],[0,'','I'],[7,'','V']]},
+  {n:'IVM7-V-IIIm-VIm (王道進行)',d:'J-Pop王道の感動系',c:[[5,'M7','IVM7'],[7,'','V'],[4,'m','iii'],[9,'m','vi']]},
+  {n:'カノン進行',d:'パッヘルベルのカノン由来',c:[[0,'','I'],[7,'','V'],[9,'m','vi'],[4,'m','iii'],[5,'','IV'],[0,'','I'],[5,'','IV'],[7,'','V']]},
+  {n:'I-vi-IV-V (50s進行)',d:'50年代ドゥーワップ定番',c:[[0,'','I'],[9,'m','vi'],[5,'','IV'],[7,'','V']]},
+  {n:'I-V-vi-iii-IV (Let Her Go)',d:'マイナー感のあるポップ',c:[[0,'','I'],[7,'','V'],[9,'m','vi'],[4,'m','iii'],[5,'','IV']]}
+],
+'Rock / ロック':[
+  {n:'I-IV-V (3コード)',d:'ロックンロールの基本',c:[[0,'','I'],[5,'','IV'],[7,'','V']]},
+  {n:'I-♭VII-IV',d:'ロック定番のモーダル進行',c:[[0,'','I'],[10,'','♭VII'],[5,'','IV']]},
+  {n:'I-V-♭VII-IV',d:'Hey Jude / Sweet Child Of Mine',c:[[0,'','I'],[7,'','V'],[10,'','♭VII'],[5,'','IV']]},
+  {n:'I-♭III-♭VII-IV',d:'パンク / グランジ',c:[[0,'','I'],[3,'','♭III'],[10,'','♭VII'],[5,'','IV']]},
+  {n:'I-IV-vi-V',d:'オルタナティブロック',c:[[0,'','I'],[5,'','IV'],[9,'m','vi'],[7,'','V']]},
+  {n:'i-♭VI-♭III-♭VII',d:'ナチュラルマイナー / エピック',c:[[0,'m','i'],[8,'','♭VI'],[3,'','♭III'],[10,'','♭VII']]}
+],
+'Jazz / ジャズ':[
+  {n:'IIm7-V7-IM7 (ツーファイブワン)',d:'ジャズの最重要進行',c:[[2,'m7','ii7'],[7,'7','V7'],[0,'M7','IM7']]},
+  {n:'IM7-VIm7-IIm7-V7 (循環コード)',d:'リズムチェンジ / 逆循環',c:[[0,'M7','IM7'],[9,'m7','vi7'],[2,'m7','ii7'],[7,'7','V7']]},
+  {n:'IVM7-III7-VIm7-IM7',d:'Just The Two Of Us進行',c:[[5,'M7','IVM7'],[4,'7','III7'],[9,'m7','vi7'],[0,'M7','IM7']]},
+  {n:'IIm7-V7-IIIm7-VI7',d:'バックドア・ターンアラウンド',c:[[2,'m7','ii7'],[7,'7','V7'],[4,'m7','iii7'],[9,'7','VI7']]},
+  {n:'IM7-IV7-IIIm7-VI7-IIm7-V7',d:'枯葉 (Autumn Leaves)風',c:[[0,'M7','IM7'],[5,'7','IV7'],[4,'m7','iii7'],[9,'7','VI7'],[2,'m7','ii7'],[7,'7','V7']]}
+],
+'Blues / ブルース':[
+  {n:'12小節ブルース',d:'ブルースの基本形',c:[[0,'7','I7'],[0,'7','I7'],[0,'7','I7'],[0,'7','I7'],[5,'7','IV7'],[5,'7','IV7'],[0,'7','I7'],[0,'7','I7'],[7,'7','V7'],[5,'7','IV7'],[0,'7','I7'],[7,'7','V7']]},
+  {n:'マイナーブルース',d:'マイナーキーの12小節',c:[[0,'m7','i7'],[0,'m7','i7'],[0,'m7','i7'],[0,'m7','i7'],[5,'m7','iv7'],[5,'m7','iv7'],[0,'m7','i7'],[0,'m7','i7'],[7,'7','V7'],[5,'m7','iv7'],[0,'m7','i7'],[7,'7','V7']]},
+  {n:'8小節ブルース',d:'コンパクトなブルース形式',c:[[0,'7','I7'],[7,'7','V7'],[5,'7','IV7'],[5,'7','IV7'],[0,'7','I7'],[7,'7','V7'],[0,'7','I7'],[7,'7','V7']]},
+  {n:'ジャズブルース',d:'IIm-V進行入り',c:[[0,'7','I7'],[5,'7','IV7'],[0,'7','I7'],[0,'7','I7'],[5,'7','IV7'],[5,'7','IV7'],[0,'7','I7'],[9,'m7','vi7'],[2,'m7','ii7'],[7,'7','V7'],[0,'7','I7'],[7,'7','V7']]}
+],
+'R&B / ソウル':[
+  {n:'IVM7-V7-IIIm7-VIm (丸サ進行)',d:'丸の内サディスティック / Fly Me To The Moon',c:[[5,'M7','IVM7'],[7,'7','V7'],[4,'m7','iii7'],[9,'m','vi']]},
+  {n:'Im7-IV7 (ファンク2コード)',d:'ファンクの定番グルーヴ',c:[[0,'m7','i7'],[5,'7','IV7']]},
+  {n:'IIm9-V9 (ネオソウル)',d:'ネオソウル / チルR&B',c:[[2,'m9','ii9'],[7,'9','V9']]},
+  {n:'VIm7-IM7-IIm7-V7',d:'R&Bバラード',c:[[9,'m7','vi7'],[0,'M7','IM7'],[2,'m7','ii7'],[7,'7','V7']]},
+  {n:'IM7-IIIm7-IVM7-V7',d:'スムースR&B',c:[[0,'M7','IM7'],[4,'m7','iii7'],[5,'M7','IVM7'],[7,'7','V7']]}
+]
+};
+var PGK=Object.keys(PG);
+
+// Audio
+var ax=null;
+function ac(){if(!ax)try{ax=new(window.AudioContext||window.webkitAudioContext)}catch(e){return null}if(ax.state==='suspended')ax.resume();return ax}
+function pf(fq,v){var c=ac();if(!c)return;v=v||.15;var t=c.currentTime,m=c.createGain();m.connect(c.destination);m.gain.setValueAtTime(0,t);m.gain.linearRampToValueAtTime(v,t+.008);m.gain.exponentialRampToValueAtTime(Math.max(v*.6,.001),t+.08);m.gain.exponentialRampToValueAtTime(Math.max(v*.3,.001),t+.4);m.gain.exponentialRampToValueAtTime(.001,t+1.8);[{r:1,g:1},{r:2,g:.5},{r:3,g:.25},{r:4,g:.15},{r:5,g:.08}].forEach(function(h){var o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.setValueAtTime(fq*h.r,t);g.gain.setValueAtTime(h.g,t);o.connect(g);g.connect(m);o.start(t);o.stop(t+2)})}
+
+// State
+var cpKey=0,cpProg=[],cpEditing=false,cpPlaying=false,cpTm=null,cpLoop=false,cpGenre=0,cpPreset=-1,mdIdx=-1;
+
+function playChord(root,type){
+  var v=(+document.getElementById('cp-vol').value/100)*.3,bf=261.63,ivs=CT[type];
+  ivs.forEach(function(iv,i){setTimeout(function(){pf(bf*Math.pow(2,(root+iv)/12),v*.7)},i*60)});
+  setTimeout(function(){ivs.forEach(function(iv){pf(bf*Math.pow(2,(root+iv)/12),v*.4)})},ivs.length*60+100);
+}
+
+function renderGenres(){
+  var el=document.getElementById('cp-gt');el.innerHTML='';
+  PGK.forEach(function(g,i){var btn=document.createElement('button');btn.className='gtab'+(i===cpGenre?' on':'');btn.textContent=g;btn.addEventListener('click',function(){cpGenre=i;cpPreset=-1;renderGenres();renderPresets()});el.appendChild(btn)});
+}
+
+function renderPresets(){
+  var el=document.getElementById('cp-pl');el.innerHTML='';
+  PG[PGK[cpGenre]].forEach(function(p,i){
+    var div=document.createElement('div');div.className='pi'+(i===cpPreset?' on':'');
+    var cn=p.c.map(function(c){return N[(cpKey+c[0])%12]+c[1]}).join(' → ');
+    div.innerHTML='<div class="pn">'+p.n+'</div><div class="pd">'+p.d+'</div><div class="pc">'+cn+'</div>';
+    div.addEventListener('click',function(){cpStop();cpPreset=i;cpProg=p.c.map(function(c){return{o:c[0],t:c[1],l:c[2]}});renderPresets();renderProg()});
+    el.appendChild(div)});
+}
+
+function renderProg(){
+  var el=document.getElementById('cp-prog');el.innerHTML='';
+  if(!cpProg.length){el.innerHTML='<span style="color:var(--txd);font-size:.82rem">プリセットを選択するか、編集モードでコードを追加</span>';el.className='prog';return}
+  el.className='prog'+(cpEditing?' edit':'');
+  if(cpEditing){var a0=mkAdd(-1);el.appendChild(a0)}
+  cpProg.forEach(function(ch,idx){
+    var root=(cpKey+ch.o)%12,card=document.createElement('div');card.className='ccard';card.id='cc-'+idx;
+    card.innerHTML='<div class="cdeg">'+ch.l+'</div><div class="cname">'+N[root]+ch.t+'</div>';
+    if(cpEditing){
+      var del=document.createElement('button');del.className='cdel';del.textContent='×';
+      del.addEventListener('click',function(e){e.stopPropagation();cpProg.splice(idx,1);renderProg()});
+      card.appendChild(del);
+      card.addEventListener('click',function(){mdIdx=idx;openModal((cpKey+ch.o)%12,ch.t,ch.l)});
+    }else{
+      card.addEventListener('click',function(){playChord(root,ch.t);card.classList.add('playing');setTimeout(function(){card.classList.remove('playing')},600)});
+    }
+    el.appendChild(card);
+    if(cpEditing){el.appendChild(mkAdd(idx))}
+  });
+}
+
+function mkAdd(afterIdx){
+  var btn=document.createElement('button');btn.className='cadd';btn.textContent='+';
+  btn.addEventListener('click',function(){mdIdx=-(afterIdx+2);openModal(cpKey,'','?')});
+  return btn;
+}
+
+// Modal
+function openModal(absRoot,t,l){
+  document.getElementById('md-root').value=absRoot;
+  document.getElementById('md-type').value=t;
+  document.getElementById('md-deg').value=l;
+  document.getElementById('md-title').textContent=mdIdx>=0?'コードを編集':'コードを追加';
+  document.getElementById('cp-modal').classList.add('show');
+}
+function closeModal(){document.getElementById('cp-modal').classList.remove('show')}
+function saveModal(){
+  var absRoot=+document.getElementById('md-root').value,o=(absRoot-cpKey+12)%12;
+  var t=document.getElementById('md-type').value,l=document.getElementById('md-deg').value||'?';
+  var ch={o:o,t:t,l:l};
+  if(mdIdx>=0){cpProg[mdIdx]=ch}
+  else{var insertAt=-mdIdx-1;cpProg.splice(insertAt,0,ch)}
+  closeModal();renderProg();
+}
+
+function togEdit(){cpEditing=!cpEditing;document.getElementById('cp-ed').classList.toggle('on',cpEditing);if(cpPlaying)cpStop();renderProg()}
+function togLoop(){cpLoop=!cpLoop;document.getElementById('cp-lp').classList.toggle('on',cpLoop)}
+
+// Playback
+function cpTogPlay(){
+  if(cpPlaying){cpStop();return}
+  if(!cpProg.length)return;
+  cpPlaying=true;document.getElementById('cp-pb').textContent='⏸';document.getElementById('cp-pb').classList.add('pg');
+  cpPlaySeq(0);
+}
+function cpStop(){
+  cpPlaying=false;clearTimeout(cpTm);
+  document.getElementById('cp-pb').textContent='▶';document.getElementById('cp-pb').classList.remove('pg');
+  document.querySelectorAll('.ccard.playing').forEach(function(c){c.classList.remove('playing')});
+}
+function cpPlaySeq(idx){
+  if(!cpPlaying)return;
+  if(idx>=cpProg.length){if(cpLoop){cpPlaySeq(0)}else{cpStop()}return}
+  var ch=cpProg[idx],root=(cpKey+ch.o)%12;
+  var bpm=+document.getElementById('cp-bpm').value,delay=60000/bpm;
+  document.querySelectorAll('.ccard').forEach(function(c,i){c.classList.toggle('playing',i===idx)});
+  playChord(root,ch.t);
+  cpTm=setTimeout(function(){cpPlaySeq(idx+1)},delay);
+}
+
+// Init
+;(function(){
+  var ks=document.getElementById('cp-k');
+  N.forEach(function(n,i){var o=document.createElement('option');o.value=i;o.textContent=FM[n]?n+' / '+FM[n]:n;ks.appendChild(o)});
+  var mr=document.getElementById('md-root');
+  N.forEach(function(n,i){var o=document.createElement('option');o.value=i;o.textContent=FM[n]?n+' / '+FM[n]:n;mr.appendChild(o)});
+  var mt=document.getElementById('md-type');
+  CTK.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=CTL[k];mt.appendChild(o)});
+  ks.addEventListener('change',function(e){cpKey=+e.target.value;renderPresets();renderProg()});
+  document.getElementById('cp-bpm').addEventListener('input',function(){document.getElementById('cp-bv').textContent=this.value});
+  document.getElementById('cp-modal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+  renderGenres();renderPresets();renderProg();
+})();
+</script>
+</body>
+</html>

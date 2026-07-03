@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>YouTuBookamark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #0e0c08;
+  --bg-1: #18140e;
+  --bg-2: #221c14;
+  --border: #2a2218;
+  --border-strong: #3a3022;
+  --text: #ebe4d3;
+  --text-dim: #8b8270;
+  --text-faint: #5a5343;
+  --accent: #d4a55a;
+  --accent-dim: #a07f3e;
+  --danger: #c85a4f;
+  --serif: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --sans: "Zen Kaku Gothic New", -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Menlo", "Consolas", monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--sans);
+  background: var(--bg-0);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--bg-2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+.app {
+  display: grid;
+  grid-template-columns: 320px 4px 1fr;
+  height: 100vh;
+}
+.sidebar {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--bg-0) 0%, #100e0a 100%);
+}
+.viewer {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.resize-handle {
+  cursor: col-resize;
+  background: var(--border);
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.resize-handle:hover, .resize-handle.resizing {
+  background: var(--accent-dim);
+}
+
+.sidebar-head {
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin: 0 0 14px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.brand::before {
+  content: "✦";
+  color: var(--accent-dim);
+  font-size: 14px;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--accent-dim); }
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+/* Cross-app nav — matches tag-chip styling */
+.app-nav { display: flex; gap: 5px; margin: 2px 0 12px; flex-wrap: wrap; }
+.app-link {
+  text-decoration: none; font-family: var(--mono); font-size: 11px;
+  padding: 3px 8px; background: var(--bg-1); border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 99px; transition: all 0.12s;
+}
+.app-link:hover { color: var(--text); border-color: var(--border-strong); }
+.app-link.active { background: var(--accent-dim); color: var(--bg-0); border-color: var(--accent); pointer-events: none; }
+.tag-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 99px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.12s;
+}
+.tag-chip:hover { color: var(--text); border-color: var(--border-strong); }
+.tag-chip.active {
+  background: var(--accent-dim);
+  color: var(--bg-0);
+  border-color: var(--accent);
+}
+
+.fav-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.fav-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background 0.1s, border-color 0.1s;
+}
+.fav-item:hover {
+  background: var(--bg-1);
+  border-color: var(--border);
+}
+.fav-item.active {
+  background: var(--bg-1);
+  border-color: var(--accent-dim);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.fav-item.dragging { opacity: 0.35; }
+.fav-item.drag-over { box-shadow: 0 -2px 0 var(--accent); }
+
+.fav-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fav-meta {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fav-meta .yt-badge { color: var(--accent); }
+.fav-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 2px;
+}
+.fav-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-2);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  cursor: pointer;
+}
+.fav-tag:hover { color: var(--accent); }
+
+.fav-actions {
+  display: none;
+  gap: 4px;
+  margin-top: 6px;
+}
+.fav-item:hover .fav-actions, .fav-item.active .fav-actions {
+  display: flex;
+}
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  transition: all 0.1s;
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent-dim); }
+.icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+.empty-list {
+  padding: 20px;
+  color: var(--text-faint);
+  font-style: italic;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 13px;
+}
+
+.sidebar-foot {
+  border-top: 1px solid var(--border);
+  padding: 10px 10px 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+.btn {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  transition: all 0.1s;
+  position: relative;
+}
+.btn:hover { background: var(--bg-2); border-color: var(--accent-dim); }
+.btn-primary {
+  background: var(--accent-dim);
+  color: var(--bg-0);
+  border-color: var(--accent);
+  font-weight: 500;
+}
+.btn-primary:hover { background: var(--accent); }
+
+.unsaved-dot {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.unsaved .unsaved-dot { display: block; }
+
+.url-bar {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.url-bar input {
+  flex: 1;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 12px;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+}
+.url-bar input:focus { border-color: var(--accent-dim); }
+.url-bar .btn { flex: 0 0 auto; padding: 7px 14px; }
+.url-bar .btn.icon-only { padding: 7px 10px; }
+
+.player-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.player-wrap {
+  flex: 1;
+  background: #000;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  outline: none;
+}
+.player-wrap iframe, .player-wrap #player {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.empty-state {
+  color: var(--text-faint);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  text-align: center;
+  padding: 40px;
+  line-height: 1.8;
+}
+.empty-state::before {
+  content: "✦";
+  display: block;
+  color: var(--accent-dim);
+  font-size: 22px;
+  margin-bottom: 14px;
+  font-style: normal;
+}
+
+.controls {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: var(--bg-1);
+}
+.controls-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.controls-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.speed-presets {
+  display: flex;
+  gap: 3px;
+}
+.speed-presets button {
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s;
+  min-width: 34px;
+}
+.speed-presets button:hover { color: var(--text); border-color: var(--border-strong); }
+.speed-presets button.active {
+  background: var(--accent-dim);
+  color: var(--bg-0);
+  border-color: var(--accent);
+}
+.loop-btn {
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.loop-btn:hover { color: var(--text); border-color: var(--border-strong); }
+.loop-btn.set { color: var(--text); border-color: var(--accent-dim); }
+.loop-btn.active {
+  background: var(--accent-dim);
+  color: var(--bg-0);
+  border-color: var(--accent);
+}
+.speed-slider {
+  width: 140px;
+  accent-color: var(--accent);
+}
+.speed-display {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+  min-width: 56px;
+  text-align: right;
+  font-weight: 500;
+}
+.speed-actual {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.speed-input {
+  width: 56px;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+}
+.speed-input:focus { border-color: var(--accent-dim); }
+
+.memo-panel {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  font-family: var(--serif);
+  font-size: 13.5px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  max-height: 100px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  cursor: text;
+  outline: none;
+  transition: border-top-color 0.15s;
+}
+.memo-panel[hidden] { display: none; }
+.memo-panel:focus { border-top-color: var(--accent-dim); }
+.memo-panel:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  font-style: italic;
+  pointer-events: none;
+}
+
+.modal-back {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-back[hidden] { display: none; }
+.modal {
+  background: var(--bg-1);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 22px 24px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.modal-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  margin: 0 0 18px;
+  color: var(--accent);
+  font-weight: 500;
+}
+.field { margin-bottom: 12px; }
+.field label {
+  display: block;
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.field input, .field textarea {
+  width: 100%;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.field input:focus, .field textarea:focus { border-color: var(--accent-dim); }
+.field textarea { min-height: 70px; resize: vertical; font-family: var(--serif); }
+.modal-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.memo-tip {
+  position: fixed;
+  z-index: 300;
+  max-width: 260px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 12.5px;
+  line-height: 1.65;
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.memo-tip.show { opacity: 1; }
+
+.shortcut-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+.shortcut-table tr + tr td { border-top: 1px solid var(--border); }
+.shortcut-table td {
+  padding: 7px 4px;
+  font-size: 13px;
+  color: var(--text);
+  vertical-align: middle;
+}
+.shortcut-table td:first-child {
+  white-space: nowrap;
+  width: 1%;
+  padding-right: 16px;
+}
+.shortcut-table th {
+  text-align: left;
+  font-size: 10.5px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  padding: 0 4px 8px;
+}
+kbd {
+  display: inline-block;
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  line-height: 1.6;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--bg-1);
+  border: 1px solid var(--accent-dim);
+  color: var(--text);
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <h1 class="brand">YouTuBookmark</h1>
+      <div class="app-nav">
+        <a href="../index.html" class="app-link">🏠 Home</a>
+        <a href="../tuner/index.html" class="app-link">🎚 Tuner</a>
+        <a href="../fretboard/index.html" class="app-link">🎸 Fretboard</a>
+        <a href="../bookmark/index.html" class="app-link active">🔖 Bookmark</a>
+        <a href="../studio/index.html" class="app-link">🎹 Studio</a>
+        <a href="../tuner/index.html#advisor" class="app-link">🎛 Advisor</a>
+      </div>
+      <input type="search" class="search-input" id="searchInput" placeholder="検索…（タイトル・URL・タグ・メモ）">
+      <div class="tag-row" id="tagRow"></div>
+    </div>
+    <div class="fav-list" id="favList"></div>
+    <div class="sidebar-foot">
+      <button class="btn btn-primary" id="addBtn">+ 追加</button>
+      <button class="btn" id="exportBtn" title="JSONをダウンロード（Ctrl/⌘+S）">
+        書き出し<span class="unsaved-dot"></span>
+      </button>
+      <button class="btn" id="importBtn" title="JSONを読み込み">読み込み</button>
+      <button class="btn icon-only" id="helpBtn" title="ショートカット一覧（?）">?</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </aside>
+  <div class="resize-handle" id="resizeHandle"></div>
+  <main class="viewer">
+    <div class="url-bar">
+      <input type="text" id="urlInput" placeholder="URLを貼り付けて Load…">
+      <button class="btn btn-primary" id="loadBtn">Load</button>
+      <button class="btn icon-only" id="openExternalBtn" title="新しいタブで開く">↗</button>
+    </div>
+    <div class="player-area">
+      <div class="player-wrap" id="playerWrap" tabindex="0">
+        <div class="empty-state">
+          左のリストから選ぶか、上のバーにURLを入力してください
+        </div>
+      </div>
+      <div class="controls" id="controls" hidden>
+        <div class="controls-section">
+          <span class="controls-label">Speed</span>
+          <div class="speed-presets" id="speedPresets">
+            <button data-speed="0.5">0.5</button>
+            <button data-speed="0.75">0.75</button>
+            <button data-speed="1" class="active">1.0</button>
+            <button data-speed="1.25">1.25</button>
+            <button data-speed="1.5">1.5</button>
+            <button data-speed="1.75">1.75</button>
+            <button data-speed="2">2.0</button>
+          </div>
+        </div>
+        <div class="controls-section">
+          <input type="range" class="speed-slider" id="speedSlider" min="0.25" max="3" step="0.05" value="1">
+          <span class="speed-display" id="speedDisplay">1.00×</span>
+        </div>
+        <div class="controls-section">
+          <span class="controls-label">任意</span>
+          <input type="number" class="speed-input" id="speedInput" min="0.1" max="5" step="0.05" value="1">
+          <span class="speed-actual" id="speedActual"></span>
+        </div>
+        <div class="controls-section" id="loopSection">
+          <span class="controls-label">A-B Loop</span>
+          <button class="loop-btn" id="loopABtn" title="現在位置をループ開始点に (a)">A −:−−</button>
+          <button class="loop-btn" id="loopBBtn" title="現在位置をループ終了点に (b)">B −:−−</button>
+          <button class="loop-btn" id="loopToggle" title="区間ループ ON/OFF (l)">⟳ Loop</button>
+          <button class="loop-btn" id="loopClear" title="ループ解除">✕</button>
+        </div>
+      </div>
+      <div class="memo-panel" id="memoPanel" hidden data-placeholder="クリックしてメモを編集…"></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-back" id="helpBack" hidden>
+  <div class="modal" style="max-width:400px">
+    <h2 class="modal-title">ショートカット一覧</h2>
+    <table class="shortcut-table">
+      <thead><tr><th>キー</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td><kbd>Space</kbd></td><td>再生 / 一時停止</td></tr>
+        <tr><td><kbd>Shift</kbd> + <kbd>,</kbd></td><td>再生速度 −5%</td></tr>
+        <tr><td><kbd>Shift</kbd> + <kbd>.</kbd></td><td>再生速度 ＋5%</td></tr>
+        <tr><td><kbd>a</kbd></td><td>区間ループ 開始点(A)をセット</td></tr>
+        <tr><td><kbd>b</kbd></td><td>区間ループ 終了点(B)をセット</td></tr>
+        <tr><td><kbd>l</kbd></td><td>区間ループ ON / OFF</td></tr>
+        <tr><td><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>書き出し（JSON保存）</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>モーダルを閉じる</td></tr>
+        <tr><td><kbd>?</kbd></td><td>このヘルプを開閉</td></tr>
+      </tbody>
+    </table>
+    <div class="modal-buttons">
+      <button class="btn btn-primary" id="helpClose">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="modalBack" hidden>
+  <div class="modal">
+    <h2 class="modal-title" id="modalTitle">追加</h2>
+    <div class="field">
+      <label>Title — 名称</label>
+      <input type="text" id="fTitle" placeholder="お気に入りの名前">
+    </div>
+    <div class="field">
+      <label>URL</label>
+      <input type="text" id="fUrl" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label>Tags — カンマ区切り</label>
+      <input type="text" id="fTags" placeholder="例: guitar, tutorial, sweep">
+    </div>
+    <div class="field">
+      <label>Memo</label>
+      <textarea id="fMemo" placeholder="メモ…"></textarea>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn" id="modalCancel">キャンセル</button>
+      <button class="btn btn-primary" id="modalSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="memo-tip" id="memoTip"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'favViewer.v1';
+let state = { version: 1, favorites: [] };
+let activeId = null;
+let activeTag = null;
+let editingId = null;
+let dragId = null;
+let isDirty = false;
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed && Array.isArray(parsed.favorites)) state = parsed;
+    }
+  } catch (e) { console.error('load error', e); }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    markDirty();
+  } catch (e) {
+    toast('保存エラー: ' + e.message);
+  }
+}
+
+function markDirty() {
+  isDirty = true;
+  document.getElementById('exportBtn').classList.add('unsaved');
+}
+function clearDirty() {
+  isDirty = false;
+  document.getElementById('exportBtn').classList.remove('unsaved');
+}
+
+function uid() {
+  return 'fav_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function parseYouTubeId(url) {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?(?:.*&)?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/,
+    /(?:m\.youtube\.com\/watch\?(?:.*&)?v=)([a-zA-Z0-9_-]{11})/
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function getStartTime(url) {
+  if (!url) return 0;
+  const m = url.match(/[?&](?:t|start)=(\d+)s?(?:&|$)/);
+  if (m) return parseInt(m[1], 10);
+  const m2 = url.match(/[?&]t=((?:\d+h)?(?:\d+m)?(?:\d+s)?)/);
+  if (m2 && m2[1]) {
+    let s = 0;
+    const h = m2[1].match(/(\d+)h/); if (h) s += parseInt(h[1]) * 3600;
+    const mn = m2[1].match(/(\d+)m/); if (mn) s += parseInt(mn[1]) * 60;
+    const sc = m2[1].match(/(\d+)s/); if (sc) s += parseInt(sc[1]);
+    return s;
+  }
+  return 0;
+}
+
+function getHost(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); }
+  catch (e) { return url || ''; }
+}
+
+function toast(msg, ms) {
+  ms = ms || 2200;
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+/* YouTube IFrame API */
+let yt = null;
+let ytReady = false;
+let pendingLoad = null;
+
+window.onYouTubeIframeAPIReady = function() {
+  ytReady = true;
+  if (pendingLoad) {
+    initYouTubePlayer(pendingLoad.videoId, pendingLoad.start);
+    pendingLoad = null;
+  }
+};
+
+(function loadYTScript() {
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+})();
+
+function initYouTubePlayer(videoId, start) {
+  start = start || 0;
+  const wrap = document.getElementById('playerWrap');
+  wrap.innerHTML = '<div id="player"></div>';
+  yt = new YT.Player('player', {
+    videoId: videoId,
+    host: 'https://www.youtube-nocookie.com',
+    playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1, 'start': start },
+    events: {
+      'onReady': function() { setTimeout(() => applySpeed(currentSpeed, false), 200); },
+      'onError': function(e) {
+        const code = e.data;
+        const map = {
+          2:   '無効なパラメータ',
+          5:   'HTML5プレーヤーの問題',
+          100: '動画が見つかりません（削除/非公開）',
+          101: 'この動画は埋め込み再生が無効です',
+          150: 'この動画は埋め込み再生が無効です'
+        };
+        toast('YouTubeエラー ' + code + (map[code] ? ': ' + map[code] : '') + '  ↗ で新規タブを試してください', 4500);
+      }
+    }
+  });
+}
+
+function loadYouTube(videoId, start) {
+  resetLoop();  // A/B points are per-video
+  document.getElementById('controls').hidden = false;
+  if (yt && typeof yt.loadVideoById === 'function') {
+    try {
+      yt.loadVideoById({ videoId: videoId, startSeconds: start || 0 });
+      setTimeout(() => applySpeed(currentSpeed, false), 800);
+      return;
+    } catch (e) {}
+  }
+  if (ytReady) {
+    initYouTubePlayer(videoId, start);
+  } else {
+    pendingLoad = { videoId: videoId, start: start };
+  }
+}
+
+function loadGeneric(url) {
+  clearLoop();  // loop only applies to the YouTube player
+  document.getElementById('controls').hidden = true;
+  const wrap = document.getElementById('playerWrap');
+  wrap.innerHTML = '';
+  if (yt) { try { yt.destroy(); } catch(e){} yt = null; }
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+  iframe.allowFullscreen = true;
+  iframe.referrerPolicy = 'no-referrer-when-downgrade';
+  wrap.appendChild(iframe);
+}
+
+/* Speed control */
+let currentSpeed = 1.0;
+
+function applySpeed(rate, fromUser) {
+  if (isNaN(rate) || rate <= 0) return;
+  currentSpeed = rate;
+  document.getElementById('speedDisplay').textContent = rate.toFixed(2) + '×';
+  document.getElementById('speedSlider').value = Math.min(Math.max(rate, 0.25), 3);
+  document.getElementById('speedInput').value = rate;
+  document.querySelectorAll('#speedPresets button').forEach(b => {
+    b.classList.toggle('active', Math.abs(parseFloat(b.dataset.speed) - rate) < 0.001);
+  });
+  document.getElementById('speedActual').textContent = '';
+  if (yt && typeof yt.setPlaybackRate === 'function') {
+    try { yt.setPlaybackRate(rate); } catch(e) {}
+    setTimeout(() => {
+      try {
+        const actual = yt.getPlaybackRate();
+        if (Math.abs(actual - rate) > 0.05) {
+          document.getElementById('speedActual').textContent = '(実際 ' + actual.toFixed(2) + '×)';
+        }
+      } catch(e) {}
+    }, 250);
+  }
+}
+
+/* A-B loop — repeat a passage for practice */
+let loopA = null, loopB = null, loopOn = false, loopTimer = null;
+
+function fmtTime(sec) {
+  if (sec == null || isNaN(sec)) return '−:−−';
+  sec = Math.max(0, Math.floor(sec));
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+function ytTime() {
+  if (yt && typeof yt.getCurrentTime === 'function') {
+    try { return yt.getCurrentTime(); } catch (e) {}
+  }
+  return null;
+}
+
+function renderLoopUI() {
+  const aBtn = document.getElementById('loopABtn');
+  const bBtn = document.getElementById('loopBBtn');
+  const tBtn = document.getElementById('loopToggle');
+  aBtn.textContent = 'A ' + fmtTime(loopA);
+  bBtn.textContent = 'B ' + fmtTime(loopB);
+  aBtn.classList.toggle('set', loopA != null);
+  bBtn.classList.toggle('set', loopB != null);
+  tBtn.classList.toggle('active', loopOn);
+}
+
+function setLoopA() {
+  const t = ytTime();
+  if (t == null) return;
+  loopA = t;
+  if (loopB != null && loopB <= loopA) loopB = null;  // keep A < B
+  renderLoopUI();
+}
+
+function setLoopB() {
+  const t = ytTime();
+  if (t == null) return;
+  if (loopA != null && t <= loopA) { toast('B は A より後ろにしてください'); return; }
+  loopB = t;
+  renderLoopUI();
+}
+
+function toggleLoop() {
+  if (loopOn) { stopLoop(); return; }
+  if (loopA == null || loopB == null || loopB <= loopA) {
+    toast('A と B を設定してください');
+    return;
+  }
+  loopOn = true;
+  renderLoopUI();
+  if (loopTimer) clearInterval(loopTimer);
+  loopTimer = setInterval(() => {
+    const t = ytTime();
+    if (t == null || !loopOn) return;
+    // jump back just before B; tighter polling + margin keeps short practice
+    // loops snappy (was 200ms, which could overshoot by up to a fifth of a second)
+    if (t >= loopB - 0.03 || t < loopA - 1) {
+      try { yt.seekTo(loopA, true); } catch (e) {}
+    }
+  }, 50);
+}
+
+function stopLoop() {
+  loopOn = false;
+  if (loopTimer) { clearInterval(loopTimer); loopTimer = null; }
+  renderLoopUI();
+}
+
+function clearLoop() {
+  stopLoop();
+  loopA = loopB = null;
+  renderLoopUI();
+}
+
+function resetLoop() { clearLoop(); }
+
+/* Render */
+function getAllTags() {
+  const set = new Set();
+  state.favorites.forEach(f => (f.tags || []).forEach(t => set.add(t)));
+  return [...set].sort((a, b) => a.localeCompare(b, 'ja'));
+}
+
+function renderTags() {
+  const row = document.getElementById('tagRow');
+  const tags = getAllTags();
+  if (tags.length === 0) { row.innerHTML = ''; return; }
+  row.innerHTML = tags.map(t =>
+    '<span class="tag-chip ' + (t === activeTag ? 'active' : '') + '" data-tag="' + esc(t) + '">' + esc(t) + '</span>'
+  ).join('');
+  row.querySelectorAll('.tag-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      activeTag = (activeTag === c.dataset.tag) ? null : c.dataset.tag;
+      renderTags();
+      renderFavorites();
+    });
+  });
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  return state.favorites.filter(f => {
+    if (activeTag && !(f.tags || []).includes(activeTag)) return false;
+    if (q) {
+      const hay = [f.title, f.url, f.memo, (f.tags || []).join(' ')].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderFavorites() {
+  const list = document.getElementById('favList');
+  const items = getFiltered();
+  if (items.length === 0) {
+    list.innerHTML = state.favorites.length === 0
+      ? '<div class="empty-list">「+ 追加」から始めましょう</div>'
+      : '<div class="empty-list">該当なし</div>';
+    return;
+  }
+  list.innerHTML = items.map(f => {
+    const ytId = parseYouTubeId(f.url);
+    const tagsHtml = (f.tags || []).map(t =>
+      '<span class="fav-tag" data-tag="' + esc(t) + '">' + esc(t) + '</span>'
+    ).join('');
+    const meta = ytId ? '<span class="yt-badge">▶ YouTube</span>' : esc(getHost(f.url));
+    return '<div class="fav-item ' + (f.id === activeId ? 'active' : '') + '" draggable="true" data-id="' + f.id + '" data-memo="' + esc(f.memo || '') + '">'
+      + '<div class="fav-title">' + esc(f.title || '(無題)') + '</div>'
+      + '<div class="fav-meta">' + meta + '</div>'
+      + (tagsHtml ? '<div class="fav-tags">' + tagsHtml + '</div>' : '')
+      + '<div class="fav-actions">'
+      +   '<button class="icon-btn" data-action="edit" data-id="' + f.id + '">編集</button>'
+      +   '<button class="icon-btn danger" data-action="del" data-id="' + f.id + '">削除</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  list.querySelectorAll('.fav-item').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.fav-actions')) return;
+      if (e.target.classList.contains('fav-tag')) {
+        activeTag = e.target.dataset.tag;
+        renderTags();
+        renderFavorites();
+        return;
+      }
+      const fav = state.favorites.find(f => f.id === el.dataset.id);
+      if (fav) selectFavorite(fav);
+    });
+    el.addEventListener('dragstart', (e) => {
+      dragId = el.dataset.id;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragId); } catch(_){}
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      list.querySelectorAll('.fav-item').forEach(x => x.classList.remove('drag-over'));
+    });
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (dragId && el.dataset.id !== dragId) {
+        list.querySelectorAll('.fav-item').forEach(x => x.classList.remove('drag-over'));
+        el.classList.add('drag-over');
+      }
+    });
+    el.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const targetId = el.dataset.id;
+      if (!dragId || dragId === targetId) return;
+      const from = state.favorites.findIndex(f => f.id === dragId);
+      const to = state.favorites.findIndex(f => f.id === targetId);
+      if (from < 0 || to < 0) return;
+      const moved = state.favorites.splice(from, 1)[0];
+      state.favorites.splice(to, 0, moved);
+      saveState();
+      renderFavorites();
+    });
+  });
+
+  list.querySelectorAll('[data-action]').forEach(b => {
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = b.dataset.id;
+      if (b.dataset.action === 'edit') openModalEdit(id);
+      if (b.dataset.action === 'del') deleteFavorite(id);
+    });
+  });
+}
+
+function selectFavorite(fav) {
+  activeId = fav.id;
+  document.getElementById('urlInput').value = fav.url;
+  const panel = document.getElementById('memoPanel');
+  panel.textContent = fav.memo || '';
+  panel.hidden = false;
+  renderFavorites();
+  const ytId = parseYouTubeId(fav.url);
+  if (ytId) loadYouTube(ytId, getStartTime(fav.url));
+  else loadGeneric(fav.url);
+  document.getElementById('playerWrap').focus();
+}
+
+/* CRUD */
+async function fetchYouTubeTitle(url) {
+  try {
+    const res = await fetch(
+      'https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(url),
+      { signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.title || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function openModalAdd(prefillUrl) {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = '追加';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fUrl').value = prefillUrl || '';
+  document.getElementById('fTags').value = '';
+  document.getElementById('fMemo').value = '';
+  document.getElementById('modalBack').hidden = false;
+
+  const titleEl = document.getElementById('fTitle');
+  const urlEl = document.getElementById('fUrl');
+
+  if (prefillUrl && parseYouTubeId(prefillUrl)) {
+    titleEl.placeholder = '取得中…';
+    const title = await fetchYouTubeTitle(prefillUrl);
+    titleEl.placeholder = 'お気に入りの名前';
+    if (title && !titleEl.value) titleEl.value = title;
+    setTimeout(() => titleEl.focus(), 50);
+  } else {
+    setTimeout(() => (prefillUrl ? titleEl : urlEl).focus(), 50);
+  }
+}
+
+function onModalUrlChange() {
+  const titleEl = document.getElementById('fTitle');
+  const url = document.getElementById('fUrl').value.trim();
+  if (!titleEl.value && url && parseYouTubeId(url)) {
+    titleEl.placeholder = '取得中…';
+    fetchYouTubeTitle(url).then(title => {
+      titleEl.placeholder = 'お気に入りの名前';
+      if (title && !titleEl.value) titleEl.value = title;
+    });
+  }
+}
+
+function openModalEdit(id) {
+  const f = state.favorites.find(x => x.id === id);
+  if (!f) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = '編集';
+  document.getElementById('fTitle').value = f.title || '';
+  document.getElementById('fUrl').value = f.url || '';
+  document.getElementById('fTags').value = (f.tags || []).join(', ');
+  document.getElementById('fMemo').value = f.memo || '';
+  document.getElementById('modalBack').hidden = false;
+  setTimeout(() => document.getElementById('fTitle').focus(), 50);
+}
+
+function saveModal() {
+  const title = document.getElementById('fTitle').value.trim();
+  const url = document.getElementById('fUrl').value.trim();
+  const tags = document.getElementById('fTags').value
+    .split(',').map(t => t.trim()).filter(Boolean);
+  const memo = document.getElementById('fMemo').value;
+  if (!url) { toast('URLを入力してください'); return; }
+
+  const dup = state.favorites.find(f => f.url === url && f.id !== editingId);
+  if (dup) {
+    if (!confirm('「' + (dup.title || '(無題)') + '」として同じURLが既に登録されています。\nそれでも追加しますか？')) return;
+  }
+
+  const wasActive = editingId === activeId;
+  if (editingId) {
+    const f = state.favorites.find(x => x.id === editingId);
+    if (f) {
+      f.title = title || f.title || '(無題)';
+      f.url = url;
+      f.tags = tags;
+      f.memo = memo;
+    }
+  } else {
+    state.favorites.unshift({
+      id: uid(),
+      title: title || '(無題)',
+      url: url,
+      tags: tags,
+      memo: memo,
+      createdAt: Date.now()
+    });
+  }
+  saveState();
+  closeModal();
+  renderTags();
+  renderFavorites();
+  if (wasActive) document.getElementById('memoPanel').textContent = memo;
+  toast('保存しました');
+}
+
+function closeModal() {
+  document.getElementById('modalBack').hidden = true;
+  editingId = null;
+}
+
+function deleteFavorite(id) {
+  const f = state.favorites.find(x => x.id === id);
+  if (!f) return;
+  if (!confirm('「' + (f.title || '(無題)') + '」を削除しますか？')) return;
+  state.favorites = state.favorites.filter(x => x.id !== id);
+  if (activeId === id) activeId = null;
+  saveState();
+  renderTags();
+  renderFavorites();
+  toast('削除しました');
+}
+
+/* Shortcut help */
+function toggleHelp() {
+  const el = document.getElementById('helpBack');
+  el.hidden = !el.hidden;
+}
+function closeHelp() {
+  document.getElementById('helpBack').hidden = true;
+}
+
+/* Folder handle persistence via IndexedDB */
+const DIR_HANDLE_DB = 'ytbm-dir-handles';
+const DIR_HANDLE_VER = 1;
+
+function openHandleDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DIR_HANDLE_DB, DIR_HANDLE_VER);
+    req.onupgradeneeded = () => req.result.createObjectStore('handles');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function loadDirHandle(key) {
+  try {
+    const db = await openHandleDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readonly');
+      const req = tx.objectStore('handles').get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  } catch { return null; }
+}
+
+async function saveDirHandle(key, handle) {
+  try {
+    const db = await openHandleDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').put(handle, key);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch { /* ignore */ }
+}
+
+/* Import/Export */
+async function doExport() {
+  const data = JSON.stringify(state, null, 2);
+  const today = new Date().toISOString().split('T')[0];
+  const suggestedName = 'favorites_' + today + '.json';
+
+  if (window.showSaveFilePicker) {
+    try {
+      const startIn = await loadDirHandle('export') || 'documents';
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        startIn,
+        types: [{ description: 'JSON ファイル', accept: { 'application/json': ['.json'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(data);
+      await writable.close();
+      await saveDirHandle('export', handle);
+      clearDirty();
+      toast('エクスポートしました');
+    } catch (e) {
+      if (e.name !== 'AbortError') toast('保存に失敗しました');
+    }
+    return;
+  }
+
+  // fallback for browsers without File System Access API
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = suggestedName;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+  clearDirty();
+  toast('エクスポートしました');
+}
+
+async function doImport() {
+  if (window.showOpenFilePicker) {
+    try {
+      const startIn = await loadDirHandle('import') || await loadDirHandle('export') || 'documents';
+      const [fileHandle] = await window.showOpenFilePicker({
+        startIn,
+        types: [{ description: 'JSON ファイル', accept: { 'application/json': ['.json'] } }],
+        multiple: false,
+      });
+      await saveDirHandle('import', fileHandle);
+      const file = await fileHandle.getFile();
+      processImportFile(file);
+    } catch (e) {
+      if (e.name !== 'AbortError') toast('読み込みに失敗しました');
+    }
+    return;
+  }
+  // fallback
+  document.getElementById('importFile').click();
+}
+
+function processImportFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.favorites || !Array.isArray(data.favorites)) {
+        throw new Error('形式が不正です');
+      }
+      const choice = confirm(
+        data.favorites.length + ' 件のお気に入りを読み込みます。\n\n' +
+        'OK = 現在のデータを置き換え\n' +
+        'キャンセル = 既存にマージ（同じIDは既存を優先）'
+      );
+      if (choice) {
+        state = { version: 1, favorites: data.favorites };
+      } else {
+        const existingIds = new Set(state.favorites.map(f => f.id));
+        const newOnes = data.favorites.filter(f => !existingIds.has(f.id));
+        state.favorites = state.favorites.concat(newOnes);
+      }
+      saveState();
+      clearDirty();
+      activeTag = null;
+      renderTags();
+      renderFavorites();
+      toast('インポート完了');
+    } catch (err) {
+      toast('インポート失敗: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* Memo tooltip */
+(function() {
+  const tip = document.getElementById('memoTip');
+  const OFFSET = 14;
+
+  function place(x, y) {
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    tip.style.left = (x + OFFSET + tw > vw ? x - tw - OFFSET : x + OFFSET) + 'px';
+    tip.style.top  = (y + OFFSET + th > vh ? y - th - OFFSET : y + OFFSET) + 'px';
+  }
+
+  document.getElementById('favList').addEventListener('mouseover', (e) => {
+    const item = e.target.closest('.fav-item');
+    if (!item) { tip.classList.remove('show'); return; }
+    const memo = item.dataset.memo;
+    if (!memo) { tip.classList.remove('show'); return; }
+    tip.textContent = memo;
+    tip.classList.add('show');
+    place(e.clientX, e.clientY);
+  });
+
+  document.getElementById('favList').addEventListener('mousemove', (e) => {
+    if (!tip.classList.contains('show')) return;
+    place(e.clientX, e.clientY);
+  });
+
+  document.getElementById('favList').addEventListener('mouseout', (e) => {
+    const item = e.target.closest('.fav-item');
+    if (!item) return;
+    if (item.contains(e.relatedTarget)) return;
+    tip.classList.remove('show');
+  });
+})();
+
+/* Init */
+function init() {
+  loadState();
+  renderTags();
+  renderFavorites();
+
+  document.getElementById('searchInput').addEventListener('input', renderFavorites);
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    const cur = document.getElementById('urlInput').value.trim();
+    openModalAdd(cur);
+  });
+  document.getElementById('fUrl').addEventListener('change', onModalUrlChange);
+  document.getElementById('fUrl').addEventListener('paste', () => setTimeout(onModalUrlChange, 50));
+  document.getElementById('modalSave').addEventListener('click', saveModal);
+  document.getElementById('modalCancel').addEventListener('click', closeModal);
+  document.getElementById('modalBack').addEventListener('click', (e) => {
+    if (e.target.id === 'modalBack') closeModal();
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', doExport);
+  document.getElementById('importBtn').addEventListener('click', doImport);
+  document.getElementById('importFile').addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+      processImportFile(e.target.files[0]);
+      e.target.value = '';
+    }
+  });
+
+  document.getElementById('loadBtn').addEventListener('click', () => {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return;
+    activeId = null;
+    renderFavorites();
+    document.getElementById('memoPanel').textContent = '';
+    const ytId = parseYouTubeId(url);
+    if (ytId) loadYouTube(ytId, getStartTime(url));
+    else loadGeneric(url);
+  });
+  document.getElementById('urlInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('loadBtn').click();
+  });
+
+  document.getElementById('openExternalBtn').addEventListener('click', () => {
+    const url = document.getElementById('urlInput').value.trim();
+    if (url) window.open(url, '_blank', 'noopener');
+  });
+
+  document.querySelectorAll('#speedPresets button').forEach(b => {
+    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+  });
+
+  document.getElementById('loopABtn').addEventListener('click', setLoopA);
+  document.getElementById('loopBBtn').addEventListener('click', setLoopB);
+  document.getElementById('loopToggle').addEventListener('click', toggleLoop);
+  document.getElementById('loopClear').addEventListener('click', clearLoop);
+  document.getElementById('speedSlider').addEventListener('input', (e) => {
+    applySpeed(parseFloat(e.target.value));
+  });
+  document.getElementById('speedInput').addEventListener('change', (e) => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v) && v > 0) applySpeed(v);
+  });
+  document.getElementById('speedInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v) && v > 0) applySpeed(v);
+    }
+  });
+
+  document.getElementById('helpBtn').addEventListener('click', toggleHelp);
+  document.getElementById('helpClose').addEventListener('click', closeHelp);
+  document.getElementById('helpBack').addEventListener('click', (e) => {
+    if (e.target.id === 'helpBack') closeHelp();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const tag = document.activeElement.tagName;
+    const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable;
+
+    if (e.key === 'Escape') {
+      if (!document.getElementById('modalBack').hidden) closeModal();
+      else if (!document.getElementById('helpBack').hidden) closeHelp();
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+      e.preventDefault();
+      doExport();
+      return;
+    }
+    if (!isTyping) {
+      if (e.key === '?') {
+        e.preventDefault();
+        toggleHelp();
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (yt && typeof yt.getPlayerState === 'function') {
+          yt.getPlayerState() === 1 ? yt.pauseVideo() : yt.playVideo();
+        }
+        return;
+      }
+      if (e.shiftKey && e.code === 'Comma') {
+        e.preventDefault();
+        const presets = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+        const idx = presets.findIndex(v => v >= currentSpeed - 0.01);
+        applySpeed(presets[Math.max(0, (idx <= 0 ? 0 : idx) - 1)]);
+        return;
+      }
+      if (e.shiftKey && e.code === 'Period') {
+        e.preventDefault();
+        const presets = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+        const idx = presets.findLastIndex(v => v <= currentSpeed + 0.01);
+        applySpeed(presets[Math.min(presets.length - 1, (idx < 0 ? 0 : idx) + 1)]);
+        return;
+      }
+      if (e.key === 'a') { e.preventDefault(); setLoopA(); return; }
+      if (e.key === 'b') { e.preventDefault(); setLoopB(); return; }
+      if (e.key === 'l') { e.preventDefault(); toggleLoop(); return; }
+    }
+  });
+}
+
+function setupSidebarResize() {
+  const handle = document.getElementById('resizeHandle');
+  const app = document.querySelector('.app');
+  const SIDEBAR_W_KEY = 'favViewer.sidebarWidth';
+  const saved = parseInt(localStorage.getItem(SIDEBAR_W_KEY), 10);
+  if (saved && saved >= 180 && saved <= 600) {
+    app.style.gridTemplateColumns = saved + 'px 4px 1fr';
+  }
+  handle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = document.querySelector('.sidebar').offsetWidth;
+    handle.classList.add('resizing');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    function onMove(e) {
+      const w = Math.min(Math.max(startW + e.clientX - startX, 180), 600);
+      app.style.gridTemplateColumns = w + 'px 4px 1fr';
+    }
+    function onUp() {
+      handle.classList.remove('resizing');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      localStorage.setItem(SIDEBAR_W_KEY, document.querySelector('.sidebar').offsetWidth);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+function setupMemoEdit() {
+  const panel = document.getElementById('memoPanel');
+  panel.contentEditable = 'true';
+  panel.addEventListener('blur', () => {
+    if (!activeId) return;
+    const f = state.favorites.find(x => x.id === activeId);
+    if (!f) return;
+    const newMemo = panel.innerText.trim();
+    if (newMemo === (f.memo || '').trim()) return;
+    f.memo = newMemo;
+    const listItem = document.querySelector('.fav-item[data-id="' + activeId + '"]');
+    if (listItem) listItem.dataset.memo = newMemo;
+    saveState();
+    toast('メモを保存しました');
+  });
+  panel.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (activeId) {
+        const f = state.favorites.find(x => x.id === activeId);
+        panel.textContent = f ? f.memo || '' : '';
+      }
+      panel.blur();
+      e.stopPropagation();
+    }
+  });
+}
+
+init();
+setupSidebarResize();
+setupMemoEdit();
+</script>
+</body>
+</html>

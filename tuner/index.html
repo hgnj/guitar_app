@@ -1,0 +1,2632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guitar Visualizer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #00ff88;
+    font-family: 'Courier New', monospace;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid #0d2a0d;
+    flex-shrink: 0;
+    background: #050f05;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .title { font-size: 14px; letter-spacing: 4px; color: #00ff88; text-transform: uppercase; }
+
+  .controls { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; justify-content: flex-end; }
+
+  .btn {
+    background: transparent;
+    border: 1px solid #00ff88;
+    color: #00ff88;
+    padding: 6px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .btn:hover { background: #00ff8820; }
+  .btn.active { background: #00ff8830; border-color: #00ffaa; }
+
+  .btn-help {
+    background: transparent;
+    border: 1px solid #005522;
+    color: #007733;
+    padding: 5px 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .btn-help:hover { border-color: #00aa44; color: #00cc55; background: #00ff8810; }
+  .btn-help.active { border-color: #00ff88; color: #00ff88; background: #00ff8818; }
+
+  /* ─── Cross-app nav (subtle, matches help buttons) ─── */
+  .app-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .app-link {
+    text-decoration: none; font-size: 10px; letter-spacing: 1px; color: #007733;
+    border: 1px solid #005522; border-radius: 2px; padding: 4px 8px; text-transform: uppercase;
+  }
+  .app-link:hover { color: #00cc55; border-color: #00aa44; background: #00ff8810; }
+  .app-link.active { color: #00ff88; border-color: #00ff88; background: #00ff8818; pointer-events: none; }
+
+  /* ─── Mode toggle ─── */
+  .mode-group {
+    display: flex;
+    border: 1px solid #005522;
+    border-radius: 2px;
+    overflow: hidden;
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+  .btn-mode {
+    background: transparent;
+    border: none;
+    border-right: 1px solid #005522;
+    color: #005522;
+    padding: 5px 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .btn-mode:last-child { border-right: none; }
+  .btn-mode:hover { background: #00ff8810; color: #00aa55; }
+  .btn-mode.active { background: #00ff8820; color: #00ff88; }
+
+  .ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #007733;
+    letter-spacing: 1px;
+  }
+
+  .meter-bar { width: 90px; height: 7px; background: #0a1a0a; border: 1px solid #0d2a0d; border-radius: 1px; overflow: hidden; }
+  .meter-fill { height: 100%; width: 0%; background: linear-gradient(to right, #00aa55, #00ff88, #aaff00, #ff4400); }
+  .clip-led { font-size: 9px; letter-spacing: 1px; color: #3a1010; border: 1px solid #2a1010; border-radius: 2px; padding: 1px 5px; transition: none; }
+  .clip-led.on { color: #ff5500; border-color: #ff5500; background: #ff550018; }
+
+  input[type=range] { -webkit-appearance: none; width: 75px; height: 3px; background: #0d2a0d; border-radius: 2px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; background: #00ff88; border-radius: 50%; cursor: pointer; }
+
+  input[type=number] {
+    width: 52px; background: #0a1a0a; border: 1px solid #0d2a0d; color: #00ff88;
+    font-family: 'Courier New', monospace; font-size: 11px; padding: 2px 4px;
+    border-radius: 2px; outline: none; text-align: center;
+  }
+  input[type=number]:focus { border-color: #00aa44; }
+
+  .dev-select {
+    background: #0a1a0a; border: 1px solid #0d2a0d; color: #00cc77;
+    font-family: 'Courier New', monospace; font-size: 11px; padding: 3px 6px;
+    border-radius: 2px; max-width: 170px; outline: none; cursor: pointer;
+  }
+  .dev-select:focus { border-color: #00aa44; }
+
+  .status { font-size: 11px; letter-spacing: 2px; color: #004422; text-transform: uppercase; }
+  .status.on { color: #00ff88; }
+
+  /* ─── Error banner ─── */
+  #errorBanner {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 20px;
+    background: #2a0d0d;
+    border-bottom: 1px solid #551111;
+    color: #ff8866;
+    font-size: 12px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+  #errorBanner.show { display: flex; }
+  #errorBanner .msg { line-height: 1.5; }
+  #errorBanner .msg b { color: #ffbb99; }
+  #errorBanner .dismiss {
+    background: transparent; border: 1px solid #aa4433; color: #ff8866;
+    font-family: 'Courier New', monospace; font-size: 11px; padding: 3px 12px;
+    border-radius: 2px; cursor: pointer; flex-shrink: 0; letter-spacing: 1px;
+  }
+  #errorBanner .dismiss:hover { background: #ff886620; }
+
+  /* ─── Help Panel ─── */
+  #helpPanel {
+    display: none;
+    background: #060f06;
+    border-bottom: 1px solid #0d2a0d;
+    overflow-y: auto;
+    max-height: 42vh;
+    flex-shrink: 0;
+  }
+  #helpPanel.open { display: block; }
+
+  .help-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .help-col {
+    padding: 16px 22px;
+    border-right: 1px solid #0d2a0d;
+  }
+  .help-col:last-child { border-right: none; }
+
+  .help-col h2 {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: #00aa55;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #0d2a0d;
+  }
+
+  .help-col p {
+    font-size: 12px;
+    color: #007733;
+    line-height: 1.75;
+    margin-bottom: 10px;
+  }
+
+  .help-col .tag {
+    display: inline-block;
+    font-size: 10px;
+    color: #00cc66;
+    background: #001a0d;
+    border: 1px solid #004422;
+    border-radius: 2px;
+    padding: 1px 7px;
+    margin: 0 2px 0 0;
+    letter-spacing: 1px;
+    vertical-align: middle;
+  }
+
+  .help-item { margin-bottom: 9px; }
+  .help-item .label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #009944;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+  }
+  .help-item .desc { font-size: 12px; color: #006622; line-height: 1.6; }
+
+  .freq-table { width: 100%; border-collapse: collapse; margin: 8px 0 10px; }
+  .freq-table th { font-size: 9px; letter-spacing: 2px; color: #005522; padding: 3px 6px; border-bottom: 1px solid #0d2a0d; text-align: left; font-weight: normal; }
+  .freq-table td { font-size: 11px; color: #007733; padding: 3px 6px; border-bottom: 1px solid #0a1a0a; }
+  .freq-table td:last-child { color: #00bb55; }
+  .freq-table tr:hover td { background: #0a1a0a; }
+
+  .band-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 7px; }
+  .band-freq { font-size: 10px; color: #00cc66; min-width: 80px; padding-top: 1px; white-space: nowrap; }
+  .band-desc { font-size: 12px; color: #006622; line-height: 1.55; }
+
+  /* ─── Visualizers ─── */
+  .visualizers { flex: 1; display: flex; flex-direction: column; padding: 12px 16px; gap: 10px; overflow: hidden; }
+
+  .panel { flex: 1; display: flex; flex-direction: column; border: 1px solid #0d2a0d; border-radius: 2px; overflow: hidden; min-height: 0; background: #050f05; }
+
+  .panel-label {
+    font-size: 9px; letter-spacing: 3px; color: #005522;
+    padding: 4px 10px; border-bottom: 1px solid #0d2a0d;
+    display: flex; justify-content: space-between; flex-shrink: 0; text-transform: uppercase;
+  }
+  .panel-label .right { color: #008844; }
+
+  .btn-scale {
+    background: #00ff8818;
+    border: 1px solid #006633;
+    color: #00cc66;
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 1px 8px;
+    margin-left: 8px;
+    border-radius: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  .btn-scale:hover { border-color: #00ff88; color: #00ff88; }
+
+  canvas { width: 100%; height: 100%; display: block; }
+
+  /* ─── Tuner Panel ─── */
+  #tunerPanel {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    padding: 12px 16px;
+    overflow: hidden;
+  }
+  #tunerPanel.active { display: flex; }
+
+  #tunerCanvas {
+    flex: 1;
+    width: 100%;
+    display: block;
+    border: 1px solid #0d2a0d;
+    border-radius: 2px;
+    background: #050f05;
+  }
+
+  /* ─── MIX dashboard ─── */
+  #mixPanel { display: none; flex: 1; flex-direction: column; padding: 12px 16px; gap: 10px; overflow: hidden; }
+  #mixPanel.active { display: flex; }
+  .mix-map-panel { flex: 1.45; }
+  #mixCanvas { flex: 1; width: 100%; display: block; }
+  .mix-cards { flex: 1; display: flex; gap: 10px; min-height: 0; }
+  .mix-sub { flex: 1; }
+  .mix-char-body { flex: 1; display: flex; flex-direction: column; padding: 10px 12px; gap: 10px; overflow: auto; }
+  .mix-vibe { font-size: 18px; letter-spacing: 1px; color: #00ffaa; font-weight: bold; }
+  .mix-meters { display: flex; flex-direction: column; gap: 7px; }
+  .mix-meter { display: grid; grid-template-columns: 64px 1fr 30px; align-items: center; gap: 8px; font-size: 10px; color: #008844; letter-spacing: 1px; }
+  .mix-meter .mtrack { height: 9px; background: #0a1a0a; border: 1px solid #0d2a0d; border-radius: 2px; overflow: hidden; }
+  .mix-meter .mfill { height: 100%; width: 0%; background: linear-gradient(to right, #007733, #00ff88); }
+  .mix-meter .mval { color: #00cc77; text-align: right; }
+
+  .mix-collide-body { flex: 1; display: flex; flex-direction: column; padding: 8px 10px; gap: 7px; overflow: auto; }
+  .mix-row { border: 1px solid #0d2a0d; border-left: 3px solid #006633; border-radius: 2px; padding: 6px 9px; background: #061206; }
+  .mix-row.warn { border-left-color: #ffaa00; }
+  .mix-row.bad  { border-left-color: #ff5500; }
+  .mix-row-top { display: flex; justify-content: space-between; align-items: center; gap: 6px 8px; flex-wrap: wrap; }
+  .mix-row .nm { font-size: 11px; color: #00dd88; letter-spacing: 1px; min-width: 0; }
+  .mix-row .rng { font-size: 9px; color: #006622; }
+  .mix-row .badge { font-size: 9px; padding: 1px 7px; border-radius: 2px; border: 1px solid #0d2a0d; color: #007733; letter-spacing: 1px; white-space: nowrap; }
+  .mix-row.warn .badge { color: #ffaa00; border-color: #4a3a10; background: #2a200520; }
+  .mix-row.bad  .badge { color: #ff7744; border-color: #4a1a10; background: #2a0a0520; }
+  .mix-row .mtrack { height: 6px; background: #0a1a0a; border: 1px solid #0d2a0d; border-radius: 2px; overflow: hidden; margin: 4px 0; }
+  .mix-row .mfill { height: 100%; width: 0%; background: #00aa55; }
+  .mix-row.warn .mfill { background: #ffaa00; }
+  .mix-row.bad  .mfill { background: #ff5500; }
+  .mix-row .tip { font-size: 10px; color: #8fbfa0; line-height: 1.5; }
+  .mix-note { font-size: 9px; color: #005522; padding: 0 10px 8px; line-height: 1.5; }
+  @media (max-width: 860px) { .mix-cards { flex-direction: column; } }
+
+  /* ─── ADVISOR mode (ported from tone-advisor) ─── */
+  #advisorPanel { display: none; flex: 1; flex-direction: column; overflow: auto; }
+  #advisorPanel.active { display: flex; }
+  .adv-main { padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .adv-panel { border: 1px solid #0d2a0d; border-radius: 3px; background: #050f05; padding: 14px 16px; }
+  .section-label { font-size: 10px; letter-spacing: 3px; color: #005522; text-transform: uppercase; margin-bottom: 8px; }
+  .target-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip {
+    background: transparent; border: 1px solid #006633; color: #00cc66;
+    font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 1px;
+    padding: 6px 12px; border-radius: 2px; cursor: pointer; text-transform: uppercase;
+  }
+  .chip:hover { border-color: #00ff88; color: #00ff88; }
+  .chip.active { background: #00ff8820; border-color: #00ffaa; color: #00ffaa; }
+  .chip.playing { background: #00ff8820; border-color: #00ffaa; color: #00ffaa; }
+  .chip:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .kw-form { display: flex; gap: 6px; flex: 1; min-width: 220px; }
+  .kw-form input {
+    flex: 1; background: #0a1a0a; border: 1px solid #0d2a0d; color: #00ff88;
+    font-family: 'Courier New', monospace; font-size: 12px; padding: 6px 10px;
+    border-radius: 2px; outline: none;
+  }
+  .kw-form input:focus { border-color: #00aa44; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+  .dim { margin-bottom: 13px; }
+  .dim-head { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: #008844; margin-bottom: 4px; letter-spacing: 1px; flex-wrap: wrap; }
+  .dim-head .gap { font-size: 10px; white-space: nowrap; }
+  .dim-head .nums { color: #007733; }
+  .track { position: relative; height: 14px; background: #0a1a0a; border: 1px solid #0d2a0d; border-radius: 2px; overflow: visible; }
+  .track .fill { position: absolute; top: 0; left: 0; bottom: 0; background: #00ff8830; border-right: 2px solid #00ff88; border-radius: 2px 0 0 2px; }
+  .track .target { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 2px dashed #ffaa00; }
+  .track .base { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1px dotted #00b4ff; }
+  .legend { font-size: 10px; color: #006622; margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .legend span b { font-weight: normal; }
+  .legend .t-cur { color: #00ff88; } .legend .t-tgt { color: #ffaa00; } .legend .t-base { color: #00b4ff; }
+  #specCanvas { width: 100%; height: 120px; display: block; border: 1px solid #0d2a0d; border-radius: 2px; background: #050f05; margin-top: 10px; }
+  .sug-status { font-size: 12px; color: #007733; margin-bottom: 10px; letter-spacing: 1px; }
+  .sug { border: 1px solid #0d2a0d; border-left: 3px solid #00aa55; border-radius: 2px; padding: 9px 12px; margin-bottom: 8px; background: #061206; }
+  .sug.up { border-left-color: #00ffaa; }
+  .sug.down { border-left-color: #ffaa00; }
+  .sug.tip { border-left-color: #00b4ff; }
+  .sug .st { font-size: 12px; color: #00dd88; letter-spacing: 1px; margin-bottom: 3px; }
+  .sug .sh { font-size: 12px; color: #8fbfa0; line-height: 1.6; }
+  .sug .badge { font-size: 9px; color: #004422; border: 1px solid #0d2a0d; border-radius: 2px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
+  .snap-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .rec-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .rec-status { font-size: 12px; color: #007733; letter-spacing: 1px; }
+  .btn-rec { border-color: #aa3333; color: #ff6666; }
+  .btn-rec:hover { border-color: #ff6666; color: #ff8888; }
+  .btn-rec.active { background: #aa333322; border-color: #ff8888; color: #ff8888; animation: recpulse 1.2s ease-in-out infinite; }
+  @keyframes recpulse { 0%,100% { background:#aa333322 } 50% { background:#aa333355 } }
+  .rec-hint { font-size: 10px; color: #005522; line-height: 1.6; margin-top: 6px; }
+  .rec-stale { color: #ffaa00; font-size: 11px; margin-left: 6px; }
+
+  footer {
+    display: flex; gap: 8px 28px; padding: 7px 20px;
+    border-top: 1px solid #0d2a0d; background: #050f05;
+    font-size: 11px; color: #005522; letter-spacing: 1px; flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .info-item { display: flex; gap: 6px; align-items: center; }
+  .info-val { color: #00dd77; font-size: 12px; min-width: 36px; }
+  .note-val { color: #00ffaa; font-size: 13px; font-weight: bold; min-width: 32px; }
+
+  /* ─── Mobile / narrow layout ─── */
+  @media (max-width: 860px) {
+    header { flex-wrap: wrap; gap: 8px; padding: 8px 12px; }
+    .title { width: 100%; font-size: 12px; letter-spacing: 2px; }
+    .controls { width: 100%; gap: 8px 12px; flex-wrap: wrap; justify-content: flex-start; }
+    .mode-group { order: -1; }
+    .btn-mode { padding: 5px 9px; letter-spacing: 1px; font-size: 10px; }
+    .dev-select { max-width: 130px; }
+    input[type=range] { width: 56px; }
+    .meter-bar { width: 64px; }
+    .startBtn, .btn { padding: 6px 14px; }
+    .help-inner { grid-template-columns: 1fr; }
+    .help-col { border-right: none; border-bottom: 1px solid #0d2a0d; }
+    #helpPanel { max-height: 50vh; }
+    .visualizers { padding: 8px 10px; gap: 8px; }
+    footer { flex-wrap: wrap; gap: 8px 18px; padding: 6px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">&#9632; Guitar Visualizer</div>
+  <div class="controls">
+    <div class="app-nav">
+      <a href="../index.html" class="app-link">🏠 Home</a>
+      <a href="../tuner/index.html" class="app-link active">🎚 Tuner</a>
+      <a href="../fretboard/index.html" class="app-link">🎸 Fretboard</a>
+      <a href="../bookmark/index.html" class="app-link">🔖 Bookmark</a>
+      <a href="../studio/index.html" class="app-link">🎹 Studio</a>
+      <a href="../tuner/index.html#advisor" class="app-link">🎛 Advisor</a>
+    </div>
+    <div class="mode-group">
+      <button class="btn-mode active" id="modeViz" onclick="switchMode('visualizer')">VISUALIZER</button>
+      <button class="btn-mode" id="modeMix" onclick="switchMode('mix')">MIX</button>
+      <button class="btn-mode" id="modeAdvisor" onclick="switchMode('advisor')">ADVISOR</button>
+      <button class="btn-mode" id="modeTuner" onclick="switchMode('tuner')">TUNER</button>
+      <button class="btn-mode" id="modeStrobe" onclick="switchMode('strobe')">STROBE</button>
+    </div>
+    <div class="ctrl-group">
+      IN
+      <select id="inputDevice" class="dev-select" onchange="onInputDeviceChange()" title="入力デバイス。オーディオIF（DI）を選ぶとマイクより格段に安定します">
+        <option value="">既定の入力</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      GAIN
+      <input type="range" id="gainSlider" min="1" max="12" value="4" step="0.1">
+      <span id="gainVal">4.0</span>
+    </div>
+    <div class="ctrl-group">
+      LEVEL
+      <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+      <span class="clip-led" id="clipLed" title="入力が大きすぎて歪んでいます。GAIN かオーディオIF側の入力を下げてください（チューナー精度も低下します）。">CLIP</span>
+    </div>
+    <div class="ctrl-group">
+      SMOOTH
+      <input type="range" id="smoothSlider" min="0" max="0.95" value="0.75" step="0.05">
+      <span id="smoothVal">0.75</span>
+    </div>
+    <div class="ctrl-group">
+      A4
+      <input type="number" id="a4Input" min="430" max="450" step="0.1" value="440">
+      <span>Hz</span>
+    </div>
+    <div class="ctrl-group">
+      CAL
+      <input type="number" id="calInput" min="-50" max="50" step="0.5" value="0"
+        title="検出ピッチの補正(セント)。HX Stomp 等の基準より高く(シャープに)出る分を、その数値だけ下げて合わせる。+でシャープ補正。">
+      <span>¢</span>
+    </div>
+    <div class="status" id="statusLabel">OFFLINE</div>
+    <button class="btn-help" id="refBtn" onclick="toggleRefTone()" title="基準音を鳴らして耳で合わせる">♪ REF</button>
+    <button class="btn-help" id="helpBtn" onclick="toggleHelp()">? GUIDE</button>
+    <button class="btn" id="startBtn" onclick="toggleAudio()">START</button>
+  </div>
+</header>
+
+<div id="errorBanner">
+  <div class="msg" id="errorMsg"></div>
+  <button class="dismiss" onclick="hideError()">✕ 閉じる</button>
+</div>
+
+<!-- Help Panel -->
+<div id="helpPanel">
+  <div class="help-inner">
+
+    <!-- 左：波形 -->
+    <div class="help-col">
+      <h2>波形（上段） — Oscilloscope</h2>
+      <p>横軸＝時間　縦軸＝振幅（音の強さ）。中央の線がゼロ（無音）。</p>
+
+      <div class="help-item">
+        <div class="label">ピッキングの強さ・一貫性</div>
+        <div class="desc">弾いた瞬間に波が大きく飛び出す。何発か弾き比べて山の高さが揃っているほど、ピッキングが安定している。</div>
+      </div>
+      <div class="help-item">
+        <div class="label">サスティン</div>
+        <div class="desc">弾いた後に波形がどれだけ続くか。コンプのアタック／リリース調整や、セッティングによるサスティンの変化確認に使える。</div>
+      </div>
+      <div class="help-item">
+        <div class="label"><span class="tag">!</span> クリッピング（歪みすぎ）</div>
+        <div class="desc">波形の山が水平に切れていたらクリップ中。GAINを下げるか、ペダルの出力レベルを落とす。</div>
+      </div>
+      <div class="help-item">
+        <div class="label">ノイズ・ハム</div>
+        <div class="desc">無音時に波形がザラついていればノイズフロアが高い。アース不良・シールド問題、またはアクティブPU（EMG）のバッテリー消耗を疑う。</div>
+      </div>
+    </div>
+
+    <!-- 右：FFT -->
+    <div class="help-col">
+      <h2>周波数スペクトラム（下段） — FFT</h2>
+      <p>横軸＝周波数（左が低音→右が高音）　縦軸＝音量（dB）。山が高いほどその帯域が強く出ている。右上のボタンで <span class="tag">LOG＋弦ガイド</span> と <span class="tag">LINEAR（旧）</span> を切替。</p>
+      <p><span class="tag">●</span> 黄色マーカー＝最も音量が大きい山（多くの場合は倍音）。<span class="tag" style="color:#ff7800;border-color:#aa5500">▼ f0</span> オレンジの縦線＝実際に鳴っている基音（MPM／基音検出で取得）。<span class="tag" style="color:#00b4ff;border-color:#0066aa">6E〜1E</span> 水色の縦線＝各開放弦の基音位置（LOGモードのみ）。<br>※開放弦を弾くと黄色（倍音）とオレンジ（基音）が別の山に出ることがあります。チューニングの目安はオレンジ f0 と水色ガイドの一致を見てください。</p>
+
+      <table class="freq-table">
+        <tr><th>弦</th><th>開放弦</th><th>基音</th></tr>
+        <tr><td>6弦</td><td>E2</td><td>82 Hz</td></tr>
+        <tr><td>5弦</td><td>A2</td><td>110 Hz</td></tr>
+        <tr><td>4弦</td><td>D3</td><td>147 Hz</td></tr>
+        <tr><td>3弦</td><td>G3</td><td>196 Hz</td></tr>
+        <tr><td>2弦</td><td>B3</td><td>247 Hz</td></tr>
+        <tr><td>1弦</td><td>E4</td><td>330 Hz</td></tr>
+      </table>
+
+      <div class="band-row"><div class="band-freq">100–300 Hz</div><div class="band-desc">ローミッド。ここが膨らみすぎると「こもった」音になる。BassTreble前にここを確認。</div></div>
+      <div class="band-row"><div class="band-freq">2–4 kHz</div><div class="band-desc">プレゼンス帯。ギターの「抜け感」を左右する。HX StompのPresenceと直結。</div></div>
+      <div class="band-row"><div class="band-freq">5 kHz 以上</div><div class="band-desc">ピックアタックの「カリッ」とした成分。Recto系はここが特徴的。IRのマイク位置でも大きく変化する。</div></div>
+      <div class="band-row"><div class="band-freq">倍音の並び方</div><div class="band-desc">基音の2倍・3倍と規則的に山が並ぶほど芯のある音。歪みが強いと倍音が広がり全体的にフラットな山になる。EQ変更しながら見ると変化が客観的にわかる。</div></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="visualizers" id="visualizersPanel">
+  <div class="panel">
+    <div class="panel-label">
+      Waveform — Oscilloscope
+      <span class="right" id="rmsLabel">RMS: —</span>
+    </div>
+    <canvas id="waveCanvas"></canvas>
+  </div>
+  <div class="panel">
+    <div class="panel-label">
+      <span>Frequency Spectrum — FFT
+        <button class="btn-scale" id="scaleBtn" onclick="toggleFftScale()">LOG + 弦ガイド</button>
+      </span>
+      <span class="right" id="peakFreqLabel">PEAK: —</span>
+    </div>
+    <canvas id="fftCanvas"></canvas>
+  </div>
+</div>
+
+<div id="tunerPanel">
+  <canvas id="tunerCanvas"></canvas>
+</div>
+
+<!-- MIX dashboard -->
+<div id="mixPanel">
+  <div class="panel mix-map-panel">
+    <div class="panel-label">
+      Band Map — 帯域マップ（他楽器との被りが一目で分かる）
+      <span class="right" id="mixVibeLabel">—</span>
+    </div>
+    <canvas id="mixCanvas"></canvas>
+  </div>
+  <div class="mix-cards">
+    <div class="panel mix-sub">
+      <div class="panel-label">音のキャラクター</div>
+      <div class="mix-char-body">
+        <div class="mix-vibe" id="mixVibe">弾いてください</div>
+        <div class="mix-meters" id="mixMeters"></div>
+      </div>
+    </div>
+    <div class="panel mix-sub">
+      <div class="panel-label">他楽器との帯域被り（取り合い度）</div>
+      <div class="mix-collide-body" id="mixCollide"></div>
+      <div class="mix-note">※ あなたのギターが各帯域にどれだけ居るか＝住み分けの取り合いになりやすい度合い。相手の音量までは測れないため目安です。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADVISOR mode (merged from tone-advisor) -->
+<div id="advisorPanel">
+  <div class="adv-main">
+    <div>
+      <div class="section-label">① 目標トーン — プリセット or 自由記述</div>
+      <div class="target-row">
+        <div id="presetChips"></div>
+        <form class="kw-form" id="kwForm" onsubmit="return applyKeyword();">
+          <input type="text" id="kwInput" placeholder="例: もっとメタルに / 歌うソロ / カッティング軽やか / Herman Li風">
+          <button class="chip" type="submit">判定</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="adv-panel">
+        <div class="section-label">② 今の音 vs 目標</div>
+        <div id="bars"></div>
+        <div class="legend">
+          <span class="t-cur">▌現在</span>
+          <span class="t-tgt">┊目標</span>
+          <span class="t-base">⋮基準(保存時)</span>
+          <span>数値は 0–100 の相対指標</span>
+        </div>
+        <canvas id="specCanvas"></canvas>
+        <div class="snap-row">
+          <button class="chip" id="snapBtn" onclick="saveBaseline()">📸 今の音を基準に保存</button>
+          <button class="chip" id="snapClr" onclick="clearBaseline()" style="display:none">基準クリア</button>
+          <button class="chip" onclick="copyForAI('target')" title="現在値・目標・差＋提案＋プロンプトをコピー（目標に近づける相談）">📋 AI相談(目標)</button>
+          <button class="chip" onclick="copyForAI('measured')" title="実測値のみ＋汎用アドバイス依頼をコピー（目標なしで音を診てもらう）">📋 AI相談(実測)</button>
+          <button class="chip" onclick="exportJSON()" title="解析数値群を JSON で保存">⬇ JSON</button>
+        </div>
+      </div>
+
+      <div class="adv-panel">
+        <div class="section-label">③ 提案 — あなたのリグ向け（HX Stomp / ブースター / IR）</div>
+        <div class="sug-status" id="sugStatus">START を押してギターを弾いてください。</div>
+        <div id="sugList"></div>
+      </div>
+    </div>
+
+    <div class="adv-panel">
+      <div class="section-label">④ Before / After — 録音して試聴</div>
+      <div class="rec-row">
+        <button class="chip btn-rec" id="recBtn" onclick="toggleRec()">● 録音開始</button>
+        <span class="rec-status" id="recStatus">START 中に録音すると、現在の解析と目標トーンに基づいて "AFTER" を生成します（最大20秒）。</span>
+      </div>
+      <div class="rec-row" id="abRow" style="display:none">
+        <button class="chip" id="playBeforeBtn" onclick="playWhich('before')">▶ BEFORE</button>
+        <button class="chip" id="playAfterBtn" onclick="playWhich('after')">▶ AFTER シミュレーション</button>
+        <button class="chip" id="stopPlayBtn" onclick="stopPlay()">■ 停止</button>
+        <button class="chip" id="regenBtn" onclick="regenerateAfter()" title="目標トーンを変えた後は再生成すると新しい目標が反映されます">♻ AFTER再生成</button>
+        <span id="abInfo" class="rec-status"></span>
+      </div>
+      <div class="rec-hint">※ AFTER は <b>EQ（5バンド）／ローカット（TIGHT）／コンプ（SUSTAIN）</b> による「提案の方向」のシミュレーションです。アンプ／キャブ／IR の入れ替えや、歪み量（GRIT）の変化は再現しません。BEFORE/AFTER はラウドネスを揃えて再生します。</div>
+    </div>
+
+    <div class="rec-hint" style="margin-top:0">
+      <b>使い方:</b> START → 目標を選ぶ/入力 → 数秒間しっかり弾く。鳴っている音を解析して目標との差を具体的なツマミ操作に翻訳します。
+      <b>精度のコツ:</b> マイク/部屋/IRで絶対値はブレるので、まず「基準」を保存して差分で追うと信頼度が上がります。提案は方向のヒントであって絶対値ではありません。DI（IN セレクタ）入力だと精度が上がります。
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="info-item">NOTE <span class="note-val" id="noteLabel">—</span></div>
+  <div class="info-item">FUNDAMENTAL <span class="info-val" id="freqLabel">—</span></div>
+  <div class="info-item">PEAK dB <span class="info-val" id="peakLabel">—</span></div>
+  <div class="info-item">SAMPLE RATE <span class="info-val" id="srLabel">—</span></div>
+  <div class="info-item">FFT <span class="info-val" id="fftLabel">—</span></div>
+</footer>
+
+<script>
+let audioCtx, analyser, gainNode, source, stream;
+let refOsc = null, refGain = null, refOn = false;  // reference-tone (tune by ear)
+let animId = null;
+let isRunning = false;
+let currentMode = 'visualizer';
+let _timeBuf = null, _freqBuf = null;
+let A4 = 440;  // concert-pitch reference (Hz), user-calibratable 430–450
+let calCents = 0;  // detection calibration: positive = app reads this many ¢ sharp → corrected down
+
+// Strobe state
+let strobePhase = [0, 0, 0];
+let strobeLastTs = null;
+let strobeLastMidi = -1;
+let fftScale = 'log';  // 'log' (with string guides) or 'linear' (legacy)
+
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+// Open-string fundamentals for the FFT reference lines (7-string standard)
+const GUITAR_STRINGS = [
+  { label: '7B', freq: 61.74 },
+  { label: '6E', freq: 82.41 },
+  { label: '5A', freq: 110.00 },
+  { label: '4D', freq: 146.83 },
+  { label: '3G', freq: 196.00 },
+  { label: '2B', freq: 246.94 },
+  { label: '1E', freq: 329.63 },
+];
+
+// Locked-note MIDI → "which open string" label (7-string standard).
+// MIDI numbers identify the note, so this is independent of the A4 calibration.
+const OPEN_STRING_MIDI = { 35: '7弦 B', 40: '6弦 E', 45: '5弦 A', 50: '4弦 D', 55: '3弦 G', 59: '2弦 B', 64: '1弦 E' };
+
+// ─── Shared pitch-detection algorithm ───
+// Defined once as source so the exact same code runs in the AudioWorklet
+// (off the main thread) and in the main-thread fallback for browsers
+// without AudioWorklet support.
+const PITCH_ALGO_SRC = `
+// McLeod Pitch Method (MPM): picks the fundamental from the Normalized Square
+// Difference Function. Unlike plain autocorrelation it is amplitude-normalized,
+// so it resists octave errors when harmonics are strong and reports a "clarity"
+// value that lets us reject noise / no-note frames.
+let _scratchPrefix = null, _scratchNsdf = null;
+function detectPitch(buf, sampleRate) {
+  const N = buf.length;
+  let rms = 0;
+  for (let i = 0; i < N; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / N);
+  if (rms < 0.004) return -1;
+
+  // Period range for 45–1400 Hz (45 Hz floor leaves margin for a low B / drop tunings)
+  const minLag = Math.floor(sampleRate / 1400);
+  const maxLag = Math.min(Math.ceil(sampleRate / 45), N - 1);
+
+  // Prefix sums of energy let us compute the NSDF normalizer m(tau) in O(1),
+  // so the only O(N·maxLag) cost is the autocorrelation itself.
+  // Reuse scratch buffers across calls — this runs in the AudioWorklet (audio)
+  // thread, so per-call allocation would add GC pressure and risk audio glitches.
+  if (!_scratchPrefix || _scratchPrefix.length < N + 1) _scratchPrefix = new Float32Array(N + 1);
+  if (!_scratchNsdf || _scratchNsdf.length < maxLag + 1) _scratchNsdf = new Float32Array(maxLag + 1);
+  const prefix = _scratchPrefix;
+  prefix[0] = 0;
+  for (let i = 0; i < N; i++) prefix[i + 1] = prefix[i] + buf[i] * buf[i];
+  const power = prefix[N];
+
+  const nsdf = _scratchNsdf;
+  for (let tau = 0; tau <= maxLag; tau++) {
+    let acf = 0;
+    for (let j = 0, end = N - tau; j < end; j++) acf += buf[j] * buf[j + tau];
+    const m = prefix[N - tau] + (power - prefix[tau]);
+    nsdf[tau] = m > 0 ? (2 * acf) / m : 0;
+  }
+
+  // Skip the main lobe at tau≈0, then collect the maximum within each positive
+  // region (key maxima between positive-going zero crossings).
+  let i = 1;
+  while (i <= maxLag && nsdf[i] > 0) i++;
+
+  let hi = -Infinity, hiPos = -1;
+  const peaks = [];
+  while (i <= maxLag) {
+    while (i <= maxLag && nsdf[i] <= 0) i++;
+    if (i > maxLag) break;
+    let maxPos = i, maxVal = nsdf[i];
+    while (i <= maxLag && nsdf[i] > 0) {
+      if (nsdf[i] > maxVal) { maxVal = nsdf[i]; maxPos = i; }
+      i++;
+    }
+    if (maxPos >= minLag) {
+      peaks.push(maxPos);
+      if (maxVal > hi) { hi = maxVal; hiPos = maxPos; }
+    }
+  }
+  if (hiPos < 0 || hi < 0.5) return -1;  // low clarity → unreliable
+
+  // First peak that clears 90% of the strongest one → the true fundamental,
+  // not a louder harmonic peak further along the NSDF.
+  const thresh = 0.9 * hi;
+  let pos = hiPos;
+  for (let k = 0; k < peaks.length; k++) {
+    if (nsdf[peaks[k]] >= thresh) { pos = peaks[k]; break; }
+  }
+
+  // Parabolic interpolation around the chosen peak for sub-sample accuracy
+  let T = pos;
+  if (pos > minLag && pos < maxLag) {
+    const x1 = nsdf[pos - 1], x2 = nsdf[pos], x3 = nsdf[pos + 1];
+    const a = (x1 + x3 - 2 * x2) / 2;
+    const b = (x3 - x1) / 2;
+    if (a !== 0) T = pos - b / (2 * a);
+  }
+
+  const freq = sampleRate / T;
+  return (freq >= 45 && freq <= 1400) ? freq : -1;
+}`;
+
+// Main-thread fallback (used only when AudioWorklet is unavailable)
+let detectPitchFallback;
+try {
+  detectPitchFallback = (new Function(PITCH_ALGO_SRC + '\nreturn detectPitch;'))();
+} catch (e) {
+  detectPitchFallback = function () { return -1; };
+}
+
+// AudioWorklet processor source: same algorithm + a ring buffer that runs
+// detection every HOP samples and posts the raw frequency back to the UI.
+const PITCH_WORKLET_SRC = PITCH_ALGO_SRC + `
+class PitchProcessor extends AudioWorkletProcessor {
+  constructor(options) {
+    super();
+    const o = (options && options.processorOptions) || {};
+    this.WINDOW = o.window || 8192;
+    this.HOP = o.hop || 1024;
+    this.ring = new Float32Array(this.WINDOW);
+    this.snapshot = new Float32Array(this.WINDOW);
+    this.writePos = 0;
+    this.sinceHop = 0;
+  }
+  process(inputs) {
+    const input = inputs[0];
+    if (input && input[0]) {
+      const ch = input[0];
+      const W = this.WINDOW;
+      for (let i = 0; i < ch.length; i++) {
+        this.ring[this.writePos] = ch[i];
+        this.writePos = (this.writePos + 1) % W;
+      }
+      this.sinceHop += ch.length;
+      if (this.sinceHop >= this.HOP) {
+        this.sinceHop = 0;
+        for (let i = 0; i < W; i++) this.snapshot[i] = this.ring[(this.writePos + i) % W];
+        this.port.postMessage(detectPitch(this.snapshot, sampleRate));
+      }
+    }
+    return true;
+  }
+}
+registerProcessor('pitch-processor', PitchProcessor);`;
+
+// Latest detection results shared between the worklet message handler and the
+// render loop, so rendering (rAF) is decoupled from detection cadence.
+let pitchNode = null;
+let useWorklet = false;
+let _latestRaw = -1;
+let _tunerResult = { freq: -1, midi: -1, held: false };
+
+// ─── Pitch stabilization state ───
+let _pitchHistory = [];
+let _smoothFreq = -1;
+let _lockedMidi = -1;
+let _lockCandidate = -1;
+let _lockCandidateCount = 0;
+let _lastGoodTime = 0;
+let _inTune = false;      // hysteretic in-tune flag (steadier than per-frame cents)
+let _inputDb = -100;      // latest input RMS level (dB), set each frame in drawLoop
+const _HISTORY_SIZE = 8;
+const _LOCK_FRAMES = 4;   // consecutive frames to confirm a new note
+const _HOLD_MS = 2000;    // keep showing last note through sustain decay / between picks
+const _NOISE_GATE_DB = -52;  // below this, treat input as silence (ignore noise/hum)
+const _INTUNE_ENTER = 3;  // ±cents to latch "in tune"
+const _INTUNE_EXIT = 6;   // must drift past this to drop "in tune" (hysteresis)
+
+function resetPitchState() {
+  _pitchHistory = [];
+  _smoothFreq = -1;
+  _lockedMidi = -1;
+  _lockCandidate = -1;
+  _lockCandidateCount = 0;
+  _lastGoodTime = 0;
+  _inTune = false;
+}
+
+function updatePitch(rawFreq) {
+  const now = performance.now();
+  // Noise gate: below the floor, ignore detection so the needle doesn't chase
+  // hum/room noise. Falls through to the hold/blank path like a real silence.
+  if (rawFreq > 0 && _inputDb < _NOISE_GATE_DB) rawFreq = -1;
+  // Calibration: correct a constant sharp/flat bias (e.g. vs a hardware tuner).
+  // Applied once here so cents / note / in-tune / Hz readouts stay consistent.
+  if (rawFreq > 0 && calCents) rawFreq *= Math.pow(2, -calCents / 1200);
+
+  if (rawFreq < 0) {
+    // Hold the last reading so the display doesn't blank during a decaying
+    // sustain or in the brief gap before the next pick is detected.
+    if (_lockedMidi >= 0 && now - _lastGoodTime < _HOLD_MS) {
+      return { freq: _smoothFreq, midi: _lockedMidi, held: true, inTune: false };
+    }
+    resetPitchState();
+    return { freq: -1, midi: -1, inTune: false };
+  }
+  _lastGoodTime = now;
+
+  _pitchHistory.push(rawFreq);
+  if (_pitchHistory.length > _HISTORY_SIZE) _pitchHistory.shift();
+
+  const sorted = [..._pitchHistory].sort((a, b) => a - b);
+  const medFreq = sorted[Math.floor(sorted.length / 2)];
+
+  // If buffer has ≥3 entries, reject if spread > 120 cents (signal is chaotic)
+  if (_pitchHistory.length >= 3) {
+    const spreadCents = 1200 * Math.log2(sorted[sorted.length - 1] / sorted[0]);
+    if (spreadCents > 120) {
+      return { freq: _smoothFreq > 0 ? _smoothFreq : -1, midi: _lockedMidi, inTune: _inTune };
+    }
+  }
+
+  // Adaptive EMA: damp harder when already sitting near the locked note so the
+  // needle settles and stays put ("ピタッと止まる"); stay responsive when far.
+  let damp = 0.65;
+  if (_lockedMidi >= 0 && _smoothFreq > 0) {
+    const prevCents = Math.abs((12 * Math.log2(_smoothFreq / A4) + 69 - _lockedMidi) * 100);
+    if (prevCents <= _INTUNE_ENTER) damp = 0.86;
+    else if (prevCents <= 12) damp = 0.78;
+  }
+  _smoothFreq = _smoothFreq < 0 ? medFreq : _smoothFreq * damp + medFreq * (1 - damp);
+
+  // Note locking: only change displayed note after _LOCK_FRAMES consistent frames
+  const detectedMidi = Math.round(12 * Math.log2(_smoothFreq / A4) + 69);
+  if (detectedMidi === _lockedMidi) {
+    _lockCandidate = -1;
+    _lockCandidateCount = 0;
+  } else if (detectedMidi === _lockCandidate) {
+    _lockCandidateCount++;
+    if (_lockCandidateCount >= _LOCK_FRAMES) {
+      _lockedMidi = detectedMidi;
+      _lockCandidate = -1;
+      _lockCandidateCount = 0;
+    }
+  } else {
+    _lockCandidate = detectedMidi;
+    _lockCandidateCount = 1;
+  }
+
+  // In-tune flag with hysteresis: latch within ±3¢, only release past ±6¢.
+  if (_lockedMidi >= 0) {
+    const cents = Math.abs((12 * Math.log2(_smoothFreq / A4) + 69 - _lockedMidi) * 100);
+    if (!_inTune && cents <= _INTUNE_ENTER) _inTune = true;
+    else if (_inTune && cents > _INTUNE_EXIT) _inTune = false;
+  } else {
+    _inTune = false;
+  }
+
+  return { freq: _smoothFreq, midi: _lockedMidi, inTune: _inTune };
+}
+
+function freqToNote(f) {
+  if (!f || f < 20) return '—';
+  const midi = Math.round(12 * Math.log2(f / A4) + 69);
+  const oct = Math.floor(midi / 12) - 1;
+  return NOTE_NAMES[((midi % 12) + 12) % 12] + oct;
+}
+
+function detectPeak(freqData, sampleRate, fftSize) {
+  const binHz = sampleRate / fftSize;
+  const lo = Math.floor(45 / binHz);
+  const hi = Math.min(Math.floor(1400 / binHz), freqData.length - 1);
+  let maxDb = -Infinity, maxIdx = lo;
+  for (let i = lo; i <= hi; i++) {
+    if (freqData[i] > maxDb) { maxDb = freqData[i]; maxIdx = i; }
+  }
+  return maxDb > -70 ? { freq: maxIdx * binHz, db: maxDb } : null;
+}
+
+// ─── Mode switching ───
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeViz').classList.toggle('active', mode === 'visualizer');
+  document.getElementById('modeMix').classList.toggle('active', mode === 'mix');
+  document.getElementById('modeAdvisor').classList.toggle('active', mode === 'advisor');
+  document.getElementById('modeTuner').classList.toggle('active', mode === 'tuner');
+  document.getElementById('modeStrobe').classList.toggle('active', mode === 'strobe');
+  document.getElementById('visualizersPanel').style.display = mode === 'visualizer' ? '' : 'none';
+  document.getElementById('mixPanel').classList.toggle('active', mode === 'mix');
+  document.getElementById('advisorPanel').classList.toggle('active', mode === 'advisor');
+  document.getElementById('tunerPanel').classList.toggle('active', mode === 'tuner' || mode === 'strobe');
+  if (mode !== 'advisor' && typeof stopPlay === 'function') stopPlay();  // stop A/B audition when leaving advisor
+  if (mode !== 'visualizer') {
+    document.getElementById('helpPanel').classList.remove('open');
+    document.getElementById('helpBtn').classList.remove('active');
+    resetPitchState();
+    _tunerResult = { freq: -1, midi: -1, held: false };
+  } else if (refOn) {
+    stopRefTone();
+  }
+  if (mode !== 'strobe') {
+    strobePhase = [0, 0, 0];
+    strobeLastTs = null;
+    strobeLastMidi = -1;
+  }
+  if (typeof saveSettings === 'function') saveSettings();
+}
+
+function toggleFftScale() {
+  fftScale = fftScale === 'log' ? 'linear' : 'log';
+  document.getElementById('scaleBtn').textContent =
+    fftScale === 'log' ? 'LOG + 弦ガイド' : 'LINEAR (旧)';
+  if (typeof saveSettings === 'function') saveSettings();
+}
+
+function toggleHelp() {
+  if (currentMode !== 'visualizer') return;
+  const panel = document.getElementById('helpPanel');
+  const btn = document.getElementById('helpBtn');
+  panel.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+function midiToFreq(midi) {
+  return A4 * Math.pow(2, (midi - 69) / 12);
+}
+
+// ─── Tuner canvas ───
+function drawTuner(freq, lockedMidi, held, inTuneFlag) {
+  const c = document.getElementById('tunerCanvas');
+  const { ctx, W, H } = prepCanvas(c);
+
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#050f05';
+  ctx.fillRect(0, 0, W, H);
+
+  if (freq < 0 || lockedMidi < 0) {
+    ctx.fillStyle = '#003319';
+    ctx.font = `bold ${Math.floor(H * 0.18)}px Courier New`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('—', W / 2, H * 0.38);
+    ctx.font = `${Math.floor(H * 0.04)}px Courier New`;
+    ctx.fillStyle = '#002211';
+    ctx.fillText('WAITING FOR INPUT', W / 2, H * 0.58);
+    ctx.textBaseline = 'alphabetic';
+    return;
+  }
+
+  // While holding a decayed note, mark it and dim the readout
+  if (held) {
+    ctx.fillStyle = '#666600';
+    ctx.font = `${Math.floor(H * 0.04)}px Courier New`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('— HOLD —', W / 2, H * 0.02);
+    ctx.globalAlpha = 0.5;
+  }
+
+  // Use lockedMidi for note name (stable), smoothFreq for cents (responsive)
+  const midi = 12 * Math.log2(freq / A4) + 69;
+  const cents = (midi - lockedMidi) * 100;
+  const noteIdx = ((lockedMidi % 12) + 12) % 12;
+  const noteName = NOTE_NAMES[noteIdx];
+  const oct = Math.floor(lockedMidi / 12) - 1;
+  const targetFreq = midiToFreq(lockedMidi);
+  const absCents = Math.abs(cents);
+  // Prefer the hysteretic flag from updatePitch (steadier); fall back to per-frame.
+  const inTune = (inTuneFlag !== undefined) ? inTuneFlag : (absCents <= 3);
+
+  let noteColor;
+  if (inTune)              noteColor = '#00ffaa';
+  else if (absCents <= 10) noteColor = '#aaff00';
+  else if (absCents <= 25) noteColor = '#ffaa00';
+  else                     noteColor = '#ff5500';
+
+  // Note name
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = noteColor;
+  ctx.font = `bold ${Math.floor(H * 0.3)}px Courier New`;
+  ctx.fillText(noteName, W / 2 - Math.floor(H * 0.055), H * 0.29);
+
+  ctx.font = `bold ${Math.floor(H * 0.12)}px Courier New`;
+  ctx.fillStyle = noteColor + 'aa';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  ctx.fillText(oct, W / 2 + Math.floor(H * 0.1), H * 0.09);
+
+  // Which open string (7-string standard) — quick "what am I tuning" hint
+  const stringLabel = OPEN_STRING_MIDI[lockedMidi];
+  if (stringLabel) {
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#00b4ff';
+    ctx.font = `${Math.floor(H * 0.05)}px Courier New`;
+    ctx.fillText('◆ ' + stringLabel, W - 14, H * 0.06);
+  }
+
+  // Hz info
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#007733';
+  ctx.font = `${Math.floor(H * 0.042)}px Courier New`;
+  ctx.fillText(freq.toFixed(1) + ' Hz  →  target ' + targetFreq.toFixed(1) + ' Hz', W / 2, H * 0.525);
+
+  // Cents bar
+  const barW = Math.min(W * 0.7, 680);
+  const barH = Math.max(14, Math.floor(H * 0.055));
+  const barX = (W - barW) / 2;
+  const barY = H * 0.585;
+  const barMid = W / 2;
+
+  ctx.fillStyle = '#0a1a0a';
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barW, barH, barH / 2);
+  ctx.fill();
+  ctx.strokeStyle = '#0d2a0d';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Tick marks at ±10, ±20, ±30, ±40, ±50
+  ctx.strokeStyle = '#0d350d';
+  ctx.lineWidth = 1;
+  [-50,-40,-30,-20,-10,0,10,20,30,40,50].forEach(t => {
+    const tx = barMid + (t / 50) * (barW / 2);
+    ctx.beginPath();
+    ctx.moveTo(tx, barY - (t === 0 ? 6 : 3));
+    ctx.lineTo(tx, barY);
+    ctx.stroke();
+  });
+
+  // Center axis
+  ctx.strokeStyle = '#005522';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(barMid, barY - 9);
+  ctx.lineTo(barMid, barY + barH + 9);
+  ctx.stroke();
+
+  // Fill strip
+  const clampedCents = Math.max(-50, Math.min(50, cents));
+  const markerX = barMid + (clampedCents / 50) * (barW / 2);
+  const fillW = Math.abs(markerX - barMid);
+  if (fillW > 1) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW, barH, barH / 2);
+    ctx.clip();
+    ctx.fillStyle = noteColor + '30';
+    ctx.fillRect(cents < 0 ? markerX : barMid, barY, fillW, barH);
+    ctx.restore();
+  }
+
+  // Marker dot + glow
+  const markerY = barY + barH / 2;
+  const dotR = barH * 0.72;
+  ctx.beginPath();
+  ctx.arc(markerX, markerY, dotR + 4, 0, Math.PI * 2);
+  ctx.fillStyle = noteColor + '28';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(markerX, markerY, dotR, 0, Math.PI * 2);
+  ctx.fillStyle = noteColor;
+  ctx.fill();
+
+  // FLAT / SHARP labels
+  ctx.font = `${Math.floor(H * 0.032)}px Courier New`;
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#004422';
+  ctx.textAlign = 'right';
+  ctx.fillText('FLAT', barX - 10, barY + barH / 2);
+  ctx.textAlign = 'left';
+  ctx.fillText('SHARP', barX + barW + 10, barY + barH / 2);
+
+  // Cents number
+  ctx.fillStyle = noteColor;
+  ctx.font = `bold ${Math.floor(H * 0.075)}px Courier New`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText((cents >= 0 ? '+' : '') + cents.toFixed(1) + ' ¢', W / 2, H * 0.835);
+
+  // IN TUNE badge
+  if (inTune) {
+    const bw = Math.floor(H * 0.5);
+    const bh = Math.floor(H * 0.068);
+    const bx = (W - bw) / 2;
+    const by = H * 0.885;
+    ctx.strokeStyle = '#00ffaa';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.fillStyle = '#00ffaa18';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = '#00ffaa';
+    ctx.font = `${Math.floor(H * 0.037)}px Courier New`;
+    ctx.textBaseline = 'middle';
+    ctx.fillText('IN TUNE', W / 2, by + bh / 2);
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+// ─── Strobe canvas ───
+// Phase accumulates at (beatFreq × multiplier) Hz.
+// When beatFreq → 0 (in tune), all rings stop rotating.
+function drawStrobe(freq, lockedMidi, held) {
+  const c = document.getElementById('tunerCanvas');
+  const { ctx, W, H } = prepCanvas(c);
+
+  const now = performance.now();
+  const dt = strobeLastTs !== null ? Math.min((now - strobeLastTs) / 1000, 0.05) : 0;
+  strobeLastTs = now;
+
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#050f05';
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2;
+  const cy = H * 0.42;
+  const baseR = Math.min(W * 0.32, H * 0.35);
+
+  if (freq < 0 || lockedMidi < 0) {
+    _drawStrobeRing(ctx, cx, cy, baseR * 0.94, baseR * 0.16, 24, 0, '#001a0d');
+    _drawStrobeRing(ctx, cx, cy, baseR * 0.72, baseR * 0.14, 16, 0, '#001a0d');
+    _drawStrobeRing(ctx, cx, cy, baseR * 0.50, baseR * 0.13, 12, 0, '#001a0d');
+    ctx.fillStyle = '#002211';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `bold ${Math.floor(baseR * 0.25)}px Courier New`;
+    ctx.fillText('—', cx, cy);
+    ctx.font = `${Math.floor(H * 0.038)}px Courier New`;
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('WAITING FOR INPUT', cx, H * 0.84);
+    return;
+  }
+
+  if (held) {
+    ctx.fillStyle = '#666600';
+    ctx.font = `${Math.floor(H * 0.035)}px Courier New`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('— HOLD —', cx, H * 0.02);
+    ctx.globalAlpha = 0.5;
+  }
+
+  const midi = 12 * Math.log2(freq / A4) + 69;
+  const cents = (midi - lockedMidi) * 100;
+  const noteIdx = ((lockedMidi % 12) + 12) % 12;
+  const noteName = NOTE_NAMES[noteIdx];
+  const oct = Math.floor(lockedMidi / 12) - 1;
+  const targetFreq = midiToFreq(lockedMidi);
+  const beatFreq = freq - targetFreq;
+  const absCents = Math.abs(cents);
+  const inTune = absCents <= 1;
+
+  if (lockedMidi !== strobeLastMidi) {
+    strobePhase = [0, 0, 0];
+    strobeLastMidi = lockedMidi;
+  }
+
+  // Which open string (7-string standard) — quick "what am I tuning" hint
+  const stringLabel = OPEN_STRING_MIDI[lockedMidi];
+  if (stringLabel) {
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#00b4ff';
+    ctx.font = `${Math.floor(H * 0.04)}px Courier New`;
+    ctx.fillText('◆ ' + stringLabel, W - 12, H * 0.04);
+  }
+
+  // Inner ×1 (most precise: barely moves when close to in tune)
+  // Middle ×2, Outer ×4 (coarse: good for gross tuning)
+  strobePhase[0] += 2 * Math.PI * beatFreq * dt;
+  strobePhase[1] += 2 * Math.PI * beatFreq * dt * 2;
+  strobePhase[2] += 2 * Math.PI * beatFreq * dt * 4;
+
+  let noteColor;
+  if (inTune)              noteColor = '#00ffaa';
+  else if (absCents <= 5)  noteColor = '#aaff00';
+  else if (absCents <= 15) noteColor = '#ffaa00';
+  else                     noteColor = '#ff5500';
+
+  // Outer first so inner rings draw on top
+  _drawStrobeRing(ctx, cx, cy, baseR * 0.94, baseR * 0.16, 24, strobePhase[2], noteColor);
+  _drawStrobeRing(ctx, cx, cy, baseR * 0.72, baseR * 0.14, 16, strobePhase[1], noteColor);
+  _drawStrobeRing(ctx, cx, cy, baseR * 0.50, baseR * 0.13, 12, strobePhase[0], noteColor);
+
+  // Multiplier labels (right side)
+  ctx.fillStyle = '#004422';
+  ctx.font = `${Math.floor(baseR * 0.09)}px Courier New`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const lx = cx + baseR * 0.99;
+  ctx.fillText('×4', lx, cy - baseR * 0.115);
+  ctx.fillText('×2', lx, cy);
+  ctx.fillText('×1', lx, cy + baseR * 0.115);
+
+  // Direction hints: left = FLAT (↺ counterclockwise), right = SHARP (↻ clockwise)
+  // The active side lights up in noteColor so the user can see which way is which.
+  const flatLit  = cents < -1;
+  const sharpLit = cents >  1;
+  const hSz = Math.floor(Math.min(baseR * 0.1, 13));
+  ctx.textBaseline = 'middle';
+  ctx.font = `bold ${hSz}px Courier New`;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = flatLit ? noteColor : '#002a11';
+  ctx.fillText('↺  FLAT', 10, cy);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = sharpLit ? noteColor : '#002a11';
+  ctx.fillText('SHARP  ↻', W - 10, cy);
+
+  // Center circle (covers ring centers)
+  ctx.globalAlpha = held ? 0.5 : 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, baseR * 0.32, 0, Math.PI * 2);
+  ctx.fillStyle = '#050f05';
+  ctx.fill();
+  ctx.strokeStyle = '#0d2a0d';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = noteColor;
+  ctx.font = `bold ${Math.floor(baseR * 0.24)}px Courier New`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(noteName + oct, cx, cy);
+
+  ctx.globalAlpha = 1;
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#007733';
+  ctx.font = `${Math.floor(H * 0.038)}px Courier New`;
+  ctx.fillText(freq.toFixed(2) + ' Hz  →  target ' + targetFreq.toFixed(2) + ' Hz', cx, H * 0.83);
+
+  ctx.fillStyle = noteColor;
+  ctx.font = `bold ${Math.floor(H * 0.065)}px Courier New`;
+  ctx.fillText((cents >= 0 ? '+' : '') + cents.toFixed(2) + ' ¢', cx, H * 0.93);
+
+  if (inTune) {
+    ctx.fillStyle = '#00ffaa';
+    ctx.font = `${Math.floor(H * 0.033)}px Courier New`;
+    ctx.fillText('◆  IN TUNE  ◆', cx, H * 0.98);
+  }
+}
+
+function _drawStrobeRing(ctx, cx, cy, r, w, numSegments, phase, color) {
+  // Dark track (always visible to show ring structure)
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + w / 2, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r - w / 2, Math.PI * 2, 0, true);
+  ctx.closePath();
+  ctx.fillStyle = '#0a1a0a';
+  ctx.fill();
+
+  // Lit segments: every other one rotates with phase
+  const seg = (2 * Math.PI) / numSegments;
+  for (let i = 0; i < numSegments; i += 2) {
+    const s = phase + i * seg;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + w / 2, s, s + seg);
+    ctx.arc(cx, cy, r - w / 2, s + seg, s, true);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+}
+
+async function toggleAudio() {
+  if (isRunning) stopAudio(); else await startAudio();
+}
+
+// Reference tone: plays the currently locked target pitch so the player can
+// tune by ear. Best used with headphones (speaker output can leak into the mic).
+function toggleRefTone() {
+  if (!isRunning || !audioCtx) {
+    showError('先に <b>START</b> でオーディオを開始してください。');
+    return;
+  }
+  if (currentMode === 'visualizer') return;
+  if (refOn) { stopRefTone(); return; }
+  refOsc = audioCtx.createOscillator();
+  refGain = audioCtx.createGain();
+  refOsc.type = 'sine';
+  refGain.gain.value = 0.12;
+  refOsc.connect(refGain);
+  refGain.connect(audioCtx.destination);
+  const target = _tunerResult.midi >= 0 ? midiToFreq(_tunerResult.midi) : A4;
+  refOsc.frequency.setValueAtTime(target, audioCtx.currentTime);
+  refOsc.start();
+  refOn = true;
+  document.getElementById('refBtn').classList.add('active');
+}
+
+function stopRefTone() {
+  if (refOsc) { try { refOsc.stop(); refOsc.disconnect(); } catch (e) {} }
+  if (refGain) { try { refGain.disconnect(); } catch (e) {} }
+  refOsc = refGain = null;
+  refOn = false;
+  document.getElementById('refBtn').classList.remove('active');
+}
+
+function describeMediaError(e) {
+  switch (e && e.name) {
+    case 'NotAllowedError':
+    case 'PermissionDeniedError':
+      return 'マイク/オーディオ入力が<b>ブロックされています</b>。ブラウザのアドレスバーのマイク許可を「許可」に変更して、もう一度 START を押してください。';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return '入力デバイスが<b>見つかりません</b>。オーディオIF／マイクが接続・認識されているか確認してください。';
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return '入力デバイスを<b>他のアプリが使用中</b>の可能性があります（DAW・配信ソフト等）。それらを閉じてから再試行してください。';
+    case 'OverconstrainedError':
+      return '指定した入力条件にデバイスが対応していません。別の入力デバイスでお試しください。';
+    case 'SecurityError':
+      return 'セキュリティ制約により入力を取得できません。<b>https</b> もしくは <b>localhost</b> 経由で開いてください。';
+    default:
+      return 'オーディオ入力を開始できませんでした。<b>' + ((e && e.name) || 'Error') + '</b>: ' + ((e && e.message) || '');
+  }
+}
+
+async function startAudio() {
+  hideError();
+  // getUserMedia requires a secure context (https / localhost / file).
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showError('このブラウザ環境ではオーディオ入力を利用できません。<b>https</b> もしくは <b>localhost</b> 経由で、対応ブラウザ（Chrome / Edge / Safari 等）で開いてください。');
+    return;
+  }
+  try {
+    const wantId = document.getElementById('inputDevice').value;
+    const audioConstraints = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+    if (wantId) audioConstraints.deviceId = { exact: wantId };
+    stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+    // Permission is now granted → device labels become available; refresh the picker.
+    refreshInputDevices();
+    requestWakeLock();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 8192;  // ~185ms window: enough periods to resolve a low B (61.7 Hz)
+    analyser.smoothingTimeConstant = parseFloat(document.getElementById('smoothSlider').value);
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = parseFloat(document.getElementById('gainSlider').value);
+    source = audioCtx.createMediaStreamSource(stream);
+    source.connect(gainNode);
+    gainNode.connect(analyser);
+
+    _timeBuf = new Float32Array(analyser.fftSize);
+    _freqBuf = new Float32Array(analyser.frequencyBinCount);
+
+    // Run pitch detection off the main thread when possible.
+    useWorklet = false;
+    if (audioCtx.audioWorklet) {
+      try {
+        const blob = new Blob([PITCH_WORKLET_SRC], { type: 'application/javascript' });
+        const url = URL.createObjectURL(blob);
+        await audioCtx.audioWorklet.addModule(url);
+        URL.revokeObjectURL(url);
+        pitchNode = new AudioWorkletNode(audioCtx, 'pitch-processor', {
+          numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+          processorOptions: { window: analyser.fftSize, hop: 1024 }
+        });
+        pitchNode.port.onmessage = onPitch;
+        gainNode.connect(pitchNode);
+        pitchNode.connect(audioCtx.destination);  // outputs silence; keeps the node pulled
+        useWorklet = true;
+      } catch (e) {
+        useWorklet = false;  // fall back to main-thread detection in drawLoop
+      }
+    }
+
+    document.getElementById('srLabel').textContent = audioCtx.sampleRate + ' Hz';
+    document.getElementById('fftLabel').textContent = analyser.fftSize;
+    document.getElementById('startBtn').textContent = 'STOP';
+    document.getElementById('startBtn').classList.add('active');
+    document.getElementById('statusLabel').textContent = 'LIVE';
+    document.getElementById('statusLabel').classList.add('on');
+    isRunning = true;
+    drawLoop();
+  } catch(e) {
+    // Roll back any partially-created audio graph so a retry starts clean.
+    if (stream) { try { stream.getTracks().forEach(t => t.stop()); } catch (_) {} }
+    if (audioCtx) { try { audioCtx.close(); } catch (_) {} }
+    stream = audioCtx = analyser = gainNode = source = pitchNode = null;
+    // Chosen device is gone/unsupported → fall back to default so the next START works.
+    if (e && e.name === 'OverconstrainedError') {
+      document.getElementById('inputDevice').value = '';
+      saveSettings();
+    }
+    showError(describeMediaError(e));
+  }
+}
+
+// ─── Input device picker (#1: let the user pick an audio interface = DI) ───
+async function refreshInputDevices() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  let devices;
+  try { devices = await navigator.mediaDevices.enumerateDevices(); } catch (e) { return; }
+  const sel = document.getElementById('inputDevice');
+  const prev = sel.value;
+  const inputs = devices.filter(d => d.kind === 'audioinput' && d.deviceId);
+  let html = '<option value="">既定の入力</option>';
+  inputs.forEach((d, i) => {
+    const label = d.label || ('入力 ' + (i + 1));
+    html += '<option value="' + d.deviceId + '">' + label.replace(/</g, '&lt;') + '</option>';
+  });
+  // Preserve a saved/selected id that isn't enumerated yet (e.g. before the
+  // first permission grant) so the choice survives until START.
+  const known = inputs.some(d => d.deviceId === prev);
+  if (prev && !known) html += '<option value="' + prev + '">保存した入力デバイス</option>';
+  sel.innerHTML = html;
+  sel.value = prev || '';
+}
+
+function onInputDeviceChange() {
+  saveSettings();
+  if (isRunning) { stopAudio(); startAudio(); }   // re-open on the newly chosen device
+}
+
+// ─── Wake Lock (#2: keep the screen awake while tuning) ───
+let _wakeLock = null;
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    _wakeLock = await navigator.wakeLock.request('screen');
+    _wakeLock.addEventListener('release', () => { _wakeLock = null; });
+  } catch (e) { _wakeLock = null; }   // denied / unsupported → silently ignore
+}
+function releaseWakeLock() {
+  if (_wakeLock) { try { _wakeLock.release(); } catch (e) {} _wakeLock = null; }
+}
+// Screen wake locks drop when the tab is hidden; re-acquire when it returns.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && isRunning && !_wakeLock) requestWakeLock();
+});
+
+function showError(html) {
+  document.getElementById('errorMsg').innerHTML = html;
+  document.getElementById('errorBanner').classList.add('show');
+}
+function hideError() {
+  document.getElementById('errorBanner').classList.remove('show');
+}
+
+function stopAudio() {
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  releaseWakeLock();
+  // Stop an in-progress Advisor recording (it processes what was captured).
+  if (typeof mediaRecorder !== 'undefined' && mediaRecorder && mediaRecorder.state !== 'inactive') {
+    try { mediaRecorder.stop(); } catch (_) {}
+  }
+  if (refOn) stopRefTone();
+  if (pitchNode) { pitchNode.port.onmessage = null; try { pitchNode.disconnect(); } catch (e) {} }
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  stream = audioCtx = analyser = gainNode = source = pitchNode = null;
+  useWorklet = false;
+  _timeBuf = _freqBuf = null;
+  _latestRaw = -1;
+  _tunerResult = { freq: -1, midi: -1, held: false };
+  isRunning = false;
+  resetPitchState();
+  strobePhase = [0, 0, 0];
+  strobeLastTs = null;
+  strobeLastMidi = -1;
+  document.getElementById('startBtn').textContent = 'START';
+  document.getElementById('startBtn').classList.remove('active');
+  document.getElementById('statusLabel').textContent = 'OFFLINE';
+  document.getElementById('statusLabel').classList.remove('on');
+  document.getElementById('meterFill').style.width = '0%';
+  _clipUntil = 0;
+  document.getElementById('clipLed').classList.remove('on');
+  ['waveCanvas','fftCanvas','tunerCanvas'].forEach(id => {
+    const c = document.getElementById(id);
+    c.getContext('2d').clearRect(0, 0, c.width, c.height);
+  });
+  ['noteLabel','freqLabel','peakLabel'].forEach(id => document.getElementById(id).textContent = '—');
+}
+
+document.getElementById('gainSlider').addEventListener('input', function() {
+  document.getElementById('gainVal').textContent = parseFloat(this.value).toFixed(1);
+  if (gainNode) gainNode.gain.value = parseFloat(this.value);
+});
+document.getElementById('smoothSlider').addEventListener('input', function() {
+  document.getElementById('smoothVal').textContent = parseFloat(this.value).toFixed(2);
+  if (analyser) analyser.smoothingTimeConstant = parseFloat(this.value);
+});
+document.getElementById('a4Input').addEventListener('change', function() {
+  let v = parseFloat(this.value);
+  if (!isFinite(v)) v = 440;
+  v = Math.max(430, Math.min(450, Math.round(v * 10) / 10));
+  this.value = v;
+  A4 = v;
+});
+document.getElementById('calInput').addEventListener('change', function() {
+  let v = parseFloat(this.value);
+  if (!isFinite(v)) v = 0;
+  v = Math.max(-50, Math.min(50, Math.round(v * 2) / 2));
+  this.value = v;
+  calCents = v;
+});
+
+// Canvas sizing is done on resize (via ResizeObserver) rather than every
+// frame, so the render loop no longer forces a layout each frame. The backing
+// store is scaled by devicePixelRatio for crisp text/strobe on HiDPI screens.
+const _canvasDims = new WeakMap();  // canvas -> { w, h, dpr }  (w,h in CSS px)
+
+function sizeCanvas(c) {
+  const dpr = window.devicePixelRatio || 1;
+  const r = c.getBoundingClientRect();
+  const w = Math.max(1, Math.round(r.width));
+  const h = Math.max(1, Math.round(r.height));
+  c.width = Math.round(w * dpr);
+  c.height = Math.round(h * dpr);
+  _canvasDims.set(c, { w, h, dpr });
+}
+
+function observeCanvas(c) {
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => sizeCanvas(c)).observe(c);
+  }
+  sizeCanvas(c);
+}
+
+// Returns the 2D context with the transform set so drawing code works in CSS
+// pixels, plus the CSS-pixel width/height to lay out against.
+function prepCanvas(c) {
+  let d = _canvasDims.get(c);
+  if (!d) { sizeCanvas(c); d = _canvasDims.get(c); }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
+  return { ctx, W: d.w, H: d.h };
+}
+
+// Worklet posts the latest raw fundamental at each hop (~21 ms). Pitch
+// smoothing/locking runs here so the note logic is driven by detection
+// cadence, while rendering stays on requestAnimationFrame.
+function onPitch(e) {
+  _latestRaw = e.data;
+  if (currentMode === 'tuner' || currentMode === 'strobe') {
+    _tunerResult = updatePitch(_latestRaw);
+  }
+}
+
+// Clipping/over-level warning: peaks at/near full scale mean the input is
+// distorting, which hurts both tuning accuracy and spectrum analysis. Held ~0.8s
+// so brief clips stay visible.
+let _clipUntil = 0;
+function updateClip(peak) {
+  const el = document.getElementById('clipLed');
+  if (!el) return;
+  if (peak >= 0.98) _clipUntil = performance.now() + 800;
+  el.classList.toggle('on', performance.now() < _clipUntil);
+}
+
+function drawLoop() {
+  if (!isRunning) return;
+  animId = requestAnimationFrame(drawLoop);
+  const timeData = _timeBuf;
+  analyser.getFloatTimeDomainData(timeData);
+
+  // Input level (used by the noise gate in updatePitch) + peak (for clip warning).
+  // Set before detection so both the worklet and fallback paths see a fresh value.
+  let _ms = 0, _pk = 0;
+  for (let i = 0; i < timeData.length; i++) {
+    const v = timeData[i]; _ms += v * v; const a = v < 0 ? -v : v; if (a > _pk) _pk = a;
+  }
+  _inputDb = 20 * Math.log10(Math.sqrt(_ms / timeData.length) + 1e-10);
+  updateClip(_pk);
+
+  // No AudioWorklet: detect on the main thread (legacy behaviour).
+  if (!useWorklet) {
+    _latestRaw = detectPitchFallback(timeData, audioCtx.sampleRate);
+    if (currentMode === 'tuner' || currentMode === 'strobe') {
+      _tunerResult = updatePitch(_latestRaw);
+    }
+  }
+
+  if (currentMode === 'tuner' || currentMode === 'strobe') {
+    if (refOn && refOsc && _tunerResult.midi >= 0) {
+      refOsc.frequency.setTargetAtTime(midiToFreq(_tunerResult.midi), audioCtx.currentTime, 0.03);
+    }
+  }
+
+  if (currentMode === 'tuner') {
+    drawTuner(_tunerResult.freq, _tunerResult.midi, _tunerResult.held, _tunerResult.inTune);
+    updateStatsTuner(timeData, _tunerResult.freq);
+  } else if (currentMode === 'strobe') {
+    drawStrobe(_tunerResult.freq, _tunerResult.midi, _tunerResult.held);
+    updateStatsTuner(timeData, _tunerResult.freq);
+  } else if (currentMode === 'mix') {
+    const freqData = _freqBuf;
+    analyser.getFloatFrequencyData(freqData);
+    drawMix(freqData, timeData);
+    updateStats(timeData, freqData, _latestRaw);
+  } else if (currentMode === 'advisor') {
+    advisorFrame(timeData);
+  } else {
+    const freqData = _freqBuf;
+    analyser.getFloatFrequencyData(freqData);
+    drawWaveform(timeData);
+    drawFFT(freqData, _latestRaw);
+    updateStats(timeData, freqData, _latestRaw);
+  }
+}
+
+function drawWaveform(data) {
+  const c = document.getElementById('waveCanvas');
+  const { ctx, W, H } = prepCanvas(c);
+
+  ctx.fillStyle = '#050f05';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = '#0a200a'; ctx.lineWidth = 0.5;
+  [0.25, 0.5, 0.75].forEach(f => {
+    const y = H * f;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  });
+  [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9].forEach(f => {
+    const x = W * f;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  });
+  ctx.strokeStyle = '#0d350d'; ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+  const step = Math.max(1, Math.floor(data.length / W));
+  ctx.beginPath(); ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 1.2;
+  for (let x = 0; x < W; x++) {
+    let s = 0;
+    for (let k = 0; k < step; k++) s += (data[x * step + k] || 0);
+    const v = s / step;
+    const y = (0.5 - v * 0.5) * H;
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function drawFFT(data, f0) {
+  const c = document.getElementById('fftCanvas');
+  const { ctx, W, H } = prepCanvas(c);
+
+  ctx.fillStyle = '#050f05';
+  ctx.fillRect(0, 0, W, H);
+
+  const binHz = audioCtx.sampleRate / analyser.fftSize;
+  const minDb = -100, maxDb = 0;
+  const isLog = fftScale === 'log';
+
+  // Frequency-axis mapping (log spreads out the musical low end; linear is the legacy view)
+  const fMin = 50, fMax = 8000;
+  const logMin = Math.log10(fMin), logMax = Math.log10(fMax);
+  const freqToX = isLog
+    ? f => (Math.log10(Math.max(f, fMin)) - logMin) / (logMax - logMin) * W
+    : f => (f / fMax) * W;
+  const xToFreq = isLog
+    ? x => Math.pow(10, logMin + (x / W) * (logMax - logMin))
+    : x => (x / W) * fMax;
+  const dbToY = db => ((maxDb - Math.max(minDb, Math.min(maxDb, db))) / (maxDb - minDb)) * H;
+
+  // dB gridlines
+  ctx.font = '9px Courier New';
+  const dbMarks = [-10,-20,-30,-40,-50,-60,-70,-80];
+  dbMarks.forEach(db => {
+    const y = dbToY(db);
+    ctx.strokeStyle = '#0a200a'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.fillStyle = '#0d350d';
+    ctx.fillText(db, 2, y-2);
+  });
+
+  // Hz gridlines
+  const freqMarks = isLog
+    ? [100, 200, 300, 500, 1000, 2000, 3000, 5000, 8000]
+    : [100, 200, 300, 500, 700, 1000, 1500, 2000, 3000, 5000, 7000];
+  freqMarks.forEach(f => {
+    if (f > fMax) return;
+    const x = freqToX(f);
+    ctx.strokeStyle = '#0a200a'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    ctx.fillStyle = '#0d350d';
+    ctx.fillText(f >= 1000 ? (f/1000)+'k' : f, x+2, H-3);
+  });
+
+  // Spectrum path, sampled per pixel column (max-hold within each column's bin range)
+  const ys = new Float32Array(W);
+  for (let x = 0; x < W; x++) {
+    const fLo = xToFreq(x), fHi = xToFreq(x + 1);
+    let binLo = Math.max(0, Math.floor(fLo / binHz));
+    let binHi = Math.min(data.length - 1, Math.ceil(fHi / binHz));
+    if (binHi < binLo) binHi = binLo;
+    let db = -Infinity;
+    for (let b = binLo; b <= binHi; b++) if (data[b] > db) db = data[b];
+    ys[x] = dbToY(db);
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(0, ys[0]);
+  for (let x = 1; x < W; x++) ctx.lineTo(x, ys[x]);
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(0,255,136,0.55)');
+  grad.addColorStop(0.5, 'rgba(0,200,100,0.25)');
+  grad.addColorStop(1, 'rgba(0,255,136,0.04)');
+  ctx.fillStyle = grad; ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(0, ys[0]);
+  for (let x = 1; x < W; x++) ctx.lineTo(x, ys[x]);
+  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 1; ctx.stroke();
+
+  // Guitar open-string reference lines (log mode only)
+  if (isLog) {
+    ctx.font = '9px Courier New';
+    GUITAR_STRINGS.forEach(s => {
+      const x = freqToX(s.freq);
+      ctx.strokeStyle = 'rgba(0,180,255,0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, 12); ctx.lineTo(x, H); ctx.stroke();
+      ctx.fillStyle = '#00b4ff';
+      ctx.textAlign = 'center';
+      ctx.fillText(s.label, x, 10);
+      ctx.textAlign = 'left';
+    });
+  }
+
+  // Detected fundamental (MPM) — lands on the actual played pitch,
+  // not the loudest harmonic, so it lines up with the string guides.
+  if (f0 > 0 && f0 <= fMax) {
+    const fx = freqToX(f0);
+    ctx.strokeStyle = 'rgba(255,120,0,0.8)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(fx, 0); ctx.lineTo(fx, H); ctx.stroke();
+    ctx.fillStyle = '#ff7800';
+    ctx.beginPath();
+    ctx.moveTo(fx - 5, 0); ctx.lineTo(fx + 5, 0); ctx.lineTo(fx, 7); ctx.closePath();
+    ctx.fill();
+    ctx.font = 'bold 10px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('f0 ' + f0.toFixed(0) + 'Hz ' + freqToNote(f0), fx, H * 0.5);
+    ctx.textAlign = 'left';
+  }
+
+  let peakIdx = 0, peakDb = -Infinity;
+  const minBin = Math.floor(45 / binHz);
+  const maxBin = Math.min(Math.floor(fMax / binHz), data.length - 1);
+  for (let i = minBin; i <= maxBin; i++) {
+    if (data[i] > peakDb) { peakDb = data[i]; peakIdx = i; }
+  }
+  if (peakDb > -70) {
+    const pf = peakIdx * binHz;
+    const px = freqToX(pf);
+    const py = dbToY(peakDb);
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2);
+    ctx.fillStyle = '#ffff44'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, H);
+    ctx.strokeStyle = 'rgba(255,255,68,0.2)'; ctx.lineWidth = 0.5; ctx.stroke();
+    document.getElementById('peakFreqLabel').textContent =
+      'PEAK: ' + pf.toFixed(0) + ' Hz  /  ' + peakDb.toFixed(1) + ' dB';
+  } else {
+    document.getElementById('peakFreqLabel').textContent = 'PEAK: —';
+  }
+}
+
+// ─── MIX dashboard ───────────────────────────────────────────────
+// Instrument zones for the band map (color = "r,g,b").
+const MIX_VIS_ZONES = [
+  { lo: 50,   hi: 90,   label: '重低音/キック',      color: '150,80,220' },
+  { lo: 90,   hi: 250,  label: 'ベース',             color: '70,120,255' },
+  { lo: 250,  hi: 500,  label: '温かみ/濁り',        color: '40,190,200' },
+  { lo: 500,  hi: 2000, label: 'ギターの芯・ボーカル', color: '0,210,120' },
+  { lo: 2000, hi: 5000, label: '抜け/明瞭度',        color: '235,185,40' },
+  { lo: 5000, hi: 9000, label: '空気/シャリ',        color: '235,90,55' },
+];
+// Collision zones: how much guitar energy shares this band. thr=[warn, bad].
+const MIX_COLLIDE = [
+  { key: 'kick',  icon: '🥁', name: 'キック/重低音',        lo: 50,   hi: 90,   thr: [0.06, 0.12],
+    tip: 'Low Cut(HPF)で重低音を削り、キック/ベースに低域を譲るとローがすっきり。' },
+  { key: 'bass',  icon: '🎸', name: 'ベース',               lo: 90,   hi: 250,  thr: [0.30, 0.42],
+    tip: 'Low Cut 100Hz前後＋Bass控えめで、ベースとの低域の取り合いを回避。' },
+  { key: 'vwarm', icon: '🎤', name: 'ボーカルの温かみ/濁り', lo: 250,  hi: 500,  thr: [0.26, 0.36],
+    tip: '300–400Hzを少し削るとボーカルが前に出て、ギターと分離する。' },
+  { key: 'vclar', icon: '🎤', name: 'ボーカルの明瞭度',      lo: 2000, hi: 4000, thr: [0.24, 0.32],
+    tip: '2–4kHzが多いとボーカルの子音と競合。Presenceを少し下げるか住み分けを。' },
+];
+// Character meters (the "feel").
+const MIX_CHAR = [
+  { key: 'body', name: '太さ',    lo: 160,  hi: 400,  scale: 0.45 },
+  { key: 'mid',  name: '芯/抜け', lo: 400,  hi: 2000, scale: 0.50 },
+  { key: 'pres', name: '食付き',  lo: 2000, hi: 5000, scale: 0.30 },
+  { key: 'air',  name: '空気感',  lo: 5000, hi: 9000, scale: 0.15 },
+];
+
+let _mixSmooth = null;   // EMA-smoothed shares + centroid
+let _mixCardTick = 0;
+
+function computeMixShares(freqData) {
+  const binHz = audioCtx.sampleRate / analyser.fftSize;
+  const loBin = Math.max(1, Math.floor(50 / binHz));
+  const hiBin = Math.min(freqData.length - 1, Math.ceil(9000 / binHz));
+  // single pass for total power + spectral centroid
+  let total = 0, cNum = 0;
+  const lin = new Float64Array(hiBin + 1);
+  for (let i = loBin; i <= hiBin; i++) {
+    const p = Math.pow(10, freqData[i] / 10);
+    lin[i] = p; total += p; cNum += (i * binHz) * p;
+  }
+  total = total || 1e-9;
+  const shareOf = (lo, hi) => {
+    let s = 0;
+    const a = Math.max(loBin, Math.floor(lo / binHz));
+    const b = Math.min(hiBin, Math.ceil(hi / binHz));
+    for (let i = a; i <= b; i++) s += lin[i];
+    return s / total;
+  };
+  const sh = { centroid: cNum / total };
+  MIX_COLLIDE.forEach(z => sh[z.key] = shareOf(z.lo, z.hi));
+  MIX_CHAR.forEach(z => sh[z.key] = shareOf(z.lo, z.hi));
+  return sh;
+}
+
+function drawMix(freqData, timeData) {
+  const c = document.getElementById('mixCanvas');
+  const { ctx, W, H } = prepCanvas(c);
+  ctx.fillStyle = '#050f05'; ctx.fillRect(0, 0, W, H);
+
+  let rms = 0; for (let i = 0; i < timeData.length; i++) rms += timeData[i] * timeData[i];
+  rms = Math.sqrt(rms / timeData.length);
+  const playing = (20 * Math.log10(rms + 1e-10)) > -48;
+
+  const sh = computeMixShares(freqData);
+  if (playing) {
+    if (!_mixSmooth) _mixSmooth = sh;
+    else { const a = 0.12; for (const k in sh) _mixSmooth[k] = _mixSmooth[k] * (1 - a) + sh[k] * a; }
+  }
+
+  const fMin = 50, fMax = 9000;
+  const logMin = Math.log10(fMin), logMax = Math.log10(fMax);
+  const f2x = f => (Math.log10(Math.max(f, fMin)) - logMin) / (logMax - logMin) * W;
+  const x2f = x => Math.pow(10, logMin + (x / W) * (logMax - logMin));
+  const labelY = 12;
+
+  // instrument zone backgrounds + labels
+  MIX_VIS_ZONES.forEach(z => {
+    const x0 = f2x(z.lo), x1 = f2x(Math.min(z.hi, fMax));
+    ctx.fillStyle = 'rgba(' + z.color + ',0.10)';
+    ctx.fillRect(x0, 0, x1 - x0, H);
+    ctx.strokeStyle = 'rgba(' + z.color + ',0.30)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x1, 0); ctx.lineTo(x1, H); ctx.stroke();
+    if (x1 - x0 > 46) {
+      ctx.fillStyle = 'rgba(' + z.color + ',0.9)';
+      ctx.font = '9px Courier New'; ctx.textAlign = 'center';
+      ctx.fillText(z.label, (x0 + x1) / 2, labelY);
+    }
+  });
+  ctx.textAlign = 'left';
+
+  // Hz ticks
+  ctx.font = '8px Courier New'; ctx.fillStyle = '#0d350d';
+  [50, 100, 250, 500, 1000, 2000, 5000, 9000].forEach(f => {
+    ctx.fillText(f >= 1000 ? (f / 1000) + 'k' : f, f2x(f) + 2, H - 3);
+  });
+
+  // guitar spectrum curve (max-hold per pixel column), filled
+  const minDb = -100, maxDb = -10, top = labelY + 4;
+  const db2y = db => top + ((maxDb - Math.max(minDb, Math.min(maxDb, db))) / (maxDb - minDb)) * (H - top - 12);
+  const binHz = audioCtx.sampleRate / analyser.fftSize;
+  const ys = new Float32Array(W);
+  for (let x = 0; x < W; x++) {
+    const fLo = x2f(x), fHi = x2f(x + 1);
+    let b0 = Math.max(0, Math.floor(fLo / binHz)), b1 = Math.min(freqData.length - 1, Math.ceil(fHi / binHz));
+    if (b1 < b0) b1 = b0;
+    let db = -Infinity; for (let b = b0; b <= b1; b++) if (freqData[b] > db) db = freqData[b];
+    ys[x] = db2y(db);
+  }
+  ctx.beginPath(); ctx.moveTo(0, ys[0]); for (let x = 1; x < W; x++) ctx.lineTo(x, ys[x]);
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(0,255,136,0.5)'); g.addColorStop(1, 'rgba(0,255,136,0.04)');
+  ctx.fillStyle = g; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0, ys[0]); for (let x = 1; x < W; x++) ctx.lineTo(x, ys[x]);
+  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 1.3; ctx.stroke();
+
+  // conflict highlight where guitar crowds a collision zone
+  if (_mixSmooth) {
+    MIX_COLLIDE.forEach(z => {
+      const v = _mixSmooth[z.key], warn = z.thr[0], bad = z.thr[1];
+      if (v < warn) return;
+      const x0 = f2x(z.lo), x1 = f2x(Math.min(z.hi, fMax));
+      const col = v >= bad ? '255,85,0' : '255,170,0';
+      ctx.fillStyle = 'rgba(' + col + ',0.16)';
+      ctx.fillRect(x0, labelY + 2, x1 - x0, H - labelY - 14);
+      ctx.fillStyle = 'rgba(' + col + ',1)'; ctx.font = 'bold 12px Courier New'; ctx.textAlign = 'center';
+      ctx.fillText('⚠', (x0 + x1) / 2, H * 0.4);
+      ctx.textAlign = 'left';
+    });
+  }
+
+  if (++_mixCardTick >= 6) { _mixCardTick = 0; updateMixCards(); }
+}
+
+function buildMixCards() {
+  const meters = [{ key: 'bright', name: '明るさ' }].concat(MIX_CHAR);
+  document.getElementById('mixMeters').innerHTML = meters.map(m =>
+    '<div class="mix-meter"><span>' + m.name + '</span>'
+    + '<div class="mtrack"><div class="mfill" id="mxm_' + m.key + '"></div></div>'
+    + '<span class="mval" id="mxv_' + m.key + '">—</span></div>'
+  ).join('');
+  document.getElementById('mixCollide').innerHTML = MIX_COLLIDE.map(z =>
+    '<div class="mix-row" id="mxr_' + z.key + '">'
+    + '<div class="mix-row-top"><span class="nm">' + z.icon + ' ' + z.name
+    + ' <span class="rng">' + z.lo + '–' + (z.hi >= 1000 ? (z.hi / 1000) + 'k' : z.hi) + 'Hz</span></span>'
+    + '<span class="badge" id="mxb_' + z.key + '">—</span></div>'
+    + '<div class="mtrack"><div class="mfill" id="mxf_' + z.key + '"></div></div>'
+    + '<div class="tip">' + z.tip + '</div></div>'
+  ).join('');
+}
+
+function updateMixCards() {
+  const sh = _mixSmooth;
+  const vibeEl = document.getElementById('mixVibe');
+  const vibeLabel = document.getElementById('mixVibeLabel');
+  if (!sh) { vibeEl.textContent = '弾いてください'; vibeLabel.textContent = '—'; return; }
+
+  // character meters
+  const setM = (k, pct, val) => {
+    document.getElementById('mxm_' + k).style.width = Math.max(0, Math.min(100, pct)).toFixed(0) + '%';
+    document.getElementById('mxv_' + k).textContent = val;
+  };
+  const cen = sh.centroid;
+  setM('bright', (Math.log2(Math.max(cen, 200) / 200) / Math.log2(4000 / 200)) * 100, cen > 0 ? Math.round(cen) + 'Hz' : '—');
+  MIX_CHAR.forEach(z => setM(z.key, sh[z.key] / z.scale * 100, Math.round(sh[z.key] * 100) + '%'));
+
+  // vibe phrase
+  const mids = sh.mid, low = sh.bass + sh.vwarm, high = sh.pres + sh.air;
+  const scoop = (low + high) / 2 - mids;
+  const words = [];
+  if (cen < 700) words.push('ウォーム'); else if (cen > 2200) words.push('ブライト'); else words.push('バランス');
+  if (scoop > 0.10 && mids < 0.30) words.push('ドンシャリ'); else if (mids > 0.40) words.push('ミッド太め');
+  if (sh.body > 0.34) words.push('図太い');
+  if (sh.air > 0.10) words.push('シャリ感');
+  const vibe = words.join('・');
+  vibeEl.textContent = vibe; vibeLabel.textContent = vibe;
+
+  // collision rows
+  MIX_COLLIDE.forEach(z => {
+    const v = sh[z.key], warn = z.thr[0], bad = z.thr[1];
+    const row = document.getElementById('mxr_' + z.key);
+    const badge = document.getElementById('mxb_' + z.key);
+    const fill = document.getElementById('mxf_' + z.key);
+    let cls = '', txt = '住み分けOK';
+    if (v >= bad) { cls = 'bad'; txt = '強く被り'; }
+    else if (v >= warn) { cls = 'warn'; txt = '被り注意'; }
+    row.classList.remove('warn', 'bad'); if (cls) row.classList.add(cls);
+    badge.textContent = txt;
+    fill.style.width = Math.min(100, v / (bad * 1.15) * 100).toFixed(0) + '%';
+  });
+}
+
+function updateStatsTuner(timeData, freq) {
+  let rms = 0;
+  for (let i = 0; i < timeData.length; i++) rms += timeData[i] * timeData[i];
+  rms = Math.sqrt(rms / timeData.length);
+  const dbRms = 20 * Math.log10(rms + 1e-10);
+  const pct = Math.max(0, Math.min(100, (dbRms + 60) / 60 * 100));
+  document.getElementById('meterFill').style.width = pct.toFixed(1) + '%';
+  document.getElementById('peakLabel').textContent = dbRms > -60 ? dbRms.toFixed(1) + ' dB' : '—';
+  if (freq > 0) {
+    document.getElementById('freqLabel').textContent = freq.toFixed(1) + ' Hz';
+    document.getElementById('noteLabel').textContent = freqToNote(freq);
+  } else {
+    document.getElementById('freqLabel').textContent = '—';
+    document.getElementById('noteLabel').textContent = '—';
+  }
+}
+
+function updateStats(timeData, freqData, f0) {
+  let rms = 0;
+  for (let i = 0; i < timeData.length; i++) rms += timeData[i] * timeData[i];
+  rms = Math.sqrt(rms / timeData.length);
+  const dbRms = 20 * Math.log10(rms + 1e-10);
+  const pct = Math.max(0, Math.min(100, (dbRms + 60) / 60 * 100));
+  document.getElementById('meterFill').style.width = pct.toFixed(1) + '%';
+  document.getElementById('rmsLabel').textContent = 'RMS: ' + (dbRms > -60 ? dbRms.toFixed(1) + ' dB' : '—');
+  document.getElementById('peakLabel').textContent = dbRms > -60 ? dbRms.toFixed(1) + ' dB' : '—';
+
+  // Prefer the autocorrelation fundamental (true pitch) over the loudest FFT bin (often a harmonic)
+  const fund = f0 > 0 ? f0 : (detectPeak(freqData, audioCtx.sampleRate, analyser.fftSize) || {}).freq;
+  if (fund > 0) {
+    document.getElementById('freqLabel').textContent = fund.toFixed(1) + ' Hz';
+    document.getElementById('noteLabel').textContent = freqToNote(fund);
+  } else {
+    document.getElementById('freqLabel').textContent = '—';
+    document.getElementById('noteLabel').textContent = '—';
+  }
+}
+
+// ─── Settings persistence ───
+const LS_KEY = 'toneVisualizerSettings';
+
+function saveSettings() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      gain: parseFloat(document.getElementById('gainSlider').value),
+      smooth: parseFloat(document.getElementById('smoothSlider').value),
+      a4: A4,
+      cal: calCents,
+      mode: currentMode,
+      fftScale: fftScale,
+      inputDevice: document.getElementById('inputDevice').value,
+      advTarget: currentTargetKey
+    }));
+  } catch (e) {}
+}
+
+function loadSettings() {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) {}
+
+  if (typeof s.gain === 'number') {
+    const el = document.getElementById('gainSlider');
+    el.value = s.gain; document.getElementById('gainVal').textContent = s.gain.toFixed(1);
+  }
+  if (typeof s.smooth === 'number') {
+    const el = document.getElementById('smoothSlider');
+    el.value = s.smooth; document.getElementById('smoothVal').textContent = s.smooth.toFixed(2);
+  }
+  if (typeof s.a4 === 'number') {
+    A4 = Math.max(430, Math.min(450, Math.round(s.a4 * 10) / 10));
+    document.getElementById('a4Input').value = A4;
+  }
+  if (typeof s.cal === 'number') {
+    calCents = Math.max(-50, Math.min(50, Math.round(s.cal * 2) / 2));
+    document.getElementById('calInput').value = calCents;
+  }
+  if (s.fftScale === 'linear' || s.fftScale === 'log') {
+    fftScale = s.fftScale;
+    document.getElementById('scaleBtn').textContent = fftScale === 'log' ? 'LOG + 弦ガイド' : 'LINEAR (旧)';
+  }
+  if (s.inputDevice) {
+    // Provisional option so the chosen device is honored on the first START
+    // (before permission, real labels/ids aren't available). refreshInputDevices()
+    // replaces this with the real list and restores the selection by id.
+    const sel = document.getElementById('inputDevice');
+    const opt = document.createElement('option');
+    opt.value = s.inputDevice; opt.textContent = '保存した入力デバイス';
+    sel.appendChild(opt); sel.value = s.inputDevice;
+  }
+  if (s.advTarget && typeof TARGETS !== 'undefined' && TARGETS[s.advTarget]) currentTargetKey = s.advTarget;
+  if (['tuner', 'strobe', 'visualizer', 'mix', 'advisor'].indexOf(s.mode) >= 0) {
+    switchMode(s.mode);
+  }
+}
+
+// ─── Keyboard shortcuts ───
+// Space = START/STOP, 1/2/3 = mode, R = reference tone.
+document.addEventListener('keydown', (e) => {
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if (e.code === 'Space') { e.preventDefault(); toggleAudio(); }
+  else if (e.key === '1') switchMode('visualizer');
+  else if (e.key === '2') switchMode('tuner');
+  else if (e.key === '3') switchMode('strobe');
+  else if (e.key === '4' || e.key === 'm' || e.key === 'M') switchMode('mix');
+  else if (e.key === '5' || e.key === 'a' || e.key === 'A') switchMode('advisor');
+  else if (e.key === 'r' || e.key === 'R') toggleRefTone();
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// ADVISOR mode — ported from the standalone tone-advisor. Reuses this
+// app's audio graph (audioCtx/analyser/gainNode/stream), level/clip
+// metering, input-device picker, wake-lock and settings. Only the
+// analysis + UI + Before/After auditioner are app-specific here.
+// ═══════════════════════════════════════════════════════════════════
+const ADV_BANDS = [
+  { key: 'sub',   lo: 60,   hi: 95 },
+  { key: 'punch', lo: 95,   hi: 160 },
+  { key: 'body',  lo: 160,  hi: 400 },
+  { key: 'mid',   lo: 400,  hi: 2000 },
+  { key: 'pres',  lo: 2000, hi: 5000 },
+  { key: 'air',   lo: 5000, hi: 9000 },
+];
+const ADV_LO = 60, ADV_HI = 9000;
+
+const DIMS = [
+  { key: 'LOW',     name: 'LOW 低域(60–160)' },
+  { key: 'BODY',    name: 'BODY 中低域・太さ(160–400)' },
+  { key: 'MID',     name: 'MID 中域・芯/抜け(400–2k)' },
+  { key: 'PRES',    name: 'PRES プレゼンス・食付き(2–5k)' },
+  { key: 'AIR',     name: 'AIR 空気感/フィズ(5–9k)' },
+  { key: 'TIGHT',   name: 'TIGHT 低域の締まり' },
+  { key: 'GRIT',    name: 'GRIT 歪み量' },
+  { key: 'SUSTAIN', name: 'SUSTAIN 伸び/圧縮' },
+];
+
+const TARGETS = {
+  metal_rhythm: { label: 'メタル(リフ)', v: { LOW: .20, BODY: .24, MID: .28, PRES: .22, AIR: .06, TIGHT: .80, GRIT: .85, SUSTAIN: .70 }, emph: ['TIGHT', 'GRIT', 'PRES'], tips: ['Noise Gate を入れてリフの隙間（無音）を締める。', 'パームミュートは Low Cut とタイトな IR が効く。'] },
+  metal_lead: { label: 'メタル(リード/ソロ)', v: { LOW: .18, BODY: .26, MID: .36, PRES: .16, AIR: .04, TIGHT: .72, GRIT: .82, SUSTAIN: .90 }, emph: ['MID', 'SUSTAIN', 'GRIT'], tips: ['Mid を持ち上げると埋もれず "歌う"。', 'Delay+Reverb でソロの余韻と空間を。'] },
+  djent: { label: 'Djent/モダン', v: { LOW: .18, BODY: .20, MID: .26, PRES: .28, AIR: .08, TIGHT: .88, GRIT: .90, SUSTAIN: .72 }, emph: ['TIGHT', 'GRIT', 'PRES'], tips: ['Low Cut を高め(90–110Hz)＋強い Noise Gate でジェントの粒立ちを。', '低域はタイトに、刻みは Presence で前に。'] },
+  hardrock: { label: 'ハードロック', v: { LOW: .20, BODY: .28, MID: .36, PRES: .13, AIR: .03, TIGHT: .60, GRIT: .60, SUSTAIN: .55 }, emph: ['MID', 'GRIT'], tips: ['Marshall系の中域を活かす。Gain は上げ過ぎずクランチ寄りに。', 'ピッキングのダイナミクスを残すと "ロック" の躍動感。'] },
+  classic: { label: 'クラシック/ヴィンテージ', v: { LOW: .22, BODY: .30, MID: .35, PRES: .10, AIR: .03, TIGHT: .50, GRIT: .45, SUSTAIN: .50 }, emph: ['BODY', 'MID'], tips: ['低〜中域の太さが肝。Gain控えめ＋スプリングReverb。', 'High Cut で角を取りヴィンテージの丸みを。'] },
+  blues: { label: 'ブルース(粘り/枯れ)', v: { LOW: .22, BODY: .30, MID: .34, PRES: .11, AIR: .03, TIGHT: .50, GRIT: .45, SUSTAIN: .70 }, emph: ['MID', 'BODY', 'SUSTAIN'], tips: ['軽いブレイクアップ＋強弱で表情を。Gainは指で操る程度に。', 'Mid を太く、Presenceは控えめにして枯れた質感。'] },
+  lead_sing: { label: '歌うリード(汎用)', v: { LOW: .18, BODY: .26, MID: .38, PRES: .14, AIR: .04, TIGHT: .65, GRIT: .60, SUSTAIN: .92 }, emph: ['MID', 'SUSTAIN'], tips: ['Mid 800Hz–1.2kHz を軸に。コンプでサステイン。', 'Delay(1/8等)+Reverb を薄く足すと "歌う"。'] },
+  shred: { label: '速弾き/ブライトHG(Herman Li系)', v: { LOW: .17, BODY: .20, MID: .28, PRES: .27, AIR: .08, TIGHT: .80, GRIT: .82, SUSTAIN: .85 }, emph: ['PRES', 'AIR', 'TIGHT'], tips: ['明るく・軽くスクープ＋Delay/Reverbで速弾きの分離と広がりを。', '低域をタイトに保つと高速フレーズが潰れない。'] },
+  funk: { label: 'ファンク・カッティング', v: { LOW: .18, BODY: .22, MID: .30, PRES: .22, AIR: .08, TIGHT: .78, GRIT: .15, SUSTAIN: .30 }, emph: ['GRIT', 'PRES', 'SUSTAIN'], tips: ['コンプの Attack を速めて粒を揃える。', '低域を締め、Treble/Presenceで歯切れよく。'] },
+  clean: { label: 'クリーン(コード/アルペジオ)', v: { LOW: .22, BODY: .28, MID: .28, PRES: .16, AIR: .06, TIGHT: .60, GRIT: .12, SUSTAIN: .45 }, emph: ['GRIT', 'AIR'], tips: ['コンプ薄め＋Reverb/Chorusでクリーンの艶を。', '歪ませたくない時はブースターを切るか Drive 最小に。'] },
+  jazz: { label: 'ジャズ(暖かい/フロント)', v: { LOW: .24, BODY: .34, MID: .34, PRES: .06, AIR: .02, TIGHT: .45, GRIT: .15, SUSTAIN: .55 }, emph: ['BODY', 'AIR'], tips: ['フロントPU＋Tone絞り気味、High Cut低めで丸く太く。', 'Reverb薄め、歪みはほぼ無しでまろやかに。'] },
+  country: { label: 'カントリー(トゥワング)', v: { LOW: .18, BODY: .22, MID: .30, PRES: .22, AIR: .08, TIGHT: .80, GRIT: .25, SUSTAIN: .30 }, emph: ['PRES', 'AIR', 'TIGHT'], tips: ['リアPU＋ブライト、コンプで粒立ちとスナップを。', 'Slapback Delay でトゥワング感を強調。'] },
+};
+const TARGET_ORDER = ['metal_rhythm', 'metal_lead', 'djent', 'shred', 'hardrock', 'classic', 'blues', 'lead_sing', 'funk', 'clean', 'jazz', 'country'];
+
+const KEYWORDS = [
+  { re: /(djent|ジェント|モダンメタル|periphery|meshuggah|メシュガ|polyphia|ポリフィア|8弦|7弦|多弦|タイト.?ハイゲイン)/i, t: 'djent' },
+  { re: /(herman|haaman|dragonforce|ドラゴンフォース|速弾き|シュレッド|shred|petrucci|ペトルー|satriani|サトリアー|steve ?vai|ヴァイ|malmsteen|マルムスティーン|gilbert|超高速|きらび|キラキラした?リード)/i, t: 'shred' },
+  { re: /(メタル.?(ソロ|リード)|metal.?(lead|solo))/i, t: 'metal_lead' },
+  { re: /(メタル|めたる|metal|heavy|ヘヴ|ヘビ|重い|ザク|チャグ|chug|riff|リフ|バッキング|激し|ダウンチューニング|デス|スラッシュ)/i, t: 'metal_rhythm' },
+  { re: /(ブルース|blues|枯れ|粘|泣き|srv|クラプトン|clapton|gary ?moore|bb ?king|ゲイリー)/i, t: 'blues' },
+  { re: /(ハードロック|hard.?rock|クランチ|crunch|ac.?dc|guns|ガンズ|vanhalen|ヴァンヘイレン)/i, t: 'hardrock' },
+  { re: /(クラシックロック|classic.?rock|ヴィンテージ|ビンテージ|vintage|マーシャル|marshall|zeppelin|ツェッペリン|60年代|70年代)/i, t: 'classic' },
+  { re: /(ジャズ|jazz|暖か|温か|まろやか|メロウ|mellow|wes|metheny|メセニー|フロント.?ピックアップ|甘い)/i, t: 'jazz' },
+  { re: /(カントリー|country|トゥワング|twang|チキンピッキング|chicken|テレキャス)/i, t: 'country' },
+  { re: /(カッティング|cutting|ファンク|funk|軽|キレ|歯切|cut|nile rodgers|john ?mayer)/i, t: 'funk' },
+  { re: /(クリーン|clean|アルペジオ|コード弾き|きれい|綺麗|キラキラ|シマー|shimmer|爽やか)/i, t: 'clean' },
+  { re: /(ソロ|リード|lead|歌|のび|伸び|sustain|サステ|目立|solo|singing|メロ|エモ|emotional)/i, t: 'lead_sing' },
+  { re: /(明る|ブライト|bright|ハイゲイン|high.?gain)/i, t: 'shred' },
+];
+const INTENS_RE = /(もっと|さらに|めちゃ|超|very|ガッツリ|強め|思いっきり|もっとも|極端|バキバキ)/i;
+
+const SUG = {
+  LOW: { up: { t: '低域が薄い', h: 'Amp の Bass を上げる / Low Cut(HPF) の周波数を下げる / IR を低域の出るマイク位置に。' }, down: { t: '低域が多い', h: 'Bass を下げる / Low Cut(HPF) を 80–100Hz に設定 / ブースター前段で低域を削る。' } },
+  BODY: { up: { t: '線が細い・薄い（中低域不足）', h: '200–350Hz を少し足して太さを出す / Mid の下側・Bass を補強 / 近接効果の出る IR に。' }, down: { t: '濁る・ボワつく（箱鳴り/中低域過多）', h: '200–300Hz を削る / IR のマイクをオフアクシス寄りに / Low Cut を少し上げる。' } },
+  MID: { up: { t: '中域が薄い（抜け・芯が不足、埋もれる）', h: 'Mid を 800Hz–1.2kHz で持ち上げる / TS 系ブースター（中域こぶ）で前段を押す。' }, down: { t: '中域が前に出過ぎ（ホンキー/箱っぽい）', h: 'Mid 600–900Hz を少し下げる / 軽くスクープして抜けを整える。' } },
+  PRES: { up: { t: 'アタック・食い付きが不足', h: 'Presence を上げる / 2–4kHz を少しブースト / アタックの立つ IR(オンアクシス)に。' }, down: { t: '耳に刺さる・荒い（プレゼンス過多）', h: 'Presence を下げる / 3–4kHz を抑える / 少しオフアクシスの IR に。' } },
+  AIR: { up: { t: '上が詰まっている（モコモコ）', h: 'High Cut の周波数を上げる(7–9kHz) / 明るい IR・キャビに変える。' }, down: { t: 'フィズ・シャリつき（高域ノイズ）', h: 'High Cut を 6–7kHz に下げる / オフアクシス IR でフィズを低減 / Gain を少し下げる。' } },
+  TIGHT: { up: { t: '低域がブーミー・緩い', h: 'Low Cut(HPF) で 60–90Hz の膨らみを削る / タイトな IR / ブースター前段でローを整理。' }, down: { t: '低域が硬い・痩せ気味', h: 'Low Cut の周波数を下げて膨らみを少し戻す / Bass を気持ち上げる。' } },
+  GRIT: { up: { t: '歪みが足りない', h: 'Amp Gain を上げる、または前段ブースターの Drive を上げる。EMG はホットなので上げ過ぎ注意 — まず Level で押す。' }, down: { t: '歪みが多すぎる（潰れ・濁り）', h: 'Gain を下げる / ブースターは Drive より Level で / よりタイトな IR でローを締める。' } },
+  SUSTAIN: { up: { t: '伸び・サステインが不足', h: 'コンプ（サステイナー）を追加 / Gain を少し上げる / Delay+Reverb で余韻を補強。' }, down: { t: '圧縮され過ぎ（ダイナミクスが死ぬ）', h: 'コンプの Ratio を下げ Attack を速める / Gain を下げてピッキングの強弱を残す。' } },
+};
+
+let currentTargetKey = 'metal_rhythm';
+let intensity = 1.0;
+let baseline = null;
+const _frames = [];
+const FRAME_WINDOW = 90;
+let _liveFP = null;
+let _recompCounter = 0;
+
+// Record / Before-After state
+let mediaRecorder = null, recChunks = [], recTimer = null, recStartMs = 0;
+let beforeBuffer = null, afterBuffer = null, afterTargetKey = null;
+let _playCtx = null, _playSrc = null, _playWhich = null;
+let beforeGain = 1, afterGain = 1;
+const REC_MAX_MS = 20000, _AB_TARGET_RMS = 0.18, _AB_MAX_GAIN = 8;
+
+function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+
+function extractFeatures(freqData, peak, rms) {
+  const binHz = audioCtx.sampleRate / analyser.fftSize;
+  const band = {}; for (const b of ADV_BANDS) band[b.key] = 0;
+  let total = 0, geoLogSum = 0, geoCount = 0, arithSum = 0;
+  const loBin = Math.max(1, Math.floor(ADV_LO / binHz));
+  const hiBin = Math.min(freqData.length - 1, Math.ceil(ADV_HI / binHz));
+  for (let i = loBin; i <= hiBin; i++) {
+    const f = i * binHz;
+    const p = Math.pow(10, freqData[i] / 10);
+    total += p; arithSum += p; geoLogSum += Math.log(p + 1e-12); geoCount++;
+    for (const b of ADV_BANDS) { if (f >= b.lo && f < b.hi) { band[b.key] += p; break; } }
+  }
+  total = total || 1e-9;
+  const flatness = Math.exp(geoLogSum / geoCount) / ((arithSum / geoCount) + 1e-12);
+  const crest = peak / (rms + 1e-9);
+  return { band, total, flatness, crest };
+}
+
+function updateFingerprint() {
+  if (_frames.length < 8) {
+    document.getElementById('sugStatus').textContent = isRunning ? 'ギターを弾き続けてください…（解析中）' : '';
+    return;
+  }
+  const acc = {}; for (const b of ADV_BANDS) acc[b.key] = 0;
+  let cTot = 0, cFlat = 0, cCrest = 0;
+  for (const f of _frames) {
+    for (const b of ADV_BANDS) acc[b.key] += f.band[b.key] / f.total;
+    cFlat += f.flatness; cCrest += f.crest; cTot++;
+  }
+  for (const b of ADV_BANDS) acc[b.key] /= cTot;
+  const flatness = cFlat / cTot, crest = cCrest / cTot;
+  const low = acc.sub + acc.punch;
+  const tightRaw = acc.punch / (acc.sub + acc.punch + 1e-9);
+  _liveFP = {
+    LOW: clamp01(low), BODY: clamp01(acc.body), MID: clamp01(acc.mid),
+    PRES: clamp01(acc.pres), AIR: clamp01(acc.air),
+    TIGHT: clamp01((tightRaw - 0.35) / (0.75 - 0.35)),
+    GRIT: clamp01((Math.log10(flatness + 1e-6) + 4) / 3),
+    SUSTAIN: clamp01((4.0 - crest) / (4.0 - 1.3)),
+  };
+  renderBars();
+  renderSuggestions();
+}
+
+function targetVec() {
+  const t = TARGETS[currentTargetKey];
+  if (intensity === 1.0) return t.v;
+  const NEUTRAL = { LOW: .22, BODY: .30, MID: .33, PRES: .12, AIR: .04, TIGHT: .55, GRIT: .5, SUSTAIN: .5 };
+  const out = {};
+  for (const d of DIMS) out[d.key] = clamp01(NEUTRAL[d.key] + (t.v[d.key] - NEUTRAL[d.key]) * intensity);
+  return out;
+}
+
+function renderBars() {
+  const tv = targetVec();
+  document.getElementById('bars').innerHTML = DIMS.map(d => {
+    const k = d.key, cur = _liveFP ? _liveFP[k] : 0, tgt = tv[k];
+    const gap = cur - tgt, aGap = Math.abs(gap);
+    const col = aGap < .07 ? '#00ffaa' : aGap < .15 ? '#ffaa00' : '#ff5500';
+    const gapTxt = aGap < .07 ? 'OK' : (gap > 0 ? '+' : '−') + Math.round(aGap * 100);
+    const baseMark = baseline ? '<div class="base" style="left:' + (baseline[k] * 100).toFixed(1) + '%"></div>' : '';
+    return '<div class="dim"><div class="dim-head"><span>' + d.name + '</span>'
+      + '<span class="gap"><span class="nums">現在 ' + Math.round(cur * 100) + ' ／ 目標 ' + Math.round(tgt * 100) + '</span> <b style="color:' + col + '">' + gapTxt + '</b></span></div>'
+      + '<div class="track"><div class="fill" style="width:' + (cur * 100).toFixed(1) + '%;border-right-color:' + col + ';background:' + col + '22"></div>'
+      + '<div class="target" style="left:' + (tgt * 100).toFixed(1) + '%"></div>' + baseMark + '</div></div>';
+  }).join('');
+}
+
+function renderSuggestions() {
+  const status = document.getElementById('sugStatus'), list = document.getElementById('sugList');
+  if (!_liveFP) { list.innerHTML = ''; return; }
+  const t = TARGETS[currentTargetKey], tv = targetVec();
+  const items = [];
+  for (const d of DIMS) {
+    const k = d.key, delta = tv[k] - _liveFP[k], mag = Math.abs(delta);
+    if (mag < 0.06) continue;
+    const dir = delta > 0 ? 'up' : 'down', s = SUG[k][dir];
+    const w = (t.emph && t.emph.indexOf(k) >= 0) ? 1.4 : 1.0;
+    items.push({ score: mag * w, dir, title: s.t, how: s.h, pct: Math.round(mag * 100) });
+  }
+  items.sort((a, b) => b.score - a.score);
+  const top = items.slice(0, 5);
+  status.innerHTML = '目標: <b style="color:#00ffaa">' + t.label + '</b>'
+    + (intensity > 1 ? ' <span style="color:#ffaa00">(強め)</span>' : '')
+    + ' — ' + (top.length ? top.length + '件の改善ポイント' : 'ほぼ目標どおり ✓');
+  let html = top.map(it => '<div class="sug ' + it.dir + '"><div class="st">' + (it.dir === 'up' ? '▲ ' : '▼ ') + it.title
+    + '<span class="badge">差 ' + it.pct + '</span></div><div class="sh">' + it.how + '</div></div>').join('');
+  if (!top.length) html = '<div class="sug up"><div class="st">✓ 目標に近い音です</div><div class="sh">大きなズレは見当たりません。微調整は基準を保存して差分で追ってください。</div></div>';
+  html += (t.tips || []).map(tip => '<div class="sug tip"><div class="sh">💡 ' + tip + '</div></div>').join('');
+  list.innerHTML = html;
+}
+
+function advDrawSpectrum() {
+  const c = document.getElementById('specCanvas');
+  const { ctx, W, H } = prepCanvas(c);
+  ctx.fillStyle = '#050f05'; ctx.fillRect(0, 0, W, H);
+  const binHz = audioCtx.sampleRate / analyser.fftSize;
+  const fMin = 60, fMax = 9000;
+  const logMin = Math.log10(fMin), logMax = Math.log10(fMax);
+  const x2f = x => Math.pow(10, logMin + (x / W) * (logMax - logMin));
+  const f2x = f => (Math.log10(Math.max(f, fMin)) - logMin) / (logMax - logMin) * W;
+  const minDb = -100, maxDb = -10;
+  const y = db => ((maxDb - Math.max(minDb, Math.min(maxDb, db))) / (maxDb - minDb)) * H;
+  ctx.strokeStyle = '#0a200a'; ctx.lineWidth = 0.5;
+  [160, 400, 2000, 5000].forEach(f => { const x = f2x(f); ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); });
+  const drawCurve = () => {
+    for (let x = 0; x < W; x++) {
+      const f0 = x2f(x), f1 = x2f(x + 1);
+      let b0 = Math.max(0, Math.floor(f0 / binHz)), b1 = Math.min(_freqBuf.length - 1, Math.ceil(f1 / binHz));
+      if (b1 < b0) b1 = b0;
+      let db = -Infinity; for (let b = b0; b <= b1; b++) if (_freqBuf[b] > db) db = _freqBuf[b];
+      const yy = y(db); x === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+    }
+  };
+  ctx.beginPath(); drawCurve(); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(0,255,136,0.45)'); grad.addColorStop(1, 'rgba(0,255,136,0.03)');
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.beginPath(); drawCurve(); ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 1; ctx.stroke();
+}
+
+// Called from drawLoop in ADVISOR mode (reuses the shared analyser + level).
+function advisorFrame(timeData) {
+  analyser.getFloatFrequencyData(_freqBuf);
+  const pct = Math.max(0, Math.min(100, (_inputDb + 60) / 60 * 100));
+  document.getElementById('meterFill').style.width = pct.toFixed(1) + '%';
+  advDrawSpectrum();
+  if (_inputDb > -45) {
+    let sumSq = 0, peak = 0;
+    for (let i = 0; i < timeData.length; i++) { const v = timeData[i]; sumSq += v * v; const a = v < 0 ? -v : v; if (a > peak) peak = a; }
+    const f = extractFeatures(_freqBuf, peak, Math.sqrt(sumSq / timeData.length));
+    _frames.push(f); if (_frames.length > FRAME_WINDOW) _frames.shift();
+  }
+  if (++_recompCounter >= 18) { _recompCounter = 0; updateFingerprint(); }
+}
+
+function setTarget(key, fromUser) {
+  currentTargetKey = key;
+  if (fromUser) intensity = 1.0;
+  document.querySelectorAll('#presetChips .chip').forEach(c => c.classList.toggle('active', c.dataset.key === key));
+  if (_liveFP) { renderBars(); renderSuggestions(); }
+  if (afterBuffer) updateAbInfo();
+  saveSettings();
+}
+
+function applyKeyword() {
+  const txt = document.getElementById('kwInput').value;
+  if (!txt.trim()) return false;
+  let matched = null;
+  for (const k of KEYWORDS) { if (k.re.test(txt)) { matched = k.t; break; } }
+  if (!matched) { document.getElementById('sugStatus').textContent = 'キーワードを判定できませんでした。プリセットを選ぶか、メタル/ソロ/カッティング/明るい 等の語を含めてください。'; return false; }
+  intensity = INTENS_RE.test(txt) ? 1.35 : 1.0;
+  setTarget(matched, false);
+  document.querySelectorAll('#presetChips .chip').forEach(c => c.classList.toggle('active', c.dataset.key === matched));
+  return false;
+}
+
+function saveBaseline() {
+  if (!_liveFP) { document.getElementById('sugStatus').textContent = 'まず弾いて解析させてから保存してください。'; return; }
+  baseline = Object.assign({}, _liveFP);
+  document.getElementById('snapClr').style.display = '';
+  renderBars();
+}
+function clearBaseline() { baseline = null; document.getElementById('snapClr').style.display = 'none'; renderBars(); }
+
+function buildReport() {
+  if (!_liveFP) return null;
+  const t = TARGETS[currentTargetKey], tv = targetVec();
+  const axes = DIMS.map(d => {
+    const k = d.key, cur = _liveFP[k], tgt = tv[k];
+    const o = { key: k, name: d.name, current: +cur.toFixed(3), target: +tgt.toFixed(3), delta: +(cur - tgt).toFixed(3), current_0to100: Math.round(cur * 100), target_0to100: Math.round(tgt * 100) };
+    if (baseline) o.baseline_0to100 = Math.round(baseline[k] * 100);
+    return o;
+  });
+  const items = [];
+  for (const d of DIMS) {
+    const k = d.key, delta = tv[k] - _liveFP[k], mag = Math.abs(delta);
+    if (mag < 0.06) continue;
+    const dir = delta > 0 ? 'up' : 'down', s = SUG[k][dir];
+    const w = (t.emph && t.emph.indexOf(k) >= 0) ? 1.4 : 1.0;
+    items.push({ axis: k, direction: dir, title: s.t, how: s.h, gap_0to100: Math.round(mag * 100), score: +(mag * w).toFixed(3) });
+  }
+  items.sort((a, b) => b.score - a.score);
+  return {
+    app: 'tone-advisor', schema_version: 1, timestamp: new Date().toISOString(),
+    note: '値は 0–1（出力では0–100換算）の相対指標。LOW/BODY/MID/PRES/AIR は全体スペクトルに対するエネルギー比、TIGHT は低域の締まり、GRIT は歪み量(スペクトル平坦度)、SUSTAIN は伸び/圧縮(クレストファクタ)。マイク/IR/部屋で絶対値はぶれるため、目標との差分で読むこと。',
+    rig: '7弦標準チューニング / Line6 HX Stomp + IR / EMG(アクティブ)PU',
+    target: { key: currentTargetKey, label: t.label, intensity: intensity },
+    axes: axes, suggestions: items.slice(0, 8), tips: t.tips || []
+  };
+}
+
+// mode: 'target' = 現在値・目標・差＋提案（目標に近づける）／ 'measured' = 実測値のみ＋汎用アドバイス依頼
+function buildAIText(mode) {
+  const r = buildReport();
+  if (!r) return null;
+  const hasBase = r.axes[0].baseline_0to100 !== undefined;
+  let s = '# ギター・トーン解析結果（tone-advisor）\n\n';
+  s += '- 解析日時: ' + r.timestamp + '\n- リグ: ' + r.rig + '\n- 補足: ' + r.note + '\n';
+
+  if (mode === 'measured') {
+    s += '\n## 各軸の実測値（0–100換算）\n| 軸 | 実測 |' + (hasBase ? ' 基準 |' : '') + '\n|---|---|' + (hasBase ? '---|' : '') + '\n';
+    r.axes.forEach(a => { s += '| ' + a.name + ' | ' + a.current_0to100 + ' |' + (hasBase ? ' ' + a.baseline_0to100 + ' |' : '') + '\n'; });
+    s += '\n## お願い\nあなたは経験豊富なギターのトーンエンジニアです。上記は私のギター音の周波数解析（実測値）です。'
+      + '① この音のキャラクターを言葉で説明し、② 埋もれ・帯域の被り・耳障りなど気になりやすい点、'
+      + '③ Line6 HX Stomp（アンプ/キャブ・IR・EQ・ブースター・コンプ等）での汎用的な改善アイデアを、優先順位をつけて具体的に提案してください。'
+      + '目標のジャンル/音像は固定していません（必要なら「メタルにしたい」等の希望は後で伝えます）。EMG はホットなのでゲインの入れ過ぎに注意してください。\n';
+    return s;
+  }
+
+  // mode === 'target' (default)
+  s += '- 目標トーン: ' + r.target.label + (r.target.intensity > 1 ? '（強め）' : '') + '\n';
+  s += '\n## 各軸の数値（0–100換算）\n| 軸 | 現在 | 目標 | 差 |' + (hasBase ? ' 基準 |' : '') + '\n|---|---|---|---|' + (hasBase ? '---|' : '') + '\n';
+  r.axes.forEach(a => { s += '| ' + a.name + ' | ' + a.current_0to100 + ' | ' + a.target_0to100 + ' | ' + (a.delta >= 0 ? '+' : '') + Math.round(a.delta * 100) + ' |' + (hasBase ? ' ' + a.baseline_0to100 + ' |' : '') + '\n'; });
+  s += '\n## 現在のヒューリスティック提案（参考）\n';
+  if (!r.suggestions.length) s += '- 目標に近く、大きなズレなし\n';
+  r.suggestions.forEach(it => { s += '- [' + (it.direction === 'up' ? '上げる' : '下げる') + '] ' + it.title + ' → ' + it.how + '\n'; });
+  r.tips.forEach(tp => s += '- 💡 ' + tp + '\n');
+  s += '\n## お願い\nあなたは経験豊富なギターのトーンエンジニアです。上記は私のギター音の周波数解析結果と、目標トーン「' + r.target.label + '」との差分です。'
+    + 'Line6 HX Stomp（アンプ/キャブ・IR・EQ・ブースター・コンプ等）でこの目標に近づけるための具体策を、優先順位をつけて提案してください。'
+    + '各アクションは「どのブロック／パラメータを、どの帯域で、どの方向にどれくらい」まで具体的に。EMG はホットなのでゲインの入れ過ぎに注意してください。\n';
+  return s;
+}
+
+function exportJSON() {
+  const r = buildReport();
+  if (!r) { document.getElementById('sugStatus').textContent = 'まず弾いて解析させてからダウンロードしてください。'; return; }
+  const blob = new Blob([JSON.stringify(r, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'tone-advisor_' + r.target.key + '_' + r.timestamp.replace(/[:.]/g, '-') + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  document.getElementById('sugStatus').textContent = '✓ JSON をダウンロードしました。';
+}
+
+async function copyForAI(mode) {
+  const txt = buildAIText(mode);
+  if (!txt) { document.getElementById('sugStatus').textContent = 'まず弾いて解析させてからコピーしてください。'; return; }
+  const kind = mode === 'measured' ? '実測値' : '目標差分';
+  try {
+    await navigator.clipboard.writeText(txt);
+    document.getElementById('sugStatus').textContent = '✓ AI用テキスト（' + kind + '）をコピーしました。ChatGPT / Claude 等に貼り付けてください。';
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+    ta.remove();
+    document.getElementById('sugStatus').textContent = ok ? '✓ AI用テキスト（' + kind + '）をコピーしました。' : 'コピー不可の環境です。⬇ JSON をご利用ください。';
+  }
+}
+
+// ─── Record + Before/After auditioner ───
+function getPlayCtx() {
+  if (!_playCtx || _playCtx.state === 'closed') _playCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_playCtx.state === 'suspended') _playCtx.resume();
+  return _playCtx;
+}
+function toggleRec() { if (mediaRecorder && mediaRecorder.state === 'recording') stopRec(); else startRec(); }
+function startRec() {
+  if (!isRunning || !stream) { setRecStatus('まず START を押して入力を有効にしてください。', true); return; }
+  if (typeof MediaRecorder === 'undefined') { setRecStatus('このブラウザは録音(MediaRecorder)に対応していません。', true); return; }
+  stopPlay();
+  recChunks = [];
+  try { mediaRecorder = new MediaRecorder(stream); }
+  catch (e) { setRecStatus('録音を開始できませんでした: ' + (e.message || e.name), true); return; }
+  mediaRecorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) recChunks.push(ev.data); };
+  mediaRecorder.onstop = onRecStopped;
+  mediaRecorder.start();
+  recStartMs = performance.now();
+  const btn = document.getElementById('recBtn');
+  btn.classList.add('active'); btn.textContent = '■ 録音停止';
+  setRecStatus('録音中… 00.0 / ' + (REC_MAX_MS / 1000).toFixed(0) + 's');
+  recTimer = setInterval(() => {
+    const elapsed = performance.now() - recStartMs;
+    if (elapsed >= REC_MAX_MS) { stopRec(); return; }
+    setRecStatus('録音中… ' + (elapsed / 1000).toFixed(1) + ' / ' + (REC_MAX_MS / 1000).toFixed(0) + 's');
+  }, 100);
+}
+function stopRec() {
+  if (recTimer) { clearInterval(recTimer); recTimer = null; }
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch (_) {} }
+  const btn = document.getElementById('recBtn');
+  btn.classList.remove('active'); btn.textContent = '● 録音開始';
+}
+async function onRecStopped() {
+  setRecStatus('解析中…');
+  try {
+    if (!recChunks.length) throw new Error('録音データが空です。');
+    const blob = new Blob(recChunks, { type: recChunks[0].type || 'audio/webm' });
+    const ab = await blob.arrayBuffer();
+    const ctx = getPlayCtx();
+    beforeBuffer = await ctx.decodeAudioData(ab.slice(0));
+    afterBuffer = await renderAfter(beforeBuffer);
+    afterTargetKey = currentTargetKey;
+    recomputePlayGains();
+    document.getElementById('abRow').style.display = '';
+    updateAbInfo();
+    setRecStatus('録音 ' + beforeBuffer.duration.toFixed(1) + 's を生成しました。BEFORE / AFTER を再生して比較できます。');
+  } catch (e) { setRecStatus('録音の処理に失敗しました: ' + (e.message || e.name), true); }
+}
+function setRecStatus(msg, isErr) { const el = document.getElementById('recStatus'); el.textContent = msg; el.style.color = isErr ? '#ff8866' : '#007733'; }
+function updateAbInfo() {
+  const info = document.getElementById('abInfo');
+  const stale = afterTargetKey && afterTargetKey !== currentTargetKey;
+  info.innerHTML = stale ? '<span class="rec-stale">⚠ 目標が変わりました — AFTER は「' + TARGETS[afterTargetKey].label + '」基準。「♻ AFTER再生成」で更新できます。</span>' : '';
+}
+async function regenerateAfter() {
+  if (!beforeBuffer) return;
+  setRecStatus('AFTER を再生成中…');
+  try {
+    stopPlay();
+    afterBuffer = await renderAfter(beforeBuffer);
+    afterTargetKey = currentTargetKey;
+    recomputePlayGains();
+    updateAbInfo();
+    setRecStatus('AFTER を「' + TARGETS[currentTargetKey].label + '」基準で再生成しました。');
+  } catch (e) { setRecStatus('再生成に失敗しました: ' + (e.message || e.name), true); }
+}
+function bufStats(buf) {
+  let sumSq = 0, peak = 0, n = 0;
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < d.length; i++) { const v = d[i]; sumSq += v * v; const a = Math.abs(v); if (a > peak) peak = a; }
+    n += d.length;
+  }
+  return { rms: n ? Math.sqrt(sumSq / n) : 0, peak: peak };
+}
+function playGainFor(buf) {
+  const { rms, peak } = bufStats(buf);
+  if (rms <= 1e-6) return 1;
+  let g = Math.min(_AB_TARGET_RMS / rms, _AB_MAX_GAIN);
+  if (peak > 0) g = Math.min(g, 0.99 / peak);
+  return g;
+}
+function recomputePlayGains() {
+  beforeGain = beforeBuffer ? playGainFor(beforeBuffer) : 1;
+  afterGain = afterBuffer ? playGainFor(afterBuffer) : 1;
+}
+async function renderAfter(buf) {
+  const fp = _liveFP || { LOW: .25, BODY: .3, MID: .3, PRES: .12, AIR: .04, TIGHT: .55, GRIT: .5, SUSTAIN: .5 };
+  const tv = targetVec();
+  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const off = new OAC(buf.numberOfChannels, buf.length, buf.sampleRate);
+  const src = off.createBufferSource(); src.buffer = buf;
+  const toDb = d => Math.max(-9, Math.min(9, d * 18));
+  const bands = [
+    { dim: 'LOW', type: 'lowshelf', freq: 120 },
+    { dim: 'BODY', type: 'peaking', freq: 250, Q: 1.0 },
+    { dim: 'MID', type: 'peaking', freq: 1000, Q: 1.0 },
+    { dim: 'PRES', type: 'peaking', freq: 3000, Q: 1.3 },
+    { dim: 'AIR', type: 'highshelf', freq: 6000 },
+  ];
+  let node = src;
+  bands.forEach(b => {
+    const f = off.createBiquadFilter();
+    f.type = b.type; f.frequency.value = b.freq;
+    if (b.Q !== undefined) f.Q.value = b.Q;
+    f.gain.value = toDb(tv[b.dim] - fp[b.dim]);
+    node.connect(f); node = f;
+  });
+  const tightDelta = tv.TIGHT - fp.TIGHT;
+  const hp = off.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 45 + Math.max(0, tightDelta) * 90; hp.Q.value = 0.7;
+  node.connect(hp); node = hp;
+  const sustDelta = tv.SUSTAIN - fp.SUSTAIN;
+  let makeup = 1.0;
+  if (sustDelta > 0.1) {
+    const comp = off.createDynamicsCompressor();
+    comp.threshold.value = -24 - sustDelta * 8;
+    comp.ratio.value = Math.min(12, 3 + sustDelta * 8);
+    comp.attack.value = 0.005; comp.release.value = 0.18; comp.knee.value = 6;
+    node.connect(comp); node = comp;
+    makeup = 1.0 + Math.min(0.7, sustDelta * 1.2);
+  }
+  const out = off.createGain(); out.gain.value = makeup;
+  node.connect(out); out.connect(off.destination);
+  src.start();
+  return off.startRendering();
+}
+function playWhich(which) {
+  const buf = which === 'before' ? beforeBuffer : afterBuffer;
+  if (!buf) return;
+  stopPlay();
+  const ctx = getPlayCtx();
+  const s = ctx.createBufferSource(); s.buffer = buf;
+  const g = ctx.createGain(); g.gain.value = which === 'before' ? beforeGain : afterGain;
+  s.connect(g); g.connect(ctx.destination);
+  s.onended = () => { if (_playWhich === which) clearPlayUI(); };
+  s.start();
+  _playSrc = s; _playWhich = which;
+  document.getElementById('playBeforeBtn').classList.toggle('playing', which === 'before');
+  document.getElementById('playAfterBtn').classList.toggle('playing', which === 'after');
+}
+function stopPlay() { if (_playSrc) { try { _playSrc.stop(); } catch (_) {} _playSrc.disconnect(); } clearPlayUI(); }
+function clearPlayUI() {
+  _playSrc = null; _playWhich = null;
+  document.getElementById('playBeforeBtn').classList.remove('playing');
+  document.getElementById('playAfterBtn').classList.remove('playing');
+}
+
+function initAdvisor() {
+  const wrap = document.getElementById('presetChips');
+  wrap.style.display = 'flex'; wrap.style.flexWrap = 'wrap'; wrap.style.gap = '8px';
+  TARGET_ORDER.forEach(key => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.key = key; b.textContent = TARGETS[key].label;
+    b.onclick = () => setTarget(key, true);
+    wrap.appendChild(b);
+  });
+  document.querySelectorAll('#presetChips .chip').forEach(c => c.classList.toggle('active', c.dataset.key === currentTargetKey));
+  renderBars();
+  observeCanvas(document.getElementById('specCanvas'));
+}
+
+// ─── Init ───
+buildMixCards();
+loadSettings();
+initAdvisor();
+// Deep-link: open directly in a given mode via URL hash (e.g. #advisor, #tuner).
+// Overrides the saved mode so cross-app "🎛 Advisor" links land in the ADVISOR mode.
+(function () {
+  const applyHashMode = () => {
+    const h = (location.hash || '').replace('#', '').toLowerCase();
+    if (['visualizer', 'mix', 'advisor', 'tuner', 'strobe'].indexOf(h) >= 0) switchMode(h);
+  };
+  applyHashMode();
+  window.addEventListener('hashchange', applyHashMode);
+})();
+['gainSlider', 'smoothSlider'].forEach(id => document.getElementById(id).addEventListener('input', saveSettings));
+document.getElementById('a4Input').addEventListener('change', saveSettings);
+document.getElementById('calInput').addEventListener('change', saveSettings);
+['waveCanvas', 'fftCanvas', 'tunerCanvas', 'mixCanvas'].forEach(id => observeCanvas(document.getElementById(id)));
+
+// Populate the input picker (labels appear after the first permission grant) and
+// keep it in sync when devices are plugged/unplugged.
+refreshInputDevices();
+if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+  navigator.mediaDevices.addEventListener('devicechange', refreshInputDevices);
+}
+</script>
+</body>
+</html>

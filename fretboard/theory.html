@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a1e">
+<title>Guitar Theory Tools</title>
+<style>
+:root{--bg:#1a1a1e;--sf:#242428;--sf2:#2e2e34;--tx:#e8e6e3;--txd:#8a8a8e;--fw:#b8a89a;--nut:#f5f0e8;--root:#e63946;--m2:#f4a261;--M2:#f4a261;--m3:#2a9d8f;--M3:#2a9d8f;--P4:#457b9d;--TT:#9b5de5;--P5:#e9c46a;--m6:#f77f00;--M6:#f77f00;--m7:#06d6a0;--M7:#06d6a0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN',Meiryo,sans-serif;min-height:100vh;min-height:-webkit-fill-available;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+.app{max-width:1440px;margin:0 auto;padding:24px 32px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:14px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo i{width:36px;height:36px;background:linear-gradient(135deg,var(--P4),#6ba3c7);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;font-style:normal;box-shadow:0 3px 12px rgba(69,123,157,.3)}
+h1{font-size:1.15rem;font-weight:700;letter-spacing:-.3px}h1 em{color:var(--txd);font-weight:400;font-size:.78rem;margin-left:6px;font-style:normal}
+.ctrls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cg{display:flex;flex-direction:column;gap:3px}
+.cg label{font-size:.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--txd)}
+select{background:var(--sf2);color:var(--tx);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 28px 8px 10px;font-size:14px;cursor:pointer;appearance:none;-webkit-appearance:none;font-family:inherit;min-width:120px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%238a8a8e' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .2s}
+select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230,57,70,.15)}
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:8px;overflow-x:auto}
+.tab{background:none;border:none;color:var(--txd);font-family:inherit;font-size:.82rem;padding:8px 16px;cursor:pointer;border-radius:8px 8px 0 0;transition:all .2s;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.tab:hover{color:var(--tx);background:var(--sf2)}.tab.on{color:var(--root);background:rgba(230,57,70,.1);border-bottom:2px solid var(--root)}
+.tp{display:none}.tp.on{display:block}
+/* Fretboard - identical to index */
+.fbw{background:var(--sf);border-radius:14px;padding:20px 12px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:0 6px 24px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.04)}
+.fn{display:flex;margin-bottom:3px;user-select:none}.fn:last-of-type{margin-bottom:0;margin-top:3px}
+.fn .sp{width:44px;min-width:44px}.fn span{width:56px;min-width:56px;text-align:center;font-size:.65rem;color:var(--txd);position:relative}
+.fn span.hd::after,.fn span.ht::before{content:'● ●';display:block;font-size:.3rem;color:rgba(255,255,255,.2);letter-spacing:2px}.fn span.hd::after{margin-top:-1px}.fn span.ht::before{margin-bottom:-1px}
+.fn span.hs::after,.fn span.st::before{content:'●';display:block;font-size:.3rem;color:rgba(255,255,255,.2)}.fn span.hs::after{margin-top:-1px}.fn span.st::before{margin-bottom:-1px}
+.fb{position:relative;background:linear-gradient(180deg,#3d2114,#2c1810 30%,#241209 70%,#1e0f08);border-radius:7px;padding:10px 0;overflow:visible;width:-webkit-fit-content;width:fit-content;min-width:100%}
+.dm{display:flex;height:0;position:relative;pointer-events:none}.dm .sp{width:44px;min-width:44px}.dm .dc{width:56px;min-width:56px;position:relative;height:0}
+.dm .dc .d{position:absolute;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,250,.2),rgba(180,175,165,.08));box-shadow:inset 0 1px 2px rgba(255,255,255,.1);left:50%;transform:translateX(-50%);border:1px solid rgba(255,255,255,.05)}
+.sr{display:flex;align-items:center;height:38px;position:relative;min-width:fit-content}
+.sl{width:44px;min-width:44px;text-align:center;font-size:.68rem;font-weight:600;color:var(--txd);z-index:2}
+.sn{position:absolute;left:44px;right:0;top:50%;transform:translateY(-50%);z-index:0;pointer-events:none}
+.fc{width:56px;min-width:56px;height:38px;position:relative;display:flex;align-items:center;justify-content:center}
+.fc.nut::after{content:'';position:absolute;right:0;top:0;bottom:0;width:4px;background:var(--nut);border-radius:1px;box-shadow:2px 0 5px rgba(0,0,0,.4);z-index:1}
+.fc:not(.nut)::after{content:'';position:absolute;right:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,rgba(200,185,170,.35),var(--fw),rgba(200,185,170,.35));z-index:1}
+.nd{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;z-index:3;position:relative;transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.3);box-shadow:0 2px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.2);animation:pop .3s cubic-bezier(.34,1.56,.64,1) backwards;line-height:1;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
+.nd:hover{transform:scale(1.2);z-index:10}
+.nd.pl{transform:scale(1.3);filter:brightness(1.3);box-shadow:0 0 14px 3px currentColor,0 2px 6px rgba(0,0,0,.35)}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.nd.root{background:var(--root);color:#fff;width:31px;height:31px;font-size:.65rem}
+.nd.m2{background:var(--m2);color:#1a1a1e}.nd.M2{background:var(--M2);color:#1a1a1e}.nd.m3{background:var(--m3);color:#fff}.nd.M3{background:var(--M3);color:#fff}
+.nd.P4{background:var(--P4);color:#fff}.nd.TT{background:var(--TT);color:#fff}.nd.P5{background:var(--P5);color:#1a1a1e}
+.nd.m6{background:var(--m6);color:#1a1a1e}.nd.M6{background:var(--M6);color:#1a1a1e}.nd.m7{background:var(--m7);color:#1a1a1e}.nd.M7{background:var(--M7);color:#1a1a1e}
+/* Chord grid */
+.cg2{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:12px 0}
+.cc{background:var(--sf);border:2px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;text-align:center;-webkit-tap-highlight-color:transparent}
+.cc:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px)}
+.cc.on{border-color:var(--root);background:rgba(230,57,70,.08);box-shadow:0 4px 16px rgba(230,57,70,.15)}
+.cc .deg{font-size:.65rem;color:var(--txd);margin-bottom:4px}
+.cc .cn{font-size:1rem;font-weight:700}
+.cc .cns{font-size:.65rem;color:var(--txd);margin-top:4px}
+.cc .ct{font-size:.6rem;color:var(--P4);margin-top:2px}
+/* Chord-Scale table */
+.cst{width:100%;border-collapse:collapse;margin:12px 0;font-size:.75rem}
+.cst th{text-align:left;padding:8px 10px;border-bottom:2px solid rgba(255,255,255,.1);color:var(--txd);font-weight:600;font-size:.65rem;text-transform:uppercase;letter-spacing:1px}
+.cst td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.cst tr:hover td{background:rgba(255,255,255,.02)}
+.csc{font-weight:700;white-space:nowrap}
+.css{display:flex;flex-wrap:wrap;gap:4px}
+.cstg{background:var(--sf2);padding:3px 8px;border-radius:12px;font-size:.65rem;cursor:pointer;transition:all .15s;border:1px solid rgba(255,255,255,.04)}
+.cstg:hover{border-color:var(--root);color:var(--root)}
+.cstg.on{background:rgba(230,57,70,.15);border-color:var(--root);color:var(--root)}
+/* Circle */
+.crc{display:flex;justify-content:center;align-items:center;padding:20px 0;flex-wrap:wrap;gap:20px}
+.crc svg{max-width:380px;width:100%}
+.cri{font-size:.75rem;color:var(--txd);max-width:250px}
+.cri h3{color:var(--tx);font-size:.9rem;margin-bottom:6px}
+.cri .cin{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.cri .cin span{padding:3px 8px;border-radius:12px;font-size:.7rem;font-weight:600}
+/* Voice Leading */
+.vl-pair{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.vl-ch{background:var(--sf);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.04);min-width:180px}
+.vl-lbl{font-size:.65rem;color:var(--txd);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.vl-pbtn{background:none;border:none;font-size:.85rem;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:2px 4px;border-radius:4px;transition:background .15s}
+.vl-pbtn:hover{background:rgba(255,255,255,.08)}
+.vl-notes{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.vl-note{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .15s;-webkit-tap-highlight-color:transparent;user-select:none}
+.vl-note:hover{transform:scale(1.15)}
+.vl-res{background:var(--sf);border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,.04);margin-top:16px}
+.vl-mv{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:.8rem}
+.vl-mn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.2);flex-shrink:0}
+.vl-ar{min-width:40px;text-align:center;font-size:.85rem}.vl-ds{font-size:.72rem;color:var(--txd)}
+.vl-sc{font-size:.9rem;font-weight:600;margin-top:10px}.vl-sc span{color:var(--P5)}
+.vl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:8px}
+.vl-cd{background:var(--sf);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.vl-cd:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px)}
+.vl-cd .vn{font-weight:700;font-size:.85rem}.vl-cd .vs2{font-size:.68rem;color:var(--P5);margin-top:3px}
+.vl-cd .vc2{font-size:.62rem;color:var(--txd);margin-top:2px}
+/* Key Signature */
+.ks-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:10px 0}
+.ks-slider-row{display:flex;align-items:center;gap:14px;width:100%;max-width:500px}
+.ks-slider-row label{font-size:.62rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--txd);white-space:nowrap}
+.ks-slider-row input[type=range]{flex:1;accent-color:var(--root);cursor:pointer;height:4px}
+.ks-val{min-width:32px;text-align:center;font-size:.85rem;font-weight:700}
+.ks-staff-wrap{background:var(--sf);border-radius:14px;padding:24px;border:1px solid rgba(255,255,255,.04);width:100%;max-width:680px;overflow-x:auto}
+.ks-staff-wrap svg{display:block;margin:0 auto}
+.ks-info{background:var(--sf);border-radius:12px;padding:16px 20px;border:1px solid rgba(255,255,255,.04);width:100%;max-width:680px}
+.ks-info h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+.ks-info .ks-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:5px 0;font-size:.8rem;color:var(--txd)}
+.ks-info .ks-row strong{color:var(--tx);min-width:110px;font-size:.72rem;text-transform:uppercase;letter-spacing:.8px}
+.ks-chip{padding:3px 9px;border-radius:10px;font-size:.72rem;font-weight:600}
+.ks-arrow{background:var(--sf2);border:1px solid rgba(255,255,255,.08);color:var(--tx);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;-webkit-tap-highlight-color:transparent}
+.ks-arrow:hover{background:rgba(255,255,255,.1)}.ks-arrow:active{transform:scale(.92)}
+/* Key Sig learn panel */
+.ks-learn{width:100%;max-width:680px;display:flex;flex-direction:column;gap:10px}
+.ks-callout{border-radius:10px;padding:11px 14px;font-size:.78rem;line-height:1.65;border:1px solid}
+.ks-callout.red{background:rgba(230,57,70,.07);border-color:rgba(230,57,70,.2)}
+.ks-callout.grn{background:rgba(6,214,160,.07);border-color:rgba(6,214,160,.25)}
+.ks-callout.neu{background:var(--sf);border-color:rgba(255,255,255,.06);color:var(--txd)}
+.ks-sbox{background:var(--sf);border-radius:12px;padding:14px 16px;border:1px solid rgba(255,255,255,.04)}
+.ks-blbl{font-size:.6rem;text-transform:uppercase;letter-spacing:1.1px;color:var(--txd);margin-bottom:9px;font-weight:600}
+.ks-blbl.ng{color:var(--root)}
+.ks-nr{display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+.ks-nn{min-width:28px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;padding:0 5px;white-space:nowrap}
+.ks-nn.rt{background:var(--root);color:#fff}
+.ks-nn.hi{background:var(--P5);color:#1a1a1e;box-shadow:0 0 0 2px rgba(233,196,106,.4)}
+.ks-nn.ac{background:rgba(69,123,157,.35);color:#fff}
+.ks-nn.wn{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);text-decoration:line-through}
+.ks-nn.nm{background:var(--sf2);color:var(--tx)}
+.ks-iv{font-size:.6rem;font-weight:700;padding:1px 4px;border-radius:3px;min-width:18px;text-align:center}
+.ks-iv.ok{color:rgba(255,255,255,.3)}
+.ks-iv.ng{color:var(--root);background:rgba(230,57,70,.18)}
+.ks-wdiff{font-size:.72rem;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);color:var(--txd);line-height:1.6}
+.ks-circle-wrap{width:100%;max-width:680px;display:flex;justify-content:center;background:var(--sf);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,.04)}
+/* Nav */
+.site-nav{display:flex;flex-wrap:wrap;gap:4px;padding:10px 16px;max-width:1440px;margin:0 auto}
+.nav-link{color:var(--txd);text-decoration:none;font-family:inherit;font-size:.75rem;padding:6px 14px;border-radius:8px;background:var(--sf2);border:1px solid rgba(255,255,255,.04);transition:all .2s;-webkit-tap-highlight-color:transparent}
+.nav-link:hover{color:var(--tx);border-color:rgba(255,255,255,.12)}.nav-link.active{color:#e63946;background:rgba(230,57,70,.1);border-color:#e63946}
+/* Mobile */
+@media(max-width:768px){.app{padding:12px;padding-top:env(safe-area-inset-top,12px)}header{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:14px}.logo{justify-content:center}h1{font-size:1rem}h1 em{display:none}.ctrls{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}.cg label{font-size:.55rem}select{min-width:0;width:100%;padding:10px 26px 10px 8px;font-size:16px;border-radius:10px}.fbw{padding:10px 6px 6px;border-radius:10px}.fn .sp,.dm .sp,.sl{width:30px;min-width:30px;font-size:.58rem}.fn span{width:44px;min-width:44px;font-size:.55rem}.dm .dc{width:44px;min-width:44px}.fc{width:44px;min-width:44px;height:34px}.sr{height:34px}.sn{left:30px}.nd{width:26px;height:26px;font-size:.52rem}.nd.root{width:28px;height:28px;font-size:.56rem}.cg2{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}.cc{padding:8px}.cc .cn{font-size:.85rem}.cst{font-size:.65rem}.vl-pair{gap:12px}.vl-ch{min-width:150px;padding:10px}.vl-note{width:32px;height:32px;font-size:.68rem}.vl-mn{width:28px;height:28px;font-size:.62rem}.vl-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.site-nav{padding:8px 10px}.nav-link{font-size:.68rem;padding:5px 10px}}
+@media(max-width:380px){.fn span,.dm .dc,.fc{width:40px;min-width:40px}.fc{height:32px}.sr{height:32px}.nd{width:23px;height:23px;font-size:.48rem}.nd.root{width:25px;height:25px}}
+@media(max-height:500px)and(orientation:landscape){.app{padding:6px 10px}header{flex-direction:row;margin-bottom:6px;gap:6px}.ctrls{display:flex;gap:5px}select{padding:4px 22px 4px 6px;font-size:13px}.sr{height:30px}.fc{height:30px}.nd{width:22px;height:22px;font-size:.48rem}.nd.root{width:24px;height:24px}}
+
+/* thin dark scrollbar for the fretboard scroller (PC) */
+.fbw{scrollbar-width:thin;scrollbar-color:#4a4038 transparent}
+.fbw::-webkit-scrollbar{height:8px}
+.fbw::-webkit-scrollbar-thumb{background:#4a4038;border-radius:4px}
+.fbw::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+<nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a><a href="index.html" class="nav-link">🎸 Fretboard</a><a href="practice.html" class="nav-link">🎵 Practice</a><a href="theory.html" class="nav-link active">📖 Theory</a><a href="compose.html" class="nav-link">🎼 Compose</a><a href="../tuner/index.html" class="nav-link" style="margin-left:auto">🎚 Tuner</a><a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a><a href="../studio/index.html" class="nav-link">🎹 Studio</a><a href="../tuner/index.html#advisor" class="nav-link">🎛 Advisor</a></nav>
+<div class="app">
+  <header><div class="logo"><i>♯</i><h1>Theory Tools <em>/ 音楽理論</em></h1></div></header>
+  <div class="tabs">
+    <button class="tab on" onclick="stab('dia',this)">🎹 ダイアトニック</button>
+    <button class="tab" onclick="stab('cs',this)">📖 コード⇔スケール</button>
+    <button class="tab" onclick="stab('cr',this)">⭕ サークル</button>
+    <button class="tab" onclick="stab('vl',this)">🔗 ボイスリーディング</button>
+    <button class="tab" onclick="stab('ks',this)">🎼 調号</button>
+  </div>
+  <!-- Diatonic -->
+  <div class="tp on" id="tp-dia">
+    <div class="ctrls" style="margin-bottom:10px">
+      <div class="cg"><label>Key</label><select id="dia-k"></select></div>
+      <div class="cg"><label>Scale</label><select id="dia-t">
+        <option value="major">Major / メジャー</option><option value="minor">Minor / マイナー</option>
+        <option value="hminor">Harm Minor / ハーモニックマイナー</option><option value="mminor">Mel Minor / メロディックマイナー</option>
+      </select></div>
+      <div class="cg"><label>Voicing</label><select id="dia-v">
+        <option value="triad">Triad / 三和音</option><option value="7th">7th / 四和音</option>
+        <option value="9th">9th / 五和音</option><option value="6th">6th</option><option value="add9">Add9</option>
+      </select></div>
+      <div class="cg"><label>Strings</label><select id="dia-r"><option value="6">6弦</option><option value="7">7弦</option></select></div>
+      <div class="cg"><label>Frets</label><select id="dia-f"><option value="12">12</option><option value="15">15</option><option value="17">17</option><option value="22">22</option><option value="24" selected>24</option></select></div>
+    </div>
+    <div class="cg2" id="dia-grid"></div>
+    <div class="fbw"><div class="fn" id="dia-ft"></div><div class="fb" id="dia-fb"></div><div class="fn" id="dia-fB"></div></div>
+    <div id="dia-nf" style="text-align:center;margin-top:8px;font-size:.75rem;color:var(--txd)"></div>
+  </div>
+  <!-- Chord-Scale -->
+  <div class="tp" id="tp-cs">
+    <div class="ctrls" style="margin-bottom:10px">
+      <div class="cg"><label>Key</label><select id="cs-k"></select></div>
+      <div class="cg"><label>Strings</label><select id="cs-r"><option value="6">6弦</option><option value="7">7弦</option></select></div>
+      <div class="cg"><label>Frets</label><select id="cs-f"><option value="12">12</option><option value="15">15</option><option value="17">17</option><option value="22">22</option><option value="24" selected>24</option></select></div>
+    </div>
+    <div style="overflow-x:auto"><table class="cst" id="cs-tbl"></table></div>
+    <div class="fbw" style="margin-top:12px"><div class="fn" id="cs-ft"></div><div class="fb" id="cs-fb"></div><div class="fn" id="cs-fB"></div></div>
+    <div id="cs-nf" style="text-align:center;margin-top:8px;font-size:.75rem;color:var(--txd)"></div>
+  </div>
+  <!-- Circle -->
+  <div class="tp" id="tp-cr">
+    <div class="ctrls" style="margin-bottom:10px">
+      <div class="cg"><label>Key</label><select id="cr-k"></select></div>
+      <div class="cg"><label>Scale</label><select id="cr-s"></select></div>
+    </div>
+    <div class="crc"><svg id="cr-svg" viewBox="0 0 400 400"></svg><div class="cri" id="cr-info"></div></div>
+  </div>
+  <!-- Key Signature -->
+  <div class="tp" id="tp-ks">
+    <div class="ks-wrap">
+      <div class="ks-slider-row">
+        <label>♭ ← 調号 → ♯</label>
+        <button class="ks-arrow" onclick="ksStep(-1)">◀</button>
+        <input type="range" id="ks-sl" min="-7" max="7" value="0" oninput="rKS()">
+        <button class="ks-arrow" onclick="ksStep(1)">▶</button>
+        <span class="ks-val" id="ks-sv">C</span>
+      </div>
+      <div class="ks-staff-wrap"><svg id="ks-svg" viewBox="0 0 620 160" width="620" height="160"></svg></div>
+      <div class="ks-info" id="ks-info"></div>
+      <div id="ks-learn" class="ks-learn"></div>
+    </div>
+  </div>
+  <!-- Voice Leading -->
+  <div class="tp" id="tp-vl">
+    <div class="vl-pair">
+      <div class="vl-ch">
+        <div class="vl-lbl">Chord A <button class="vl-pbtn" onclick="vlPlayCh('a')">🔊</button></div>
+        <div style="display:flex;gap:6px"><select id="vl-ar"></select><select id="vl-at"></select></div>
+        <div class="vl-notes" id="vl-an"></div>
+      </div>
+      <div style="font-size:1.5rem;color:var(--txd);align-self:center;padding-top:20px">→</div>
+      <div class="vl-ch">
+        <div class="vl-lbl">Chord B <button class="vl-pbtn" onclick="vlPlayCh('b')">🔊</button></div>
+        <div style="display:flex;gap:6px"><select id="vl-br"></select><select id="vl-bt"></select></div>
+        <div class="vl-notes" id="vl-bn"></div>
+      </div>
+      <button class="vl-pbtn" style="align-self:center;padding-top:20px;font-size:.8rem" onclick="vlPlayBoth()">🔊 A→B</button>
+    </div>
+    <div class="vl-res" id="vl-res"></div>
+    <div style="margin-top:20px">
+      <div style="font-size:.82rem;color:var(--txd);margin-bottom:10px;font-weight:600">Chord A からの滑らかな接続先 TOP 12</div>
+      <div class="vl-grid" id="vl-sug"></div>
+    </div>
+  </div>
+</div>
+<script>
+var N=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FM={'C#':'D♭','D#':'E♭','F#':'G♭','G#':'A♭','A#':'B♭'};
+var T6={t:[4,9,2,7,11,4],n:['E','A','D','G','B','e'],w:[2.8,2.3,1.8,1.4,1.1,.9],c:['#928880','#9c9286','#a69c90','#b0a69a','#bab0a4','#c4b8ac'],h:[82.41,110,146.83,196,246.94,329.63]};
+var T7={t:[11,4,9,2,7,11,4],n:['B','E','A','D','G','B','e'],w:[3.2,2.8,2.3,1.8,1.4,1.1,.9],c:['#88807a','#928880','#9c9286','#a69c90','#b0a69a','#bab0a4','#c4b8ac'],h:[61.74,82.41,110,146.83,196,246.94,329.63]};
+var FS=new Set([3,5,7,9,15,17,19,21]),FD=new Set([12,24]);
+var DC={'R':'root','m2':'m2','M2':'M2','m3':'m3','M3':'M3','P4':'P4','TT':'TT','P5':'P5','m6':'m6','M6':'M6','m7':'m7','M7':'M7'};
+var DJ={'R':'ルート','m2':'短2','M2':'長2','m3':'短3','M3':'長3','P4':'完全4','TT':'トライトーン','P5':'完全5','m6':'短6','M6':'長6','m7':'短7','M7':'長7'};
+var SC={'Major / メジャー':{i:[0,2,4,5,7,9,11],d:['R','M2','M3','P4','P5','M6','M7']},'Nat Minor / ナチュラルマイナー':{i:[0,2,3,5,7,8,10],d:['R','M2','m3','P4','P5','m6','m7']},'Harm Minor / ハーモニックマイナー':{i:[0,2,3,5,7,8,11],d:['R','M2','m3','P4','P5','m6','M7']},'Mel Minor / メロディックマイナー':{i:[0,2,3,5,7,9,11],d:['R','M2','m3','P4','P5','M6','M7']},'Maj Penta / メジャーペンタ':{i:[0,2,4,7,9],d:['R','M2','M3','P5','M6']},'Min Penta / マイナーペンタ':{i:[0,3,5,7,10],d:['R','m3','P4','P5','m7']},'Blues / ブルース':{i:[0,3,5,6,7,10],d:['R','m3','P4','TT','P5','m7']},'Dorian / ドリアン':{i:[0,2,3,5,7,9,10],d:['R','M2','m3','P4','P5','M6','m7']},'Mixolydian / ミクソリディアン':{i:[0,2,4,5,7,9,10],d:['R','M2','M3','P4','P5','M6','m7']},'Phrygian / フリジアン':{i:[0,1,3,5,7,8,10],d:['R','m2','m3','P4','P5','m6','m7']},'Lydian / リディアン':{i:[0,2,4,6,7,9,11],d:['R','M2','M3','TT','P5','M6','M7']},'Locrian / ロクリアン':{i:[0,1,3,5,6,8,10],d:['R','m2','m3','P4','TT','m6','m7']},'Whole Tone / ホールトーン':{i:[0,2,4,6,8,10],d:['R','M2','M3','TT','m6','m7']}};
+var NC=['var(--root)','var(--m2)','var(--M2)','var(--m3)','var(--M3)','var(--P4)','var(--TT)','var(--P5)','var(--m6)','var(--M6)','var(--m7)','var(--M7)'];
+
+// Diatonic chord builder
+var SDG={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10],hminor:[0,2,3,5,7,8,11],mminor:[0,2,3,5,7,9,11]};
+var DLB={major:['I','ii','iii','IV','V','vi','vii°'],minor:['i','ii°','III','iv','v','VI','VII'],hminor:['i','ii°','III+','iv','V','VI','vii°'],mminor:['i','ii','III+','IV','V','vi°','vii°']};
+function dn(){var a=arguments,m={0:'R',1:'m2',2:'M2',3:'m3',4:'M3',5:'P4',6:'TT',7:'P5',8:'m6',9:'M6',10:'m7',11:'M7'},r=[];for(var i=0;i<a.length;i++)r.push(m[a[i]]||'?');return r}
+function buildDia(st){
+  var sc=SDG[st],lb=DLB[st],res=[];
+  for(var dg=0;dg<7;dg++){
+    var n1=sc[dg],n2=sc[(dg+2)%7],n3=sc[(dg+4)%7],n4=sc[(dg+6)%7],n5=sc[(dg+1)%7];
+    var i2=((n2-n1)+12)%12,i3=((n3-n1)+12)%12,i4=((n4-n1)+12)%12,i9=((n5-n1)+12)%12,i6=((sc[(dg+5)%7]-n1)+12)%12;
+    var tt,sv;
+    if(i2===4&&i3===7)tt='';else if(i2===3&&i3===7)tt='m';else if(i2===3&&i3===6)tt='dim';else if(i2===4&&i3===8)tt='aug';else tt='?';
+    if(i4===11)sv=tt==='m'?'mMaj7':tt===''?'Maj7':'?7';
+    else if(i4===10)sv=tt===''?'7':tt==='m'?'m7':tt==='dim'?'m7♭5':'?7';
+    else if(i4===9)sv=tt==='dim'?'dim7':'?7';else sv='?7';
+    if(tt==='aug'&&i4===11)sv='augMaj7';if(tt==='aug'&&i4===10)sv='aug7';
+    var n9l=sv.replace('Maj7','Maj9').replace('m7♭5','m9♭5').replace('dim7','dim9').replace('m7','m9').replace('mMaj7','mMaj9').replace(/^7$/,'9').replace('aug7','aug9').replace('augMaj7','augMaj9');
+    res.push({deg:lb[dg],riv:n1,
+      triad:{iv:[0,i2,i3],d:dn(0,i2,i3),l:tt||'Maj'},
+      '7th':{iv:[0,i2,i3,i4],d:dn(0,i2,i3,i4),l:sv},
+      '9th':{iv:[0,i2,i3,i4,i9],d:dn(0,i2,i3,i4,i9),l:n9l},
+      '6th':{iv:[0,i2,i3,i6],d:dn(0,i2,i3,i6),l:tt==='m'?'m6':tt===''?'6':tt+'6'},
+      add9:{iv:[0,i9,i2,i3],d:dn(0,i9,i2,i3),l:tt==='m'?'m(add9)':tt===''?'add9':tt+'(add9)'}
+    })}return res}
+var DIA={};['major','minor','hminor','mminor'].forEach(function(t){DIA[t]=buildDia(t)});
+
+var CSM={'Maj':['Major / メジャー','Lydian / リディアン','Mixolydian / ミクソリディアン','Maj Penta / メジャーペンタ'],'m':['Nat Minor / ナチュラルマイナー','Dorian / ドリアン','Phrygian / フリジアン','Min Penta / マイナーペンタ'],'dim':['Locrian / ロクリアン'],'aug':['Mel Minor / メロディックマイナー'],'Maj7':['Major / メジャー','Lydian / リディアン'],'7':['Mixolydian / ミクソリディアン','Blues / ブルース'],'m7':['Dorian / ドリアン','Nat Minor / ナチュラルマイナー','Phrygian / フリジアン','Min Penta / マイナーペンタ'],'m7♭5':['Locrian / ロクリアン'],'dim7':['Harm Minor / ハーモニックマイナー'],'mMaj7':['Harm Minor / ハーモニックマイナー','Mel Minor / メロディックマイナー'],'augMaj7':['Mel Minor / メロディックマイナー'],'aug7':['Mel Minor / メロディックマイナー'],'m9':['Dorian / ドリアン','Nat Minor / ナチュラルマイナー'],'9':['Mixolydian / ミクソリディアン'],'Maj9':['Major / メジャー','Lydian / リディアン'],'m6':['Dorian / ドリアン','Mel Minor / メロディックマイナー'],'6':['Major / メジャー','Maj Penta / メジャーペンタ'],'add9':['Major / メジャー'],'m(add9)':['Dorian / ドリアン','Nat Minor / ナチュラルマイナー']};
+
+// Audio
+var ax=null;
+function ac(){if(!ax)try{ax=new(window.AudioContext||window.webkitAudioContext)}catch(e){return null}if(ax.state==='suspended')ax.resume();return ax}
+function pf(fq,v){var c=ac();if(!c)return;v=v||.2;var t=c.currentTime,m=c.createGain();m.connect(c.destination);m.gain.setValueAtTime(0,t);m.gain.linearRampToValueAtTime(v,t+.008);m.gain.exponentialRampToValueAtTime(Math.max(v*.6,.001),t+.08);m.gain.exponentialRampToValueAtTime(Math.max(v*.3,.001),t+.4);m.gain.exponentialRampToValueAtTime(.001,t+1.8);[{r:1,g:1},{r:2,g:.5},{r:3,g:.25},{r:4,g:.15},{r:5,g:.08}].forEach(function(h){var o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.setValueAtTime(fq*h.r,t);g.gain.setValueAtTime(h.g,t);o.connect(g);g.connect(m);o.start(t);o.stop(t+2)})}
+function ps(ns,si,f,v){var T=+ns===7?T7:T6;pf(T.h[si]*Math.pow(2,f/12),v||.2)}
+function bnd(d,ns,si,f,v){var tc=false;d.addEventListener('touchstart',function(e){e.preventDefault();tc=true;ps(ns,si,f,v);d.classList.add('pl');setTimeout(function(){d.classList.remove('pl')},300)},{passive:false});d.addEventListener('click',function(){if(tc){tc=false;return}ps(ns,si,f,v);d.classList.add('pl');setTimeout(function(){d.classList.remove('pl')},300)})}
+
+function stab(id,el){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});document.querySelectorAll('.tp').forEach(function(p){p.classList.remove('on')});document.getElementById('tp-'+id).classList.add('on');el.classList.add('on')}
+function fk(el){N.forEach(function(n,i){var o=document.createElement('option');o.value=i;o.textContent=FM[n]?n+' / '+FM[n]:n;el.appendChild(o)})}
+function fsc(el){Object.keys(SC).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;el.appendChild(o)})}
+
+// Shared fretboard
+function rfb(fbId,ftId,fBId,ns,key,ivs,degs,maxF){
+  var T=+ns===7?T7:T6,nst=+ns,map={};ivs.forEach(function(iv,idx){map[(key+iv)%12]=degs[idx]});
+  ;[ftId,fBId].forEach(function(id,idx){var el=document.getElementById(id);el.innerHTML='<div class="sp"></div>';for(var f=0;f<=maxF;f++){var s=document.createElement('span');s.textContent=f;if(idx===0){if(FD.has(f))s.className='hd';else if(FS.has(f))s.className='hs'}else{if(FD.has(f))s.className='ht';else if(FS.has(f))s.className='st'}el.appendChild(s)}});
+  var fb=document.getElementById(fbId);fb.innerHTML='';var sh=38,th=nst*sh,my=th/2-16,d1=th*.25,d2=th*.75;
+  var dm=document.createElement('div');dm.className='dm';dm.innerHTML='<div class="sp"></div>';
+  for(var f=0;f<=maxF;f++){var c=document.createElement('div');c.className='dc';if(FS.has(f))c.innerHTML='<div class="d" style="top:'+my+'px"></div>';else if(FD.has(f))c.innerHTML='<div class="d" style="top:'+d1+'px"></div><div class="d" style="top:'+d2+'px"></div>';dm.appendChild(c)}
+  fb.appendChild(dm);
+  for(var si=nst-1;si>=0;si--){var row=document.createElement('div');row.className='sr';var sn=document.createElement('div');sn.className='sn';sn.style.height=T.w[si]+'px';sn.style.background=T.c[si];sn.style.opacity='.4';row.appendChild(sn);var lb=document.createElement('div');lb.className='sl';lb.textContent=T.n[si];row.appendChild(lb);
+    for(var f=0;f<=maxF;f++){var cell=document.createElement('div');cell.className='fc'+(f===0?' nut':'');var ni=(T.t[si]+f)%12;
+      if(map[ni]!==undefined){var dg=map[ni],dot=document.createElement('div');dot.className='nd '+DC[dg];dot.textContent=N[ni];dot.style.animationDelay=f*10+'ms';bnd(dot,ns,si,f);cell.appendChild(dot)}
+      row.appendChild(cell)}fb.appendChild(row)}}
+
+// ═══ Diatonic ═══
+var diaSel=0;
+function rDia(){
+  var key=+document.getElementById('dia-k').value,st=document.getElementById('dia-t').value,vc=document.getElementById('dia-v').value,ns=document.getElementById('dia-r').value,fr=+document.getElementById('dia-f').value;
+  var dia=DIA[st];if(diaSel>=dia.length)diaSel=0;
+  var grid=document.getElementById('dia-grid');grid.innerHTML='';
+  dia.forEach(function(ch,idx){
+    var root=(key+ch.riv)%12,vd=ch[vc],notes=vd.iv.map(function(iv){return N[(root+iv)%12]});
+    var card=document.createElement('div');card.className='cc'+(idx===diaSel?' on':'');
+    card.innerHTML='<div class="deg">'+ch.deg+'</div><div class="cn">'+N[root]+(vd.l==='Maj'?'':vd.l)+'</div><div class="cns">'+notes.join(' - ')+'</div><div class="ct">'+vd.d.join(' ')+'</div>';
+    card.addEventListener('click',function(){diaSel=idx;rDia();var bf=261.63;vd.iv.forEach(function(iv,i){setTimeout(function(){pf(bf*Math.pow(2,(root+iv)/12),.12)},i*80)})});
+    grid.appendChild(card)});
+  var ch=dia[diaSel],root=(key+ch.riv)%12,vd=ch[vc];
+  rfb('dia-fb','dia-ft','dia-fB',ns,root,vd.iv,vd.d,fr);
+  var vn={triad:'Triad','7th':'7th','9th':'9th','6th':'6th',add9:'Add9'};
+  document.getElementById('dia-nf').textContent=N[root]+(vd.l==='Maj'?'':vd.l)+' ('+vn[vc]+') のコードトーンを表示中 — タップで音が出ます'}
+
+// ═══ Chord-Scale ═══
+function rCS(){
+  var key=+document.getElementById('cs-k').value,ns=document.getElementById('cs-r').value,fr=+document.getElementById('cs-f').value;
+  var tbl=document.getElementById('cs-tbl');tbl.innerHTML='<thead><tr><th>Degree</th><th>Triad</th><th>7th</th><th>使えるスケール</th></tr></thead>';
+  var tb=document.createElement('tbody');
+  DIA.major.forEach(function(ch){
+    var root=(key+ch.riv)%12,tri=ch.triad,sev=ch['7th'];
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td style="color:var(--txd)">'+ch.deg+'</td><td class="csc">'+N[root]+(tri.l==='Maj'?'':tri.l)+'</td><td class="csc">'+N[root]+sev.l+'</td><td></td>';
+    var td=tr.querySelector('td:last-child'),div=document.createElement('div');div.className='css';
+    var ss=new Set();(CSM[sev.l]||[]).forEach(function(s){ss.add(s)});(CSM[tri.l==='Maj'?'Maj':tri.l]||[]).forEach(function(s){ss.add(s)});
+    ss.forEach(function(sc){var tag=document.createElement('span');tag.className='cstg';tag.textContent=sc;
+      tag.addEventListener('click',function(){document.querySelectorAll('.cstg').forEach(function(t){t.classList.remove('on')});tag.classList.add('on');var scD=SC[sc];if(scD){rfb('cs-fb','cs-ft','cs-fB',ns,root,scD.i,scD.d,fr);document.getElementById('cs-nf').textContent=N[root]+' '+sc+' を表示中（'+N[root]+sev.l+' 上で使用）'}});
+      div.appendChild(tag)});
+    td.appendChild(div);tb.appendChild(tr)});
+  tbl.appendChild(tb);
+  document.getElementById('cs-fb').innerHTML='';document.getElementById('cs-nf').textContent='スケール名をタップすると指板に表示されます'}
+
+// ═══ Chromatic Circle ═══
+function rCR(){
+  var key=+document.getElementById('cr-k').value,sn=document.getElementById('cr-s').value,sc=SC[sn];
+  var sNotes=new Set(sc.i.map(function(iv){return(key+iv)%12}));
+  var cx=200,cy=200,r=160,ri=120,svg=document.getElementById('cr-svg'),h='';
+  h+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(r+10)+'" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="1"/>';
+  var sp=[];for(var i=0;i<12;i++){if(sNotes.has(i)){var a=(i-3)*30*Math.PI/180;sp.push({ni:i,x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)})}}
+  for(var i=0;i<sp.length;i++){var nx=sp[(i+1)%sp.length];h+='<line x1="'+sp[i].x+'" y1="'+sp[i].y+'" x2="'+nx.x+'" y2="'+nx.y+'" stroke="rgba(255,255,255,.08)" stroke-width="1"/>'}
+  var ra=(key-3)*30*Math.PI/180,p5=(key+7)%12;
+  if(sNotes.has(p5)){var pa=(p5-3)*30*Math.PI/180;h+='<line x1="'+(cx+r*Math.cos(ra))+'" y1="'+(cy+r*Math.sin(ra))+'" x2="'+(cx+r*Math.cos(pa))+'" y2="'+(cy+r*Math.sin(pa))+'" stroke="var(--P5)" stroke-width="2" opacity=".3"/>'}
+  for(var i=0;i<12;i++){var a=(i-3)*30*Math.PI/180,x=cx+r*Math.cos(a),y=cy+r*Math.sin(a),ins=sNotes.has(i),isR=i===key,nr=isR?22:ins?18:14,fl=isR?'var(--root)':ins?NC[(i-key+12)%12]:'var(--sf2)',tf=ins?'#fff':'var(--txd)',op=ins?1:.4;
+    h+='<g opacity="'+op+'"><circle cx="'+x+'" cy="'+y+'" r="'+nr+'" fill="'+fl+'" stroke="rgba(255,255,255,'+(ins?.15:.06)+')" stroke-width="1.5"/><text x="'+x+'" y="'+y+'" text-anchor="middle" dominant-baseline="central" fill="'+tf+'" font-size="'+(isR?14:12)+'" font-weight="'+(isR?700:600)+'" font-family="-apple-system,monospace">'+N[i]+'</text></g>';
+    if(ins){var di=sc.i.indexOf((i-key+12)%12);if(di>=0){var lx=cx+ri*Math.cos(a),ly=cy+ri*Math.sin(a);h+='<text x="'+lx+'" y="'+ly+'" text-anchor="middle" dominant-baseline="central" fill="var(--txd)" font-size="9" font-family="-apple-system,monospace">'+sc.d[di]+'</text>'}}}
+  h+='<text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" fill="var(--tx)" font-size="18" font-weight="700" font-family="-apple-system,monospace">'+N[key]+'</text>';
+  h+='<text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" fill="var(--txd)" font-size="11" font-family="-apple-system,monospace">'+sn.split('/')[0].trim()+'</text>';
+  svg.innerHTML=h;
+  var info=document.getElementById('cr-info'),nl=sc.i.map(function(iv,idx){var ni=(key+iv)%12;return'<span style="background:'+NC[iv]+';color:'+(iv<3||iv===7?'#1a1a1e':'#fff')+'">'+N[ni]+' ('+sc.d[idx]+')</span>'}).join('');
+  var hs=[];for(var i=0;i<sc.i.length;i++){var nx=sc.i[(i+1)%sc.i.length]||12;hs.push(((nx||12)-sc.i[i]+12)%12)}
+  info.innerHTML='<h3>'+N[key]+' '+sn+'</h3><div class="cin">'+nl+'</div><p style="margin-top:8px">音程パターン: '+hs.join(' - ')+'</p><p style="margin-top:4px">構成音数: '+sc.i.length+'音</p>'}
+
+// ═══ Voice Leading ═══
+var VCT={'':[0,4,7],'m':[0,3,7],'dim':[0,3,6],'aug':[0,4,8],'sus4':[0,5,7],'sus2':[0,2,7],'7':[0,4,7,10],'m7':[0,3,7,10],'M7':[0,4,7,11],'mM7':[0,3,7,11],'dim7':[0,3,6,9],'m7♭5':[0,3,6,10],'add9':[0,2,4,7],'6':[0,4,7,9],'m6':[0,3,7,9]};
+var VCTK=['','m','dim','aug','sus4','sus2','7','m7','M7','mM7','dim7','m7♭5','add9','6','m6'];
+var VCTL={'':'Major','m':'minor','dim':'dim','aug':'aug','sus4':'sus4','sus2':'sus2','7':'7','m7':'m7','M7':'M7','mM7':'mM7','dim7':'dim7','m7♭5':'m7♭5','add9':'add9','6':'6','m6':'m6'};
+function vlDist(a,b){var d=Math.abs(a-b);return Math.min(d,12-d)}
+function vlDir(a,b){if(a===b)return{d:0,s:'共通音'};var up=(b-a+12)%12,dn=(a-b+12)%12;if(up<=dn)return{d:up,s:up===1?'半音↑':up===2?'全音↑':up+'半音↑'};return{d:dn,s:dn===1?'半音↓':dn===2?'全音↓':dn+'半音↓'}}
+function vlMatch(na,nb){
+  var a=na.slice(),b=nb.slice(),m=[];
+  while(a.length&&b.length){var best={d:13,ai:-1,bi:-1};for(var i=0;i<a.length;i++)for(var j=0;j<b.length;j++){var d=vlDist(a[i],b[j]);if(d<best.d)best={d:d,ai:i,bi:j}};m.push({from:a[best.ai],to:b[best.bi]});a.splice(best.ai,1);b.splice(best.bi,1)}
+  a.forEach(function(n){m.push({from:n,to:-1})});b.forEach(function(n){m.push({from:-1,to:n})});
+  m.sort(function(x,y){return(x.from===-1?99:x.from)-(y.from===-1?99:y.from)});return m}
+function vlScore(na,nb){var s=0;na.forEach(function(a){var mn=12;nb.forEach(function(b){mn=Math.min(mn,vlDist(a,b))});s+=mn});return s}
+function vlTC(iv){return[0,3,4,5,6].indexOf(iv)>=0?'#fff':'#1a1a1e'}
+function vlPlayCh(ab){var r=+document.getElementById('vl-'+ab+'r').value,t=document.getElementById('vl-'+ab+'t').value,bf=261.63;VCT[t].forEach(function(iv,i){setTimeout(function(){pf(bf*Math.pow(2,(r+iv)/12),.12)},i*60)})}
+function vlPlayBoth(){vlPlayCh('a');setTimeout(function(){vlPlayCh('b')},600)}
+function rVL(){
+  var ra=+document.getElementById('vl-ar').value,ta=document.getElementById('vl-at').value;
+  var rb=+document.getElementById('vl-br').value,tb=document.getElementById('vl-bt').value;
+  var na=VCT[ta].map(function(iv){return(ra+iv)%12}),nb=VCT[tb].map(function(iv){return(rb+iv)%12});
+  // Render note circles
+  ['a','b'].forEach(function(ab){
+    var notes=ab==='a'?na:nb,root=ab==='a'?ra:rb,type=ab==='a'?ta:tb;
+    var el=document.getElementById('vl-'+ab+'n');el.innerHTML='';
+    notes.forEach(function(n){var iv=(n-root+12)%12;var dot=document.createElement('div');dot.className='vl-note';dot.style.background=NC[iv];dot.style.color=vlTC(iv);dot.textContent=N[n];dot.addEventListener('click',function(){pf(261.63*Math.pow(2,n/12),.15);dot.style.transform='scale(1.3)';setTimeout(function(){dot.style.transform=''},200)});el.appendChild(dot)});
+  });
+  // Voice movement analysis
+  var matches=vlMatch(na,nb),total=0,common=0;
+  var h='<div style="font-size:.82rem;font-weight:600;margin-bottom:8px">声部の動き</div>';
+  matches.forEach(function(m){
+    if(m.from===-1){var iv=(m.to-rb+12)%12;h+='<div class="vl-mv"><div class="vl-mn" style="background:var(--sf2);color:var(--txd)">+</div><div class="vl-ar" style="color:var(--txd)">←</div><div class="vl-mn" style="background:'+NC[iv]+';color:'+vlTC(iv)+'">'+N[m.to]+'</div><div class="vl-ds">追加</div></div>'}
+    else if(m.to===-1){var iv=(m.from-ra+12)%12;h+='<div class="vl-mv"><div class="vl-mn" style="background:'+NC[iv]+';color:'+vlTC(iv)+'">'+N[m.from]+'</div><div class="vl-ar" style="color:var(--txd)">→</div><div class="vl-mn" style="background:var(--sf2);color:var(--txd)">-</div><div class="vl-ds">消滅</div></div>'}
+    else{var dir=vlDir(m.from,m.to);total+=dir.d;if(dir.d===0)common++;var iva=(m.from-ra+12)%12,ivb=(m.to-rb+12)%12;var arSt=dir.d===0?'color:var(--P5);font-weight:700':'color:var(--txd)';h+='<div class="vl-mv"><div class="vl-mn" style="background:'+NC[iva]+';color:'+vlTC(iva)+'">'+N[m.from]+'</div><div class="vl-ar" style="'+arSt+'">'+(dir.d===0?'━━━':'──→')+'</div><div class="vl-mn" style="background:'+NC[ivb]+';color:'+vlTC(ivb)+'">'+N[m.to]+'</div><div class="vl-ds">'+dir.s+'</div></div>'}
+  });
+  var rating=total<=2?'非常に滑らか':total<=4?'滑らか':total<=6?'やや跳躍あり':'跳躍が多い';
+  var rCol=total<=2?'var(--m7)':total<=4?'var(--P5)':total<=6?'var(--txd)':'var(--root)';
+  h+='<div class="vl-sc">移動距離: <span>'+total+'半音</span> (共通音: '+common+')</div>';
+  h+='<div style="font-size:.75rem;color:'+rCol+';margin-top:4px">'+rating+'</div>';
+  document.getElementById('vl-res').innerHTML=h;
+  // Suggestions
+  var results=[];
+  for(var r=0;r<12;r++)for(var ti=0;ti<VCTK.length;ti++){var t=VCTK[ti],nb2=VCT[t].map(function(iv){return(r+iv)%12});var sc=vlScore(na,nb2);var cm=0;na.forEach(function(a){nb2.forEach(function(b){if(a===b)cm++})});results.push({r:r,t:t,sc:sc,cm:cm,nb:nb2})}
+  results.sort(function(a,b){return a.sc-b.sc||(b.cm-a.cm)});
+  results=results.filter(function(x){return x.r!==ra});
+  var grid=document.getElementById('vl-sug');grid.innerHTML='';
+  results.slice(0,12).forEach(function(item){
+    var card=document.createElement('div');card.className='vl-cd';
+    var name=N[item.r]+(item.t||'');
+    var cn=[];na.forEach(function(a){item.nb.forEach(function(b){if(a===b&&cn.indexOf(N[a])===-1)cn.push(N[a])})});
+    card.innerHTML='<div class="vn">'+name+'</div><div class="vs2">距離: '+item.sc+'半音</div><div class="vc2">共通音: '+(cn.length?cn.join(', '):'なし')+'</div>';
+    card.addEventListener('click',function(){document.getElementById('vl-br').value=item.r;document.getElementById('vl-bt').value=item.t;rVL();var bf=261.63;VCT[item.t].forEach(function(iv,i){setTimeout(function(){pf(bf*Math.pow(2,(item.r+iv)/12),.12)},i*60)})});
+    grid.appendChild(card)});
+}
+
+// ═══ Key Signature ═══
+// Slider value → key info
+var KS_MAP={
+  '-7':{maj:'C♭',min:'A♭',acc:'♭',n:7,midi:11},
+  '-6':{maj:'G♭',min:'E♭',acc:'♭',n:6,midi:6},
+  '-5':{maj:'D♭',min:'B♭',acc:'♭',n:5,midi:1},
+  '-4':{maj:'A♭',min:'F',  acc:'♭',n:4,midi:8},
+  '-3':{maj:'E♭',min:'C',  acc:'♭',n:3,midi:3},
+  '-2':{maj:'B♭',min:'G',  acc:'♭',n:2,midi:10},
+  '-1':{maj:'F', min:'D',  acc:'♭',n:1,midi:5},
+   '0':{maj:'C', min:'A',  acc:'',  n:0,midi:0},
+   '1':{maj:'G', min:'E',  acc:'♯',n:1,midi:7},
+   '2':{maj:'D', min:'B',  acc:'♯',n:2,midi:2},
+   '3':{maj:'A', min:'F♯',acc:'♯',n:3,midi:9},
+   '4':{maj:'E', min:'C♯',acc:'♯',n:4,midi:4},
+   '5':{maj:'B', min:'G♯',acc:'♯',n:5,midi:11},
+   '6':{maj:'F♯',min:'D♯',acc:'♯',n:6,midi:6},
+   '7':{maj:'C♯',min:'A♯',acc:'♯',n:7,midi:1}
+};
+// Scale note names for each key (major, 7 notes)
+var KS_NOTES={
+  'C♭': ['C♭','D♭','E♭','F♭','G♭','A♭','B♭'],
+  'G♭': ['G♭','A♭','B♭','C♭','D♭','E♭','F'],
+  'D♭': ['D♭','E♭','F','G♭','A♭','B♭','C'],
+  'A♭': ['A♭','B♭','C','D♭','E♭','F','G'],
+  'E♭': ['E♭','F','G','A♭','B♭','C','D'],
+  'B♭': ['B♭','C','D','E♭','F','G','A'],
+  'F':  ['F','G','A','B♭','C','D','E'],
+  'C':  ['C','D','E','F','G','A','B'],
+  'G':  ['G','A','B','C','D','E','F♯'],
+  'D':  ['D','E','F♯','G','A','B','C♯'],
+  'A':  ['A','B','C♯','D','E','F♯','G♯'],
+  'E':  ['E','F♯','G♯','A','B','C♯','D♯'],
+  'B':  ['B','C♯','D♯','E','F♯','G♯','A♯'],
+  'F♯': ['F♯','G♯','A♯','B','C♯','D♯','E♯'],
+  'C♯': ['C♯','D♯','E♯','F♯','G♯','A♯','B♯']
+};
+// Parallel minor note names
+var KS_MINOR_NOTES={
+  'A♭m': ['A♭','B♭','C♭','D♭','E♭','F♭','G♭'],
+  'E♭m': ['E♭','F','G♭','A♭','B♭','C♭','D♭'],
+  'B♭m': ['B♭','C','D♭','E♭','F','G♭','A♭'],
+  'Fm':  ['F','G','A♭','B♭','C','D♭','E♭'],
+  'Cm':  ['C','D','E♭','F','G','A♭','B♭'],
+  'Gm':  ['G','A','B♭','C','D','E♭','F'],
+  'Dm':  ['D','E','F','G','A','B♭','C'],
+  'Am':  ['A','B','C','D','E','F','G'],
+  'Em':  ['E','F♯','G','A','B','C','D'],
+  'Bm':  ['B','C♯','D','E','F♯','G','A'],
+  'F♯m':['F♯','G♯','A','B','C♯','D','E'],
+  'C♯m':['C♯','D♯','E','F♯','G♯','A','B'],
+  'G♯m':['G♯','A♯','B','C♯','D♯','E','F♯'],
+  'D♯m':['D♯','E♯','F♯','G♯','A♯','B','C♯'],
+  'A♯m':['A♯','B♯','C♯','D♯','E♯','F♯','G♯']
+};
+// Staff Y positions (5 lines, top line = y24, spacing=12)
+// Lines at y: 24,36,48,60,72  (treble clef, ledger lines below for C)
+// Note positions on staff (pitch class name → staff slot, 0=top line E5)
+var KS_NOTE_Y={
+  'E5':24,'D5':30,'C5':36,'B4':42,'A4':48,'G4':54,'F4':60,'E4':66,'D4':72,'C4':78
+};
+// For each major key, the 7 diatonic notes and their staff Y
+// We map note letter to staff slot directly
+var STAFF_LETTER_Y={'C':78,'D':72,'E':66,'F':60,'G':54,'A':48,'B':42};
+// ♯ positions on staff (order: F C G D A E B), each as {x offset, y}
+var SHARP_POS=[
+  {dy:60},{dy:42},{dy:66},{dy:48},{dy:72},{dy:54},{dy:78}
+];
+// ♭ positions on staff (order: B E A D G C F), each as {dy}
+var FLAT_POS=[
+  {dy:42},{dy:60},{dy:48},{dy:66},{dy:54},{dy:72},{dy:60}
+];
+
+function ksStep(d){var sl=document.getElementById('ks-sl');var v=Math.max(-7,Math.min(7,+sl.value+d));sl.value=v;rKS()}
+function rKS(){
+  var v=+document.getElementById('ks-sl').value;
+  var ki=KS_MAP[String(v)];
+  document.getElementById('ks-sv').textContent=ki.maj+(v===0?' ♮':v>0?' ('+ki.n+'♯)':' ('+ki.n+'♭)');
+  // Build SVG
+  var W=620,H=160,svg=document.getElementById('ks-svg');
+  var h='';
+  // Staff lines (5 lines, y=40,52,64,76,88 — center of staff)
+  var LY=[40,52,64,76,88],LS=12; // line y values, line spacing
+  var staffX=10,staffW=W-20;
+  LY.forEach(function(y){h+='<line x1="'+staffX+'" y1="'+y+'" x2="'+(staffX+staffW)+'" y2="'+y+'" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>'});
+  // Treble clef (unicode 𝄞 rendered as text)
+  h+='<text x="18" y="98" font-size="108" fill="rgba(255,255,255,.85)" font-family="serif" dominant-baseline="auto" style="font-style:normal">𝄞</text>';
+  // Key signature accidentals
+  var accX=88; // start x for accidentals
+  var accArr=ki.acc==='♯'?SHARP_POS:ki.acc==='♭'?FLAT_POS:[];
+  for(var i=0;i<ki.n;i++){
+    var pos=accArr[i];
+    // Map dy (letter-based offset from top line E5=y40) to actual y
+    // dy values above are: C=78,D=72,E=66,F=60,G=54,A=48,B=42
+    // We remap to staff coords: staff top line=40, so offset from 40
+    // dy in SHARP_POS/FLAT_POS represents: 42=B4,48=A4,54=G4,60=F4,66=E4,72=D4,78=C4
+    // Map to actual staff y: top line E5=40, so B4=40+12=52? Let me re-map properly.
+    // Staff lines: E5=40, D5=46, C5=52, B4=58, A4=64, G4=70, F4=76, E4=82, D4=88(bottom line), C4=94(ledger)
+    // Actually let me redefine: line spacing=12, 5 lines at 40,52,64,76,88
+    // Notes sit ON lines or BETWEEN lines (spaces):
+    // E5=40(line1), D5=46(space), C5=52(line2), B4=58(space), A4=64(line3), G4=70(space), F4=76(line4), E4=82(space), D4=88(line5), C4=94(ledger below)
+    var noteYmap={'B':58,'A':64,'G':70,'F':76,'E':82,'D':88,'C':94};
+    // Sharp order: F C G D A E B → positions
+    var sharpLetters=['F','C','G','D','A','E','B'];
+    // Flat order: B E A D G C F
+    var flatLetters=['B','E','A','D','G','C','F'];
+    var letter=ki.acc==='♯'?sharpLetters[i]:flatLetters[i];
+    var ay=noteYmap[letter];
+    h+='<text x="'+(accX+i*16)+'" y="'+(ay+8)+'" font-size="20" fill="rgba(255,255,255,.9)" font-family="serif" text-anchor="middle">'+ki.acc+'</text>';
+  }
+  // Note heads for major scale
+  var noteStartX=ki.n===0?120:accX+ki.n*16+20;
+  var noteNames=KS_NOTES[ki.maj]||[];
+  // Letter-to-staff-y (treble clef, one octave C4–B4 + C5–E5)
+  var noteYmap2={'B':58,'A':64,'G':70,'F':76,'E':82,'D':88,'C':94};
+  // Some notes are in higher octave: E,F,G of the scale go to E5,F5... let's put all in natural range
+  // Map each note name (possibly with accidental) to its letter for Y, then draw
+  var noteColors=['var(--root)','var(--M2)','var(--M3)','var(--P4)','var(--P5)','var(--M6)','var(--M7)'];
+  // Track octave so the scale ascends instead of dropping when the letter name
+  // wraps (…A B → next note's letter is lower, but it's an octave HIGHER).
+  var LETTER_IDX={'C':0,'D':1,'E':2,'F':3,'G':4,'A':5,'B':6};
+  var ksPrevLi=-1,ksOct=0;
+  noteNames.forEach(function(nn,idx){
+    var letter=nn[0]; // first char is always the letter
+    var li=LETTER_IDX[letter];
+    if(idx>0&&li<=ksPrevLi)ksOct++;
+    ksPrevLi=li;
+    var ny=noteYmap2[letter]-ksOct*42; // 7 diatonic steps × 6px = 42px per octave
+    var nx=noteStartX+idx*56+24;
+    // Ledger line for C4 (below staff)
+    if(ny>=94){h+='<line x1="'+(nx-10)+'" y1="94" x2="'+(nx+10)+'" y2="94" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>';}
+    // Ledger lines above the staff for octave-5 notes (G5 line at 28 and up)
+    for(var ly=28;ly>=ny-0.1;ly-=12){h+='<line x1="'+(nx-10)+'" y1="'+ly+'" x2="'+(nx+10)+'" y2="'+ly+'" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>';}
+    h+='<ellipse cx="'+nx+'" cy="'+ny+'" rx="10" ry="7.5" fill="'+noteColors[idx]+'" stroke="rgba(0,0,0,.3)" stroke-width="1"/>';
+    // Stem — up for low notes, down for high ones so it stays on the staff
+    if(ny>=58)h+='<line x1="'+(nx+10)+'" y1="'+ny+'" x2="'+(nx+10)+'" y2="'+(ny-36)+'" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>';
+    else h+='<line x1="'+(nx-10)+'" y1="'+ny+'" x2="'+(nx-10)+'" y2="'+(ny+36)+'" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>';
+    // Accidental on note if needed
+    if(nn.length>1){
+      var acc2=nn.slice(1);
+      h+='<text x="'+(nx-13)+'" y="'+(ny+5)+'" font-size="13" fill="rgba(255,255,255,.9)" font-family="serif" text-anchor="middle">'+acc2+'</text>';
+    }
+    // Note name label below staff
+    h+='<text x="'+nx+'" y="115" font-size="11" fill="rgba(255,255,255,.55)" text-anchor="middle" font-family="-apple-system,sans-serif">'+nn+'</text>';
+  });
+  svg.innerHTML=h;
+  // Info panel
+  var minKey=ki.min+'m';
+  var minNotes=KS_MINOR_NOTES[minKey]||[];
+  var accLabel=ki.n===0?'なし':(ki.acc+' '+ki.n+'個');
+  var el=document.getElementById('ks-info');
+  el.innerHTML='<h3>'+ki.maj+' Major</h3>'
+    +'<div class="ks-row"><strong>調号</strong><span>'+accLabel+'</span></div>'
+    +'<div class="ks-row"><strong>長調</strong>'
+    +noteNames.map(function(n,i){return'<span class="ks-chip" style="background:'+noteColors[i]+';color:#fff">'+n+'</span>'}).join('')
+    +'</div>'
+    +'<div class="ks-row"><strong>並行短調</strong><span style="color:var(--tx);font-weight:700;margin-right:8px">'+ki.min+' minor</span>'
+    +minNotes.map(function(n,i){return'<span class="ks-chip" style="background:var(--sf2);border:1px solid rgba(255,255,255,.1)">'+n+'</span>'}).join('')
+    +'</div>'
+  renderKSLearn(v);
+}
+
+// ═══ KS Learn Panel ═══
+var NOTE_SEMI={'C':0,'C♯':1,'D♭':1,'D':2,'D♯':3,'E♭':3,'E':4,'E♯':5,'F♭':4,'F':5,'F♯':6,'G♭':6,'G':7,'G♯':8,'A♭':8,'A':9,'A♯':10,'B♭':10,'B':11,'B♯':0,'C♭':11};
+var KSS=['F','C','G','D','A','E','B'],KSF=['B','E','A','D','G','C','F'];
+function ksIV(notes){var r=[];for(var i=0;i<notes.length;i++){var s1=NOTE_SEMI[notes[i]],s2=NOTE_SEMI[notes[(i+1)%notes.length]];var d=(s2-s1+12)%12;r.push(d===0?12:d)}return r}
+function ksSetV(pos){var v=pos<=7?pos:pos-12;document.getElementById('ks-sl').value=v;rKS()}
+function buildKSCircle(v){
+  var ki=KS_MAP[String(v)],curPos=v>=0?v:12+v;
+  var CX=150,CY=150,R=105;
+  var NAMES=['C','G','D','A','E','B','F♯','C♯','A♭','E♭','B♭','F'];
+  var MNAMES=['Am','Em','Bm','F♯m','C♯m','G♯m','D♯m','A♯m','Fm','Cm','Gm','Dm'];
+  var SSIG=['♮','1♯','2♯','3♯','4♯','5♯','6♯','7♯',null,null,null,null];
+  var FSIG=[null,null,null,null,null,'7♭','6♭','5♭','4♭','3♭','2♭','1♭'];
+  var h='<svg viewBox="0 0 300 300" style="width:100%;max-width:260px;display:block">';
+  h+='<circle cx="'+CX+'" cy="'+CY+'" r="128" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="1"/>';
+  h+='<circle cx="'+CX+'" cy="'+CY+'" r="60" fill="none" stroke="rgba(255,255,255,.03)" stroke-width="1"/>';
+  if(v!==0){
+    var sx=CX,sy=CY-R;
+    var ea=(-90+curPos*30)*Math.PI/180;
+    var ex=CX+R*Math.cos(ea),ey=CY+R*Math.sin(ea);
+    if(v>0){
+      var la=curPos*30>180?1:0;
+      h+='<path d="M '+sx+' '+sy+' A '+R+' '+R+' 0 '+la+' 1 '+ex.toFixed(1)+' '+ey.toFixed(1)+'" fill="none" stroke="var(--root)" stroke-width="2.5" stroke-linecap="round" opacity=".45"/>';
+    }else{
+      var fs=-v,la=fs*30>180?1:0;
+      h+='<path d="M '+sx+' '+sy+' A '+R+' '+R+' 0 '+la+' 0 '+ex.toFixed(1)+' '+ey.toFixed(1)+'" fill="none" stroke="var(--P4)" stroke-width="2.5" stroke-linecap="round" opacity=".45"/>';
+    }
+  }
+  for(var pos=0;pos<12;pos++){
+    var a=(-90+pos*30)*Math.PI/180;
+    var x=CX+R*Math.cos(a),y=CY+R*Math.sin(a);
+    var mx=CX+68*Math.cos(a),my=CY+68*Math.sin(a);
+    var ox=CX+128*Math.cos(a),oy=CY+128*Math.sin(a);
+    var isCur=pos===curPos;
+    var onPath=(v>0&&pos>=1&&pos<=curPos)||(v<0&&pos>=curPos&&pos<=11);
+    var nr=isCur?21:onPath?17:14;
+    var fill=isCur?'var(--root)':onPath?(v>0?'rgba(230,57,70,.28)':'rgba(69,123,157,.28)'):'rgba(255,255,255,.05)';
+    var tcol=isCur?'#fff':onPath?'var(--tx)':'var(--txd)';
+    var nm=isCur?ki.maj:NAMES[pos];
+    var slbl=isCur?(ki.n===0?'♮':(ki.n+ki.acc)):(v>=0?SSIG[pos]:FSIG[pos])||'';
+    h+='<g onclick="ksSetV('+pos+')" style="cursor:pointer">';
+    h+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+nr+'" fill="'+fill+'" stroke="rgba(255,255,255,'+(isCur?.2:.06)+')" stroke-width="1.5"/>';
+    h+='<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" text-anchor="middle" dominant-baseline="central" fill="'+tcol+'" font-size="'+(nm.length>2?8:9)+'" font-weight="'+(isCur?700:onPath?600:400)+'" font-family="-apple-system,monospace">'+nm+'</text>';
+    h+='</g>';
+    h+='<text x="'+mx.toFixed(1)+'" y="'+my.toFixed(1)+'" text-anchor="middle" dominant-baseline="central" fill="'+(isCur?'rgba(255,255,255,.55)':'rgba(255,255,255,.18)')+'" font-size="6" font-family="-apple-system,monospace" style="pointer-events:none">'+MNAMES[pos]+'</text>';
+    h+='<text x="'+ox.toFixed(1)+'" y="'+oy.toFixed(1)+'" text-anchor="middle" dominant-baseline="central" fill="'+(isCur?'var(--P5)':onPath?'rgba(255,255,255,.32)':'rgba(255,255,255,.1)')+'" font-size="6.5" font-family="-apple-system,monospace" style="pointer-events:none">'+slbl+'</text>';
+  }
+  h+='<text x="'+CX+'" y="'+(CY-7)+'" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="8.5" font-family="-apple-system,sans-serif">5度圏</text>';
+  h+='<text x="'+CX+'" y="'+(CY+8)+'" text-anchor="middle" fill="rgba(255,255,255,.25)" font-size="7.5" font-family="-apple-system,sans-serif">'+(v===0?'基準':v>0?'→ ♯ 方向':'→ ♭ 方向')+'</text>';
+  h+='</svg>';
+  return h;
+}
+function renderKSLearn(v){
+  var ki=KS_MAP[String(v)],cn=KS_NOTES[ki.maj]||[];
+  if(cn.length<7){return}
+  var MP=[2,2,1,2,2,2,1]; // W W H W W W H
+  var civ=ksIV(cn);
+  var nat=cn.map(function(n){return n[0]});
+  var niv=ksIV(nat);
+  var latest=v>0?KSS[v-1]+'♯':v<0?KSF[(-v)-1]+'♭':'';
+  // Callout explaining WHY this key needs its latest accidental
+  var ca='';
+  if(v===0){
+    ca='<div class="ks-callout grn">C Major はすべてナチュラル。♯も♭もなく、<strong>全全半全全全半</strong> のパターンがそのまま成立します。これが調号の基準点です。</div>';
+  }else if(v>0){
+    var lt=KSS[v-1],prev=cn[5];
+    ca='<div class="ks-callout red"><strong>なぜ '+lt+'♯ が必要？</strong><br>'
+      +ki.maj+' Major を作ると、'+prev+' → '+lt+' が<span style="color:var(--root)"><strong>半音（H）</strong></span>になってしまいます。本来ここは<strong>全音（W）</strong>が必要です。<br>'
+      +'→ '+lt+' を '+lt+'♯ にすれば：'+prev+' → '+lt+'♯ ＝ 全音 ✓、'+lt+'♯ → '+cn[0]+' ＝ 半音 ✓<br>'
+      +'<small style="color:var(--txd)">'+lt+'♯ は '+ki.maj+' の第7音（導音 / Leading Tone）</small></div>';
+  }else{
+    var lt=KSF[(-v)-1],prev=cn[2];
+    ca='<div class="ks-callout red"><strong>なぜ '+lt+'♭ が必要？</strong><br>'
+      +ki.maj+' Major を作ると、'+prev+' → '+lt+' が<span style="color:var(--root)"><strong>全音（W）</strong></span>になってしまいます。本来ここは<strong>半音（H）</strong>が必要です。<br>'
+      +'→ '+lt+' を '+lt+'♭ にすれば：'+prev+' → '+lt+'♭ ＝ 半音 ✓、'+lt+'♭ → '+cn[4]+' ＝ 全音 ✓<br>'
+      +'<small style="color:var(--txd)">'+lt+'♭ は '+ki.maj+' の第4音（サブドミナント）</small></div>';
+  }
+  // Build a note row
+  function mkRow(notes,ivs,isNat){
+    var h='<div class="ks-nr">';
+    for(var i=0;i<notes.length;i++){
+      var n=notes[i],cls;
+      if(i===0)cls='rt';
+      else if(!isNat&&n===latest)cls='hi';
+      else if(!isNat&&n.length>1)cls='ac';
+      else if(isNat&&cn[i]!==n)cls='wn';
+      else cls='nm';
+      h+='<span class="ks-nn '+cls+'">'+n+'</span>';
+      h+='<span class="ks-iv '+(ivs[i]===MP[i]?'ok':'ng')+'">'+(ivs[i]===1?'H':'W')+'</span>';
+    }
+    h+='<span class="ks-nn rt">'+notes[0]+'</span></div>';
+    return h;
+  }
+  var hasDiff=nat.join('')!==cn.join('');
+  var html='<div class="ks-circle-wrap">'+buildKSCircle(v)+'</div>'+ca+'<div class="ks-sbox">';
+  html+='<div class="ks-blbl">✓ 正しいスケール — '+ki.maj+' Major'+(latest?' （'+latest+' がポイント）':'')+'</div>';
+  html+=mkRow(cn,civ,false);
+  if(hasDiff){
+    html+='<div style="margin-top:14px"><div class="ks-blbl ng">✗ ♯/♭ なし（ナチュラルのみ）で作ると…</div>';
+    html+=mkRow(nat,niv,true);
+    var ws=[];
+    for(var i=0;i<7;i++){if(niv[i]!==MP[i]){ws.push((i+1)+'番目の音程が '+(niv[i]===1?'H（半音）':'W（全音）')+' → 本来は '+(MP[i]===1?'H（半音）':'W（全音）')+'')}}
+    if(ws.length)html+='<div class="ks-wdiff">⚠ '+ws.join('<br>　')+'</div>';
+    html+='</div>';
+  }else{
+    html+='<div class="ks-wdiff" style="color:var(--m7)">✓ ナチュラルのままで音程パターンが成立します（C Major基準）</div>';
+  }
+  html+='</div>';
+  document.getElementById('ks-learn').innerHTML=html;
+}
+
+// Init
+;(function(){
+  ['dia-k','cs-k','cr-k'].forEach(function(id){fk(document.getElementById(id))});
+  fsc(document.getElementById('cr-s'));
+  // Voice Leading selectors
+  ['vl-ar','vl-br'].forEach(function(id){fk(document.getElementById(id))});
+  ['vl-at','vl-bt'].forEach(function(id){var el=document.getElementById(id);VCTK.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=VCTL[k];el.appendChild(o)});el.selectedIndex=0});
+  document.getElementById('vl-br').value=7; // default B=G (V)
+  ['dia-k','dia-t','dia-v','dia-r','dia-f'].forEach(function(id){document.getElementById(id).addEventListener('change',rDia)});
+  ['cs-k','cs-r','cs-f'].forEach(function(id){document.getElementById(id).addEventListener('change',rCS)});
+  ['cr-k','cr-s'].forEach(function(id){document.getElementById(id).addEventListener('change',rCR)});
+  ['vl-ar','vl-at','vl-br','vl-bt'].forEach(function(id){document.getElementById(id).addEventListener('change',rVL)});
+  rDia();rCS();rCR();rVL();rKS()
+})();
+</script>
+</body>
+</html>

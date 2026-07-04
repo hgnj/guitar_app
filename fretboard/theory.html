@@ -31,7 +31,7 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 .fn .sp{width:44px;min-width:44px}.fn span{width:56px;min-width:56px;text-align:center;font-size:.65rem;color:var(--txd);position:relative}
 .fn span.hd::after,.fn span.ht::before{content:'● ●';display:block;font-size:.3rem;color:rgba(255,255,255,.2);letter-spacing:2px}.fn span.hd::after{margin-top:-1px}.fn span.ht::before{margin-bottom:-1px}
 .fn span.hs::after,.fn span.st::before{content:'●';display:block;font-size:.3rem;color:rgba(255,255,255,.2)}.fn span.hs::after{margin-top:-1px}.fn span.st::before{margin-bottom:-1px}
-.fb{position:relative;background:linear-gradient(180deg,#3d2114,#2c1810 30%,#241209 70%,#1e0f08);border-radius:7px;padding:10px 0;overflow:visible;width:-webkit-fit-content;width:fit-content;min-width:100%}
+.fb{position:relative;background:linear-gradient(180deg,#3d2114,#2c1810 30%,#241209 70%,#1e0f08);border-radius:7px;padding:10px 0;overflow:visible}
 .dm{display:flex;height:0;position:relative;pointer-events:none}.dm .sp{width:44px;min-width:44px}.dm .dc{width:56px;min-width:56px;position:relative;height:0}
 .dm .dc .d{position:absolute;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,250,.2),rgba(180,175,165,.08));box-shadow:inset 0 1px 2px rgba(255,255,255,.1);left:50%;transform:translateX(-50%);border:1px solid rgba(255,255,255,.05)}
 .sr{display:flex;align-items:center;height:38px;position:relative;min-width:fit-content}
@@ -137,16 +137,10 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 @media(max-width:768px){.app{padding:12px;padding-top:env(safe-area-inset-top,12px)}header{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:14px}.logo{justify-content:center}h1{font-size:1rem}h1 em{display:none}.ctrls{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}.cg label{font-size:.55rem}select{min-width:0;width:100%;padding:10px 26px 10px 8px;font-size:16px;border-radius:10px}.fbw{padding:10px 6px 6px;border-radius:10px}.fn .sp,.dm .sp,.sl{width:30px;min-width:30px;font-size:.58rem}.fn span{width:44px;min-width:44px;font-size:.55rem}.dm .dc{width:44px;min-width:44px}.fc{width:44px;min-width:44px;height:34px}.sr{height:34px}.sn{left:30px}.nd{width:26px;height:26px;font-size:.52rem}.nd.root{width:28px;height:28px;font-size:.56rem}.cg2{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}.cc{padding:8px}.cc .cn{font-size:.85rem}.cst{font-size:.65rem}.vl-pair{gap:12px}.vl-ch{min-width:150px;padding:10px}.vl-note{width:32px;height:32px;font-size:.68rem}.vl-mn{width:28px;height:28px;font-size:.62rem}.vl-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.site-nav{padding:8px 10px}.nav-link{font-size:.68rem;padding:5px 10px}}
 @media(max-width:380px){.fn span,.dm .dc,.fc{width:40px;min-width:40px}.fc{height:32px}.sr{height:32px}.nd{width:23px;height:23px;font-size:.48rem}.nd.root{width:25px;height:25px}}
 @media(max-height:500px)and(orientation:landscape){.app{padding:6px 10px}header{flex-direction:row;margin-bottom:6px;gap:6px}.ctrls{display:flex;gap:5px}select{padding:4px 22px 4px 6px;font-size:13px}.sr{height:30px}.fc{height:30px}.nd{width:22px;height:22px;font-size:.48rem}.nd.root{width:24px;height:24px}}
-
-/* thin dark scrollbar for the fretboard scroller (PC) */
-.fbw{scrollbar-width:thin;scrollbar-color:#4a4038 transparent}
-.fbw::-webkit-scrollbar{height:8px}
-.fbw::-webkit-scrollbar-thumb{background:#4a4038;border-radius:4px}
-.fbw::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
-<nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a><a href="index.html" class="nav-link">🎸 Fretboard</a><a href="practice.html" class="nav-link">🎵 Practice</a><a href="theory.html" class="nav-link active">📖 Theory</a><a href="compose.html" class="nav-link">🎼 Compose</a><a href="../tuner/index.html" class="nav-link" style="margin-left:auto">🎚 Tuner</a><a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a><a href="../studio/index.html" class="nav-link">🎹 Studio</a><a href="../tuner/index.html#advisor" class="nav-link">🎛 Advisor</a></nav>
+<nav class="site-nav"><a href="index.html" class="nav-link">🎸 Fretboard</a><a href="practice.html" class="nav-link">🎵 Practice</a><a href="theory.html" class="nav-link active">📖 Theory</a><a href="compose.html" class="nav-link">🎼 Compose</a><a href="https://hgnj.github.io/visualizer/" class="nav-link" style="margin-left:auto">🎚 Tuner</a><a href="https://hgnj.github.io/youtubookmark/" class="nav-link">🔖 Bookmark</a><a href="https://hgnj.github.io/studio/" class="nav-link">🎹 Studio</a><a href="https://hgnj.github.io/visualizer/#advisor" class="nav-link">🎛 Advisor</a></nav>
 <div class="app">
   <header><div class="logo"><i>♯</i><h1>Theory Tools <em>/ 音楽理論</em></h1></div></header>
   <div class="tabs">

@@ -31,7 +31,7 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 .fn .sp{width:44px;min-width:44px}.fn span{width:56px;min-width:56px;text-align:center;font-size:.65rem;color:var(--txd);position:relative}
 .fn span.hd::after,.fn span.ht::before{content:'● ●';display:block;font-size:.3rem;color:rgba(255,255,255,.2);letter-spacing:2px}.fn span.hd::after{margin-top:-1px}.fn span.ht::before{margin-bottom:-1px}
 .fn span.hs::after,.fn span.st::before{content:'●';display:block;font-size:.3rem;color:rgba(255,255,255,.2)}.fn span.hs::after{margin-top:-1px}.fn span.st::before{margin-bottom:-1px}
-.fb{position:relative;background:linear-gradient(180deg,#3d2114,#2c1810 30%,#241209 70%,#1e0f08);border-radius:7px;padding:10px 0;overflow:visible}
+.fb{position:relative;background:linear-gradient(180deg,#3d2114,#2c1810 30%,#241209 70%,#1e0f08);border-radius:7px;padding:10px 0;overflow:visible;width:-webkit-fit-content;width:fit-content;min-width:100%}
 .dm{display:flex;height:0;position:relative;pointer-events:none}.dm .sp{width:44px;min-width:44px}.dm .dc{width:56px;min-width:56px;position:relative;height:0}
 .dm .dc .d{position:absolute;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,250,.2),rgba(180,175,165,.08));box-shadow:inset 0 1px 2px rgba(255,255,255,.1);left:50%;transform:translateX(-50%);border:1px solid rgba(255,255,255,.05)}
 .sr{display:flex;align-items:center;height:38px;position:relative;min-width:fit-content}
@@ -74,6 +74,41 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 .cri h3{color:var(--tx);font-size:.9rem;margin-bottom:6px}
 .cri .cin{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
 .cri .cin span{padding:3px 8px;border-radius:12px;font-size:.7rem;font-weight:600}
+/* Circle of Fifths */
+.c5-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.c5-box{flex:0 0 auto;background:var(--sf);border-radius:16px;padding:12px 12px 8px;border:1px solid rgba(255,255,255,.04);box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.c5-box svg{width:min(430px,84vw);height:auto;display:block}
+.c5-leg{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:6px;font-size:.62rem;color:var(--txd)}
+.c5-leg i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;font-style:normal}
+.c5-side{flex:1 1 320px;min-width:290px;max-width:460px;display:flex;flex-direction:column;gap:11px}
+.c5-card{background:var(--sf);border-radius:12px;padding:14px 16px;border:1px solid rgba(255,255,255,.04)}
+.c5-ttl{font-size:.6rem;text-transform:uppercase;letter-spacing:1.1px;color:var(--txd);font-weight:600;margin-bottom:9px}
+.c5-ttl b{text-transform:none;color:var(--tx);font-size:1.1em}
+.c5-key{font-size:1.5rem;font-weight:700;letter-spacing:-.5px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.c5-key em{font-size:.72rem;font-style:normal;color:var(--txd);font-weight:400}
+.c5-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:.75rem;color:var(--txd)}
+.c5-row strong{color:var(--tx);font-size:.62rem;text-transform:uppercase;letter-spacing:.8px;min-width:64px}
+.c5-chip{padding:3px 9px;border-radius:10px;font-size:.72rem;font-weight:600;background:var(--sf2);border:1px solid rgba(255,255,255,.07);color:var(--tx)}
+.c5-chords{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.c5-ch{background:var(--sf2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 1px;text-align:center;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.c5-ch:hover{border-color:var(--root);transform:translateY(-2px)}
+.c5-ch.t{border-color:rgba(230,57,70,.5);background:rgba(230,57,70,.1)}
+.c5-ch.d{border-color:rgba(233,196,106,.4)}.c5-ch.s{border-color:rgba(69,123,157,.45)}
+.c5-ch .rn{font-size:.58rem;color:var(--txd)}
+.c5-ch .nm{font-size:.76rem;font-weight:700;margin-top:2px;white-space:nowrap}
+.c5-btns{display:flex;flex-wrap:wrap;gap:6px}
+.c5-btn{background:var(--sf2);border:1px solid rgba(255,255,255,.08);color:var(--tx);border-radius:8px;padding:6px 11px;font-size:.78rem;font-weight:700;font-family:inherit;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;text-align:left}
+.c5-btn:hover{border-color:var(--root);color:var(--root)}
+.c5-btn b{color:var(--txd);font-weight:400;font-size:.6rem;display:block;margin-bottom:1px}
+.c5-prg{display:flex;flex-direction:column;gap:6px}
+.c5-pr{display:flex;align-items:center;gap:10px;background:var(--sf2);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:8px 10px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.c5-pr:hover{border-color:var(--P5)}
+.c5-pr .pd{flex:1;min-width:0}
+.c5-pr .pn{font-size:.75rem;font-weight:700}
+.c5-pr .pc2{font-size:.65rem;color:var(--txd);margin-top:2px}
+.c5-note{font-size:.74rem;color:var(--txd);line-height:1.8}
+.c5-note b{color:var(--tx)}
+.c5-note code{background:var(--sf2);padding:1px 5px;border-radius:4px;font-size:.7rem;color:var(--P5)}
 /* Voice Leading */
 .vl-pair{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
 .vl-ch{background:var(--sf);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.04);min-width:180px}
@@ -134,19 +169,26 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 .nav-link{color:var(--txd);text-decoration:none;font-family:inherit;font-size:.75rem;padding:6px 14px;border-radius:8px;background:var(--sf2);border:1px solid rgba(255,255,255,.04);transition:all .2s;-webkit-tap-highlight-color:transparent}
 .nav-link:hover{color:var(--tx);border-color:rgba(255,255,255,.12)}.nav-link.active{color:#e63946;background:rgba(230,57,70,.1);border-color:#e63946}
 /* Mobile */
-@media(max-width:768px){.app{padding:12px;padding-top:env(safe-area-inset-top,12px)}header{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:14px}.logo{justify-content:center}h1{font-size:1rem}h1 em{display:none}.ctrls{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}.cg label{font-size:.55rem}select{min-width:0;width:100%;padding:10px 26px 10px 8px;font-size:16px;border-radius:10px}.fbw{padding:10px 6px 6px;border-radius:10px}.fn .sp,.dm .sp,.sl{width:30px;min-width:30px;font-size:.58rem}.fn span{width:44px;min-width:44px;font-size:.55rem}.dm .dc{width:44px;min-width:44px}.fc{width:44px;min-width:44px;height:34px}.sr{height:34px}.sn{left:30px}.nd{width:26px;height:26px;font-size:.52rem}.nd.root{width:28px;height:28px;font-size:.56rem}.cg2{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}.cc{padding:8px}.cc .cn{font-size:.85rem}.cst{font-size:.65rem}.vl-pair{gap:12px}.vl-ch{min-width:150px;padding:10px}.vl-note{width:32px;height:32px;font-size:.68rem}.vl-mn{width:28px;height:28px;font-size:.62rem}.vl-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.site-nav{padding:8px 10px}.nav-link{font-size:.68rem;padding:5px 10px}}
+@media(max-width:768px){.app{padding:12px;padding-top:env(safe-area-inset-top,12px)}header{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:14px}.logo{justify-content:center}h1{font-size:1rem}h1 em{display:none}.ctrls{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}.cg label{font-size:.55rem}select{min-width:0;width:100%;padding:10px 26px 10px 8px;font-size:16px;border-radius:10px}.fbw{padding:10px 6px 6px;border-radius:10px}.fn .sp,.dm .sp,.sl{width:30px;min-width:30px;font-size:.58rem}.fn span{width:44px;min-width:44px;font-size:.55rem}.dm .dc{width:44px;min-width:44px}.fc{width:44px;min-width:44px;height:34px}.sr{height:34px}.sn{left:30px}.nd{width:26px;height:26px;font-size:.52rem}.nd.root{width:28px;height:28px;font-size:.56rem}.cg2{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}.cc{padding:8px}.cc .cn{font-size:.85rem}.cst{font-size:.65rem}.vl-pair{gap:12px}.vl-ch{min-width:150px;padding:10px}.vl-note{width:32px;height:32px;font-size:.68rem}.vl-mn{width:28px;height:28px;font-size:.62rem}.vl-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.site-nav{padding:8px 10px}.nav-link{font-size:.68rem;padding:5px 10px}.c5-wrap{gap:12px}.c5-box{padding:8px 8px 6px;border-radius:12px}.c5-side{min-width:0;flex:1 1 100%;max-width:none}.c5-card{padding:12px 13px}.c5-chords{grid-template-columns:repeat(4,1fr)}.c5-key{font-size:1.25rem}.c5-leg{font-size:.56rem;gap:7px}}
 @media(max-width:380px){.fn span,.dm .dc,.fc{width:40px;min-width:40px}.fc{height:32px}.sr{height:32px}.nd{width:23px;height:23px;font-size:.48rem}.nd.root{width:25px;height:25px}}
 @media(max-height:500px)and(orientation:landscape){.app{padding:6px 10px}header{flex-direction:row;margin-bottom:6px;gap:6px}.ctrls{display:flex;gap:5px}select{padding:4px 22px 4px 6px;font-size:13px}.sr{height:30px}.fc{height:30px}.nd{width:22px;height:22px;font-size:.48rem}.nd.root{width:24px;height:24px}}
+
+/* thin dark scrollbar for the fretboard scroller (PC) */
+.fbw{scrollbar-width:thin;scrollbar-color:#4a4038 transparent}
+.fbw::-webkit-scrollbar{height:8px}
+.fbw::-webkit-scrollbar-thumb{background:#4a4038;border-radius:4px}
+.fbw::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
-<nav class="site-nav"><a href="index.html" class="nav-link">🎸 Fretboard</a><a href="practice.html" class="nav-link">🎵 Practice</a><a href="theory.html" class="nav-link active">📖 Theory</a><a href="compose.html" class="nav-link">🎼 Compose</a><a href="https://hgnj.github.io/visualizer/" class="nav-link" style="margin-left:auto">🎚 Tuner</a><a href="https://hgnj.github.io/youtubookmark/" class="nav-link">🔖 Bookmark</a><a href="https://hgnj.github.io/studio/" class="nav-link">🎹 Studio</a><a href="https://hgnj.github.io/visualizer/#advisor" class="nav-link">🎛 Advisor</a></nav>
+<nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a><a href="index.html" class="nav-link">🎸 Fretboard</a><a href="practice.html" class="nav-link">🎵 Practice</a><a href="theory.html" class="nav-link active">📖 Theory</a><a href="compose.html" class="nav-link">🎼 Compose</a><a href="../tuner/index.html" class="nav-link" style="margin-left:auto">🎚 Tuner</a><a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a><a href="../studio/index.html" class="nav-link">🎹 Studio</a><a href="../tuner/index.html#advisor" class="nav-link">🎛 Advisor</a></nav>
 <div class="app">
   <header><div class="logo"><i>♯</i><h1>Theory Tools <em>/ 音楽理論</em></h1></div></header>
   <div class="tabs">
     <button class="tab on" onclick="stab('dia',this)">🎹 ダイアトニック</button>
     <button class="tab" onclick="stab('cs',this)">📖 コード⇔スケール</button>
-    <button class="tab" onclick="stab('cr',this)">⭕ サークル</button>
+    <button class="tab" onclick="stab('c5',this)">🔵 五度圏</button>
+    <button class="tab" onclick="stab('cr',this)">⭕ 半音円</button>
     <button class="tab" onclick="stab('vl',this)">🔗 ボイスリーディング</button>
     <button class="tab" onclick="stab('ks',this)">🎼 調号</button>
   </div>
@@ -180,7 +222,22 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
     <div class="fbw" style="margin-top:12px"><div class="fn" id="cs-ft"></div><div class="fb" id="cs-fb"></div><div class="fn" id="cs-fB"></div></div>
     <div id="cs-nf" style="text-align:center;margin-top:8px;font-size:.75rem;color:var(--txd)"></div>
   </div>
-  <!-- Circle -->
+  <!-- Circle of Fifths -->
+  <div class="tp" id="tp-c5">
+    <div class="c5-wrap">
+      <div class="c5-box">
+        <svg id="c5-svg" viewBox="0 0 400 400"></svg>
+        <div class="c5-leg">
+          <span><i style="background:var(--root)"></i>トニック</span>
+          <span><i style="background:rgba(233,196,106,.75)"></i>ドミナント</span>
+          <span><i style="background:rgba(69,123,157,.8)"></i>サブドミナント</span>
+          <span><i style="background:rgba(6,214,160,.5)"></i>その他ダイアトニック</span>
+        </div>
+      </div>
+      <div class="c5-side" id="c5-side"></div>
+    </div>
+  </div>
+  <!-- Chromatic Circle -->
   <div class="tp" id="tp-cr">
     <div class="ctrls" style="margin-bottom:10px">
       <div class="cg"><label>Key</label><select id="cr-k"></select></div>
@@ -275,7 +332,7 @@ function fk(el){N.forEach(function(n,i){var o=document.createElement('option');o
 function fsc(el){Object.keys(SC).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;el.appendChild(o)})}
 
 // Shared fretboard
-function rfb(fbId,ftId,fBId,ns,key,ivs,degs,maxF){
+function rfb(fbId,ftId,fBId,ns,key,ivs,degs,maxF,sp){
   var T=+ns===7?T7:T6,nst=+ns,map={};ivs.forEach(function(iv,idx){map[(key+iv)%12]=degs[idx]});
   ;[ftId,fBId].forEach(function(id,idx){var el=document.getElementById(id);el.innerHTML='<div class="sp"></div>';for(var f=0;f<=maxF;f++){var s=document.createElement('span');s.textContent=f;if(idx===0){if(FD.has(f))s.className='hd';else if(FS.has(f))s.className='hs'}else{if(FD.has(f))s.className='ht';else if(FS.has(f))s.className='st'}el.appendChild(s)}});
   var fb=document.getElementById(fbId);fb.innerHTML='';var sh=38,th=nst*sh,my=th/2-16,d1=th*.25,d2=th*.75;
@@ -284,7 +341,7 @@ function rfb(fbId,ftId,fBId,ns,key,ivs,degs,maxF){
   fb.appendChild(dm);
   for(var si=nst-1;si>=0;si--){var row=document.createElement('div');row.className='sr';var sn=document.createElement('div');sn.className='sn';sn.style.height=T.w[si]+'px';sn.style.background=T.c[si];sn.style.opacity='.4';row.appendChild(sn);var lb=document.createElement('div');lb.className='sl';lb.textContent=T.n[si];row.appendChild(lb);
     for(var f=0;f<=maxF;f++){var cell=document.createElement('div');cell.className='fc'+(f===0?' nut':'');var ni=(T.t[si]+f)%12;
-      if(map[ni]!==undefined){var dg=map[ni],dot=document.createElement('div');dot.className='nd '+DC[dg];dot.textContent=N[ni];dot.style.animationDelay=f*10+'ms';bnd(dot,ns,si,f);cell.appendChild(dot)}
+      if(map[ni]!==undefined){var dg=map[ni],dot=document.createElement('div');dot.className='nd '+DC[dg];dot.textContent=(sp&&sp[ni])?sp[ni]:N[ni];dot.style.animationDelay=f*10+'ms';bnd(dot,ns,si,f);cell.appendChild(dot)}
       row.appendChild(cell)}fb.appendChild(row)}}
 
 // ═══ Diatonic ═══
@@ -292,17 +349,18 @@ var diaSel=0;
 function rDia(){
   var key=+document.getElementById('dia-k').value,st=document.getElementById('dia-t').value,vc=document.getElementById('dia-v').value,ns=document.getElementById('dia-r').value,fr=+document.getElementById('dia-f').value;
   var dia=DIA[st];if(diaSel>=dia.length)diaSel=0;
+  var sm=spellMap(key,st),nm=function(pc){return sm[pc]||N[pc]};
   var grid=document.getElementById('dia-grid');grid.innerHTML='';
   dia.forEach(function(ch,idx){
-    var root=(key+ch.riv)%12,vd=ch[vc],notes=vd.iv.map(function(iv){return N[(root+iv)%12]});
+    var root=(key+ch.riv)%12,vd=ch[vc],notes=vd.iv.map(function(iv){return nm((root+iv)%12)});
     var card=document.createElement('div');card.className='cc'+(idx===diaSel?' on':'');
-    card.innerHTML='<div class="deg">'+ch.deg+'</div><div class="cn">'+N[root]+(vd.l==='Maj'?'':vd.l)+'</div><div class="cns">'+notes.join(' - ')+'</div><div class="ct">'+vd.d.join(' ')+'</div>';
+    card.innerHTML='<div class="deg">'+ch.deg+'</div><div class="cn">'+nm(root)+(vd.l==='Maj'?'':vd.l)+'</div><div class="cns">'+notes.join(' - ')+'</div><div class="ct">'+vd.d.join(' ')+'</div>';
     card.addEventListener('click',function(){diaSel=idx;rDia();var bf=261.63;vd.iv.forEach(function(iv,i){setTimeout(function(){pf(bf*Math.pow(2,(root+iv)/12),.12)},i*80)})});
     grid.appendChild(card)});
   var ch=dia[diaSel],root=(key+ch.riv)%12,vd=ch[vc];
-  rfb('dia-fb','dia-ft','dia-fB',ns,root,vd.iv,vd.d,fr);
+  rfb('dia-fb','dia-ft','dia-fB',ns,root,vd.iv,vd.d,fr,sm);
   var vn={triad:'Triad','7th':'7th','9th':'9th','6th':'6th',add9:'Add9'};
-  document.getElementById('dia-nf').textContent=N[root]+(vd.l==='Maj'?'':vd.l)+' ('+vn[vc]+') のコードトーンを表示中 — タップで音が出ます'}
+  document.getElementById('dia-nf').textContent=nm(root)+(vd.l==='Maj'?'':vd.l)+' ('+vn[vc]+') のコードトーンを表示中 — タップで音が出ます'}
 
 // ═══ Chord-Scale ═══
 function rCS(){
@@ -450,6 +508,25 @@ var KS_MINOR_NOTES={
   'D♯m':['D♯','E♯','F♯','G♯','A♯','B','C♯'],
   'A♯m':['A♯','B♯','C♯','D♯','E♯','F♯','G♯']
 };
+// Enharmonic tonic spelling by chromatic pitch-class (used by the Diatonic tab)
+var MAJ_TONIC=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+var MIN_TONIC=['Cm','C♯m','Dm','E♭m','Em','Fm','F♯m','Gm','G♯m','Am','B♭m','Bm'];
+// Raise a spelled note by a semitone, keeping the letter (E♭→E, C→C♯, B♭→B)
+function raiseNote(n){if(/♭/.test(n))return n.replace('♭','');return n+'♯';}
+// 7 diatonic note names (by scale degree) for a chromatic key + scale type
+function scaleSpelling(keyPc,type){
+  if(type==='major')return KS_NOTES[MAJ_TONIC[keyPc]].slice();
+  var arr=KS_MINOR_NOTES[MIN_TONIC[keyPc]].slice();
+  if(type==='hminor')arr[6]=raiseNote(arr[6]);
+  else if(type==='mminor'){arr[5]=raiseNote(arr[5]);arr[6]=raiseNote(arr[6]);}
+  return arr;
+}
+// pitch-class → correctly-spelled name for the current key/scale
+function spellMap(keyPc,type){
+  var arr=scaleSpelling(keyPc,type),iv=SDG[type],m={};
+  for(var d=0;d<7;d++)m[(keyPc+iv[d])%12]=arr[d];
+  return m;
+}
 // Staff Y positions (5 lines, top line = y24, spacing=12)
 // Lines at y: 24,36,48,60,72  (treble clef, ledger lines below for C)
 // Note positions on staff (pitch class name → staff slot, 0=top line E5)
@@ -667,6 +744,143 @@ function renderKSLearn(v){
   document.getElementById('ks-learn').innerHTML=html;
 }
 
+// ═══ Circle of Fifths / 五度圏 ═══
+// position 0 = C at 12 o'clock, clockwise = +P5 (♯ が1つずつ増える)
+var C5_MAJ =['C','G','D','A','E','B','F♯','D♭','A♭','E♭','B♭','F'];
+var C5_MIN =['Am','Em','Bm','F♯m','C♯m','G♯m','D♯m','B♭m','Fm','Cm','Gm','Dm'];
+var C5_MAJD=['C','G','D','A','E','B','F♯/G♭','D♭/C♯','A♭','E♭','B♭','F'];
+var C5_MIND=['Am','Em','Bm','F♯m','C♯m','G♯m','D♯m/E♭m','B♭m','Fm','Cm','Gm','Dm'];
+var C5_SIGD=['♮','1♯','2♯','3♯','4♯','5♯','6♯/6♭','5♭','4♭','3♭','2♭','1♭'];
+var C5_SIGN=[0,1,2,3,4,5,6,5,4,3,2,1];
+var C5_ACC =['','♯','♯','♯','♯','♯','♯','♭','♭','♭','♭','♭'];
+var C5_MAJQ=['','m','m','','','m','dim'],C5_MINQ=['m','dim','','m','m','',''];
+var C5_MAJR=['I','ii','iii','IV','V','vi','vii°'],C5_MINR=['i','ii°','III','iv','v','VI','VII'];
+var C5_PROG={
+  major:[
+    {n:'I – V – vi – IV',d:[0,4,5,3],c:'ポップスの王道進行'},
+    {n:'ii – V – I',d:[1,4,0],c:'ジャズの基本ケーデンス'},
+    {n:'vi – IV – V – I',d:[5,3,4,0],c:'小室進行'},
+    {n:'I – vi – ii – V',d:[0,5,1,4],c:'循環コード'},
+    {n:'I – IV – V – I',d:[0,3,4,0],c:'スリーコード（基本形）'},
+    {n:'I–V–vi–iii–IV–I–IV–V',d:[0,4,5,2,3,0,3,4],c:'カノン進行'}
+  ],
+  minor:[
+    {n:'i – VI – III – VII',d:[0,5,2,6],c:'哀愁系の定番'},
+    {n:'i – iv – v – i',d:[0,3,4,0],c:'マイナーのスリーコード'},
+    {n:'i – VII – VI – VII',d:[0,6,5,6],c:'アンダルシア風'},
+    {n:'ii° – v – i',d:[1,4,0],c:'マイナーのツーファイブ'},
+    {n:'i – VI – VII – i',d:[0,5,6,0],c:'力強い終止'}
+  ]
+};
+var c5Pos=0,c5Mode='major';
+function c5Key(p,m){return (m||c5Mode)==='major'?C5_MAJ[p]:C5_MIN[p]}
+function c5Scale(p,m){p=(p===undefined?c5Pos:p);m=m||c5Mode;
+  return m==='major'?KS_NOTES[C5_MAJ[p]].slice():KS_MINOR_NOTES[C5_MIN[p]].slice()}
+// absolute semitones above C4 for the triad on `deg` (stacked upward, so it always ascends)
+function c5Triad(deg,p,m){var sc=c5Scale(p,m),r=NOTE_SEMI[sc[deg]];
+  return[0,(NOTE_SEMI[sc[(deg+2)%7]]-r+12)%12,(NOTE_SEMI[sc[(deg+4)%7]]-r+12)%12].map(function(o){return r+o})}
+function c5PlayDeg(deg,v){var t=c5Triad(deg);t.forEach(function(pc,i){setTimeout(function(){pf(261.63*Math.pow(2,pc/12),v||.13)},i*45)})}
+function c5PlayProg(pi){var pr=C5_PROG[c5Mode][pi];pr.d.forEach(function(deg,i){setTimeout(function(){c5PlayDeg(deg,.11)},i*720)})}
+function c5Sel(p,m){c5Pos=((p%12)+12)%12;c5Mode=m;rC5()}
+function c5Sect(cx,cy,r1,r2,a1,a2){
+  var x=function(r,a){return(cx+r*Math.cos(a)).toFixed(1)+' '+(cy+r*Math.sin(a)).toFixed(1)};
+  return'M'+x(r2,a1)+'A'+r2+' '+r2+' 0 0 1 '+x(r2,a2)+'L'+x(r1,a2)+'A'+r1+' '+r1+' 0 0 0 '+x(r1,a1)+'Z'}
+// Draws a sector label. "F♯/G♭" style enharmonics are stacked on two lines so they
+// stay inside the 30° sector; the alternative spelling is dimmed.
+function c5Label(txt,x,y,fs,col,fw){
+  var ls=txt.split('/'),t=function(s,yy,sz,op){return'<text x="'+(+x).toFixed(1)+'" y="'+(+yy).toFixed(1)+'" text-anchor="middle" dominant-baseline="central" fill="'+col+'" font-size="'+sz.toFixed(1)+'" font-weight="'+fw+'" font-family="-apple-system,sans-serif"'+(op?' opacity="'+op+'"':'')+' style="pointer-events:none">'+s+'</text>'};
+  if(ls.length===1){var n=txt.length,sc=n<=2?1:n<=3?.86:.76;return t(txt,y,fs*sc)}
+  var f2=fs*.8;
+  return t(ls[0],+y-f2*.58,f2)+t(ls[1],+y+f2*.58,f2,'.5')}
+function rC5(){
+  var isM=c5Mode==='major',CX=200,CY=200,h='';
+  var RM1=112,RM2=158,RN1=66,RN2=112,RS=178; // major ring / minor ring / signature radius
+  h+='<circle cx="200" cy="200" r="'+RM2+'" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="1"/>';
+  for(var p=0;p<12;p++){
+    var rel=((p-c5Pos)%12+12)%12,near=(rel===0||rel===1||rel===11);
+    var a1=(-90+p*30-14.3)*Math.PI/180,a2=(-90+p*30+14.3)*Math.PI/180,am=(-90+p*30)*Math.PI/180;
+    // role of each cell relative to the selected key
+    var mjR=near?(isM?(rel===0?'I':rel===1?'V':'IV'):(rel===0?'III':rel===1?'VII':'VI')):'';
+    var mnR=near?(isM?(rel===0?'vi':rel===1?'iii':'ii'):(rel===0?'i':rel===1?'v':'iv')):'';
+    var isT=rel===0,tonMj=isT&&isM,tonMn=isT&&!isM;
+    var domMj=isM&&rel===1,subMj=isM&&rel===11,domMn=!isM&&rel===1,subMn=!isM&&rel===11;
+    var cells=[
+      {r1:RM1,r2:RM2,rl:mjR,txt:C5_MAJD[p],ton:tonMj,dom:domMj,sub:subMj,rt:RM1+(RM2-RM1)*.52,fs:15,mode:'major'},
+      {r1:RN1,r2:RN2,rl:mnR,txt:C5_MIND[p],ton:tonMn,dom:domMn,sub:subMn,rt:RN1+(RN2-RN1)*.5,fs:12,mode:'minor'}
+    ];
+    cells.forEach(function(c){
+      var fill,stk,tc;
+      if(c.ton){fill='var(--root)';stk='rgba(255,255,255,.35)';tc='#fff'}
+      else if(c.dom){fill='rgba(233,196,106,.26)';stk='rgba(233,196,106,.55)';tc='var(--tx)'}
+      else if(c.sub){fill='rgba(69,123,157,.3)';stk='rgba(69,123,157,.6)';tc='var(--tx)'}
+      else if(c.rl){fill='rgba(6,214,160,.13)';stk='rgba(6,214,160,.3)';tc='var(--tx)'}
+      else{fill=c.mode==='minor'?'rgba(255,255,255,.055)':'rgba(255,255,255,.03)';stk='rgba(255,255,255,.09)';tc='var(--txd)'}
+      var tx=CX+c.rt*Math.cos(am),ty=CY+c.rt*Math.sin(am);
+      h+='<g onclick="c5Sel('+p+',\''+c.mode+'\')" style="cursor:pointer">';
+      h+='<path d="'+c5Sect(CX,CY,c.r1,c.r2,a1,a2)+'" fill="'+fill+'" stroke="'+stk+'" stroke-width="1"/>';
+      h+=c5Label(c.txt,tx,c.rl?ty-5:ty,c.fs,tc,c.ton?700:c.rl?600:400);
+      if(c.rl)h+='<text x="'+tx.toFixed(1)+'" y="'+(ty+12).toFixed(1)+'" text-anchor="middle" dominant-baseline="central" fill="'+(c.ton?'rgba(255,255,255,.8)':'var(--txd)')+'" font-size="8.5" font-family="-apple-system,sans-serif" style="pointer-events:none">'+c.rl+'</text>';
+      h+='</g>';
+    });
+    // key signature ring (outside)
+    var sx=CX+RS*Math.cos(am),sy=CY+RS*Math.sin(am);
+    h+=c5Label(C5_SIGD[p],sx,sy,10,near?'var(--P5)':'rgba(255,255,255,.22)',near?600:400);
+  }
+  // centre
+  var kn=isM?C5_MAJD[c5Pos]:C5_MIND[c5Pos];
+  h+='<circle cx="200" cy="200" r="'+RN1+'" fill="var(--sf2)" stroke="rgba(255,255,255,.06)" stroke-width="1"/>';
+  h+='<text x="200" y="183" text-anchor="middle" dominant-baseline="central" fill="var(--tx)" font-size="26" font-weight="700" font-family="-apple-system,sans-serif">'+kn.split('/')[0]+'</text>';
+  h+='<text x="200" y="204" text-anchor="middle" dominant-baseline="central" fill="var(--txd)" font-size="10" font-family="-apple-system,sans-serif">'+(isM?'Major / 長調':'minor / 短調')+'</text>';
+  h+='<text x="200" y="221" text-anchor="middle" dominant-baseline="central" fill="var(--P5)" font-size="10.5" font-weight="600" font-family="-apple-system,sans-serif">調号 '+C5_SIGD[c5Pos]+'</text>';
+  h+='<text x="200" y="14" text-anchor="middle" fill="rgba(255,255,255,.2)" font-size="8.5" font-family="-apple-system,sans-serif">← ♭ ／ ♯ →</text>';
+  document.getElementById('c5-svg').innerHTML=h;
+  rC5Side();
+}
+function rC5Side(){
+  var isM=c5Mode==='major',sc=c5Scale(),qs=isM?C5_MAJQ:C5_MINQ,rn=isM?C5_MAJR:C5_MINR;
+  var kn=(isM?C5_MAJD:C5_MIND)[c5Pos],n=C5_SIGN[c5Pos],acc=C5_ACC[c5Pos];
+  var accN=(acc==='♯'?KSS:KSF).slice(0,n).map(function(l){return l+acc}).join(' ');
+  var rel=isM?C5_MIND[c5Pos]:C5_MAJD[c5Pos],relM=isM?'minor':'major';
+  var par=(c5Pos+(isM?9:3))%12,parN=(isM?C5_MIND:C5_MAJD)[par],parM=isM?'minor':'major';
+  var dom=(c5Pos+1)%12,sub=(c5Pos+11)%12;
+  var h='';
+  // key card
+  h+='<div class="c5-card"><div class="c5-key">'+kn+'<em>'+(isM?'Major / 長調':'minor / 短調')+'</em></div>';
+  h+='<div class="c5-row"><strong>調号</strong><span>'+(n===0?'なし（すべてナチュラル）':acc+' '+n+'個 — '+accN)+'</span></div>';
+  h+='<div class="c5-row"><strong>構成音</strong>'+sc.map(function(x){return'<span class="c5-chip">'+x+'</span>'}).join('')+'</div></div>';
+  // diatonic chords
+  h+='<div class="c5-card"><div class="c5-ttl">ダイアトニックコード — タップで再生</div><div class="c5-chords">';
+  sc.forEach(function(nt,i){
+    var q=qs[i],nm=nt+(q==='dim'?'dim':q);
+    var cls=i===0?' t':i===4?' d':i===3?' s':'';
+    h+='<div class="c5-ch'+cls+'" onclick="c5PlayDeg('+i+')"><div class="rn">'+rn[i]+'</div><div class="nm">'+nm+'</div></div>'});
+  // the diminished chord is the one degree that has no place on the wheel
+  var dd=isM?6:1;
+  h+='</div><div class="c5-note" style="margin-top:9px">'+rn[dd]+'（'+sc[dd]+'dim）だけは五度圏の輪の上に現れません — '+(isM?'V7（'+sc[4]+'7）の一部':'ドミナント（'+sc[4]+'m）へ向かう和音')+'として機能します。</div></div>';
+  // related keys
+  h+='<div class="c5-card"><div class="c5-ttl">近親調 — タップで移動</div><div class="c5-btns">';
+  h+='<button class="c5-btn" onclick="c5Sel('+sub+',\''+c5Mode+'\')"><b>下属調 ←</b>'+(isM?C5_MAJD:C5_MIND)[sub]+'</button>';
+  h+='<button class="c5-btn" onclick="c5Sel('+dom+',\''+c5Mode+'\')"><b>属調 →</b>'+(isM?C5_MAJD:C5_MIND)[dom]+'</button>';
+  h+='<button class="c5-btn" onclick="c5Sel('+c5Pos+',\''+relM+'\')"><b>平行調（同じ調号）</b>'+rel+'</button>';
+  h+='<button class="c5-btn" onclick="c5Sel('+par+',\''+parM+'\')"><b>同主調（同じ主音）</b>'+parN+'</button>';
+  h+='</div></div>';
+  // progressions
+  h+='<div class="c5-card"><div class="c5-ttl"><b>'+kn.split('/')[0]+'</b> の定番進行 — タップで再生</div><div class="c5-prg">';
+  C5_PROG[c5Mode].forEach(function(pr,i){
+    var nms=pr.d.map(function(d){var q=qs[d];return sc[d]+(q==='dim'?'dim':q)}).join(' → ');
+    h+='<div class="c5-pr" onclick="c5PlayProg('+i+')"><span>🔊</span><div class="pd"><div class="pn">'+pr.n+'　<span style="color:var(--txd);font-weight:400;font-size:.9em">'+pr.c+'</span></div><div class="pc2">'+nms+'</div></div></div>'});
+  h+='</div></div>';
+  // explanation
+  h+='<div class="c5-card"><div class="c5-ttl">五度圏の読み方</div><div class="c5-note">'
+    +'・時計回りに<b>完全5度（7半音）</b>ずつ進み、1つ進むごとに<code>♯</code>が1つ増えます。反時計回りは<code>♭</code>が1つずつ増加。<br>'
+    +'・隣り合うキーは構成音が<b>7つ中6つ共通</b>。だから隣への転調はなめらかで、円上で遠いキーほど関係が薄くなります。<br>'
+    +'・選んだキーを中心に <b>外周3マス＋内周3マス</b> の6マスが、そのキーのダイアトニックコード（'+(isM?'I・IV・V・ii・iii・vi':'i・iv・v・III・VI・VII')+'）。<br>'
+    +'・外周＝メジャー、内周＝その<b>平行調</b>。'+C5_MAJD[c5Pos].split('/')[0]+' と '+C5_MIND[c5Pos].split('/')[0]+' は調号が同じなので、光る6マスも同一です。<br>'
+    +'・同じ輪の<b>右隣がドミナント（'+(isM?'V':'v')+'）</b>、<b>左隣がサブドミナント（'+(isM?'IV':'iv')+'）</b>。'+(isM?'V→I':'v→i')+' は円を1マス反時計回りに戻る動きで、これが終止感の正体です。'
+    +'</div></div>';
+  document.getElementById('c5-side').innerHTML=h;
+}
+
 // Init
 ;(function(){
   ['dia-k','cs-k','cr-k'].forEach(function(id){fk(document.getElementById(id))});
@@ -679,7 +893,7 @@ function renderKSLearn(v){
   ['cs-k','cs-r','cs-f'].forEach(function(id){document.getElementById(id).addEventListener('change',rCS)});
   ['cr-k','cr-s'].forEach(function(id){document.getElementById(id).addEventListener('change',rCR)});
   ['vl-ar','vl-at','vl-br','vl-bt'].forEach(function(id){document.getElementById(id).addEventListener('change',rVL)});
-  rDia();rCS();rCR();rVL();rKS()
+  rDia();rCS();rCR();rC5();rVL();rKS()
 })();
 </script>
 </body>

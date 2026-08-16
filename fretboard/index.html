@@ -189,6 +189,10 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
   /* ── Roman numeral badge ── */
   .rn-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(230,57,70,.12);border:1px solid rgba(230,57,70,.3);color:var(--root);border-radius:8px;padding:3px 10px;font-size:.82rem;font-weight:700;margin-left:8px;letter-spacing:.3px}
   .rn-badge small{color:var(--txd);font-size:.63rem;font-weight:400}
+  /* ── Marked (highlighted) notes — click-to-mark mode ── */
+  .nd.mk{z-index:6}
+  .nd.mk::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2.5px solid #ffe066;box-shadow:0 0 10px 2px rgba(255,224,102,.65);pointer-events:none}
+  .an-clr.mk-clr{margin-left:6px}
 
 /* thin dark scrollbar for the fretboard scroller (PC) */
 .fbw{scrollbar-width:thin;scrollbar-color:#4a4038 transparent}
@@ -251,6 +255,14 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
     <div class="cg" style="align-items:flex-start">
       <label>CAGED Position / ポジション</label>
       <div class="dp" id="posBtns"></div>
+    </div>
+    <div class="cg" style="align-items:flex-start">
+      <label>クリック動作 / Click Action</label>
+      <div class="dp">
+        <button class="tb on" id="bClickPlay" onclick="setClickMode('play')">🔊 再生</button>
+        <button class="tb" id="bClickMark" onclick="setClickMode('mark')">📌 マーク</button>
+        <button class="an-clr mk-clr" id="mkClr" title="マークを全解除">クリア</button>
+      </div>
     </div>
     <div class="vc"><label>🔊</label><input type="range" id="vol" min="0" max="100" value="50" class="vs"></div>
     <div class="nf" id="nf"></div>
@@ -320,6 +332,8 @@ var CHQ={'Major / メジャー':{minor:false,suffix:''},'Minor / マイナー':{
 var SROMAN=['I','♭II','II','♭III','III','IV','♭V','V','♭VI','VI','♭VII','VII'];
 function GRN(){var semi=(ky-sk+12)%12,rn=SROMAN[semi],q=CHQ[ch]||{minor:false,suffix:''};if(q.minor)rn=rn.toLowerCase();return rn+q.suffix}
 var ai=new Set();
+var marked=new Set();  // "si-f" keys of fretboard cells the user has pinned/highlighted
+var markMode=false;
 var ALD=[{i:0,d:'R'},{i:1,d:'m2'},{i:2,d:'M2'},{i:3,d:'m3'},{i:4,d:'M3'},{i:5,d:'P4'},{i:6,d:'TT'},{i:7,d:'P5'},{i:8,d:'m6'},{i:9,d:'M6'},{i:10,d:'m7'},{i:11,d:'M7'}];
 // ── CAGED positions: fret windows relative to the key's root fret on the (low) E string ──
 var pos='all';
@@ -341,7 +355,7 @@ function inWin(w,f){if(!w)return true;for(var i=0;i<w.length;i++)if(f>=w[i][0]&&
 // so localStorage is shared — a unique key avoids clobbering the other apps.
 var FB_LS_KEY='fretboardSettings';
 function saveFb(){
-  try{localStorage.setItem(FB_LS_KEY,JSON.stringify({md:md,ky:ky,sc:sc,ch:ch,ns:ns,fr:fr,dp:dp,sk:sk,acc:acc,pos:pos,ai:Array.from(ai)}));}catch(e){}
+  try{localStorage.setItem(FB_LS_KEY,JSON.stringify({md:md,ky:ky,sc:sc,ch:ch,ns:ns,fr:fr,dp:dp,sk:sk,acc:acc,pos:pos,ai:Array.from(ai),mk:Array.from(marked)}));}catch(e){}
 }
 function loadFb(){
   var s;try{s=JSON.parse(localStorage.getItem(FB_LS_KEY));}catch(e){s=null;}
@@ -357,6 +371,7 @@ function loadFb(){
   if(s.pos==='all'||CAGED[s.pos])pos=s.pos;
   if(typeof s.sk==='number')sk=s.sk;
   ai=new Set(Array.isArray(s.ai)?s.ai:[]);
+  marked=new Set(Array.isArray(s.mk)?s.mk:[]);
 }
 
 // Audio
@@ -379,10 +394,20 @@ function pn(si,f){
   var bf=c.createBiquadFilter();bf.type='bandpass';bf.frequency.setValueAtTime(fq*2,t);bf.Q.setValueAtTime(1.5,t);
   bs.connect(bf);bf.connect(bg);bg.connect(m);bs.start(t);bs.stop(t+.05);
 }
+function toggleMark(dot,si,f){
+  var key=si+'-'+f;
+  if(marked.has(key))marked.delete(key);else marked.add(key);
+  dot.classList.toggle('mk',marked.has(key));
+  saveFb();
+}
 function bnd(dot,si,f){
   var tc=false;
-  dot.addEventListener('touchstart',function(e){e.preventDefault();tc=true;pn(si,f);dot.classList.add('pl');setTimeout(function(){dot.classList.remove('pl')},300)},{passive:false});
-  dot.addEventListener('click',function(){if(tc){tc=false;return}pn(si,f);dot.classList.add('pl');setTimeout(function(){dot.classList.remove('pl')},300)});
+  function act(){
+    if(markMode){toggleMark(dot,si,f);return}
+    pn(si,f);dot.classList.add('pl');setTimeout(function(){dot.classList.remove('pl')},300);
+  }
+  dot.addEventListener('touchstart',function(e){e.preventDefault();tc=true;act()},{passive:false});
+  dot.addEventListener('click',function(){if(tc){tc=false;return}act()});
 }
 
 function R(){
@@ -410,7 +435,7 @@ function R(){
       var ni=(T.t[si]+f)%12;
       if(sm[ni]!==undefined){
         var dg=sm[ni],dot=document.createElement('div');
-        dot.className='nd '+DC[dg]+(inWin(wins,f)?'':' posdim');
+        dot.className='nd '+DC[dg]+(inWin(wins,f)?'':' posdim')+(marked.has(si+'-'+f)?' mk':'');
         dot.style.animationDelay=(Math.abs(si-Math.floor(ns/2))*15+f*10)+'ms';
         var nn=DN(ni);
         if(dp==='note')dot.textContent=nn;
@@ -419,7 +444,7 @@ function R(){
         bnd(dot,si,f);cell.appendChild(dot);
       } else if(am[ni]!==undefined){
         var dg=am[ni],dot=document.createElement('div');
-        dot.className='nd ext '+DC[dg]+(inWin(wins,f)?'':' posdim');
+        dot.className='nd ext '+DC[dg]+(inWin(wins,f)?'':' posdim')+(marked.has(si+'-'+f)?' mk':'');
         dot.style.animationDelay=(Math.abs(si-Math.floor(ns/2))*15+f*10)+'ms';
         var nn=DN(ni);
         if(dp==='note')dot.textContent=nn;
@@ -473,6 +498,7 @@ function UA(){
   }
 }
 function SD(m){dp=m;document.getElementById('bN').className='tb'+(m==='note'?' on':'');document.getElementById('bD').className='tb'+(m==='deg'?' on':'');document.getElementById('bB').className='tb'+(m==='both'?' on':'');R()}
+function setClickMode(m){markMode=(m==='mark');document.getElementById('bClickPlay').classList.toggle('on',!markMode);document.getElementById('bClickMark').classList.toggle('on',markMode)}
 function toggleAcc(){acc=acc==='flat'?'sharp':'flat';var b=document.getElementById('bAcc');b.textContent=acc==='sharp'?'♯ 表記':'♭ 表記';b.classList.toggle('on',acc==='sharp');R()}
 // Init
 (function(){
@@ -488,6 +514,7 @@ function toggleAcc(){acc=acc==='flat'?'sharp':'flat';var b=document.getElementBy
   document.getElementById('sR').addEventListener('change',function(e){ns=+e.target.value;R()});
   document.getElementById('sF').addEventListener('change',function(e){fr=+e.target.value;R()});
   document.getElementById('an-clr').onclick=function(){ai.clear();R()};
+  document.getElementById('mkClr').onclick=function(){marked.clear();R()};
   // CAGED position buttons
   var pw=document.getElementById('posBtns');
   var pa=document.createElement('button');pa.className='tb on';pa.textContent='ALL';pa.title='全ポジション表示';

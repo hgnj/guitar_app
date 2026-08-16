@@ -83,6 +83,9 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 .iv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:480px;margin:16px auto}
 .iv-grid .trb{min-width:0;padding:8px 6px;font-size:.75rem}
 @media(max-width:768px){.iv-grid{grid-template-columns:repeat(3,1fr)}.iv-grid .trb{padding:10px 4px;font-size:.72rem}}
+.dg-slot{width:46px;height:46px;border-radius:10px;background:var(--sf2);border:2px solid rgba(255,255,255,.08);display:inline-flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--txd);margin:0 3px;transition:all .2s}
+.dg-slot.on{border-color:var(--root);color:var(--tx);background:rgba(230,57,70,.12)}
+.iv-grid.six{grid-template-columns:repeat(3,1fr)}
 .site-nav{display:flex;flex-wrap:wrap;gap:4px;padding:10px 16px;max-width:1440px;margin:0 auto}
 .nav-link{color:var(--txd);text-decoration:none;font-family:inherit;font-size:.75rem;padding:6px 14px;border-radius:8px;background:var(--sf2);border:1px solid rgba(255,255,255,.04);transition:all .2s;-webkit-tap-highlight-color:transparent}
 .nav-link:hover{color:var(--tx);border-color:rgba(255,255,255,.12)}.nav-link.active{color:#e63946;background:rgba(230,57,70,.1);border-color:#e63946}
@@ -106,6 +109,7 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
     <button class="tab" onclick="stab('cmp',this)">🔀 スケール比較</button>
     <button class="tab" onclick="stab('iv',this)">🎯 インターバル</button>
     <button class="tab" onclick="stab('ch',this)">🎵 コード判別</button>
+    <button class="tab" onclick="stab('dg',this)">🎼 度数トレーナー</button>
   </div>
   <div class="tp on" id="tp-ap">
     <div class="ctrls" style="margin-bottom:10px">
@@ -177,6 +181,48 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
       <button class="trnx" id="ch-nx" onclick="newCh()" style="display:none">次の問題 →</button>
     </div>
   </div>
+  <div class="tp" id="tp-dg">
+    <div class="tra">
+      <div class="trh">
+        <div class="smt" id="dg-modeSeg"><button class="smb on" data-mode="quality">明暗</button><button class="smb" data-mode="degree">度数</button><button class="smb" data-mode="progression">進行</button></div>
+        <button class="rbtn" onclick="rstDg()">リセット</button>
+      </div>
+      <div class="klr" id="dg-klr">
+        <span>🔑</span><label>Key:</label>
+        <select id="dg-key">
+          <option value="random">ランダム</option>
+          <option value="0">C</option><option value="7">G</option>
+          <option value="2">D</option><option value="9">A</option>
+          <option value="4" selected>E</option><option value="5">F</option>
+          <option value="10">B♭</option>
+        </select>
+        <label>Pool:</label>
+        <select id="dg-pool">
+          <option value="3">I IV V</option>
+          <option value="4" selected>I IV V vi</option>
+          <option value="6">I ii iii IV V vi</option>
+        </select>
+        <label>Tone:</label>
+        <select id="dg-tone">
+          <option value="acoustic" selected>アコギ</option>
+          <option value="electric">クリーン</option>
+          <option value="nylon">ナイロン</option>
+        </select>
+      </div>
+      <p style="color:var(--txd);font-size:.82rem" id="dg-desc">キーを聴かせてから出題します（メジャー/マイナー判定）。音名ではなく「キーに対する位置」で覚える練習です。</p>
+      <div class="trq" id="dg-q">?</div>
+      <div style="margin:8px 0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="trli" onclick="rpDg()">🔊</button>
+        <button class="rbtn" onclick="playDgKey()">🎼 キーを鳴らす</button>
+      </div>
+      <div class="trfb" id="dg-fb"></div>
+      <div class="iv-grid" id="dg-opts"></div>
+      <div class="trs">スコア: <strong id="dg-ok">0</strong> / <span id="dg-tt">0</span><span id="dg-st"></span></div>
+      <button class="trnx" id="dg-nx" onclick="newDg()" style="display:none">次の問題 →</button>
+      <div id="dg-conf" style="font-size:.72rem;color:var(--txd);margin-top:12px;line-height:1.7;text-align:center"></div>
+      <p style="color:var(--txd);font-size:.72rem;margin-top:8px">💡 取り違えの傾向が出たら、そこだけ夜にギターで鳴らして耳を合わせてみましょう。3度をルートと聴く癖、V と IV の混同あたりが典型です。</p>
+    </div>
+  </div>
 </div>
 <script>
 var N=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FM={'C#':'D♭','D#':'E♭','F#':'G♭','G#':'A♭','A#':'B♭'};
@@ -198,7 +244,7 @@ function ac(){if(!ax)try{ax=new(window.AudioContext||window.webkitAudioContext)}
 function pf(fq,v){var c=ac();if(!c)return;v=v||.2;var t=c.currentTime,m=c.createGain();m.connect(c.destination);m.gain.setValueAtTime(0,t);m.gain.linearRampToValueAtTime(v,t+.008);m.gain.exponentialRampToValueAtTime(Math.max(v*.6,.001),t+.08);m.gain.exponentialRampToValueAtTime(Math.max(v*.3,.001),t+.4);m.gain.exponentialRampToValueAtTime(.001,t+1.8);[{r:1,g:1},{r:2,g:.5},{r:3,g:.25},{r:4,g:.15},{r:5,g:.08}].forEach(function(h){var o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.setValueAtTime(fq*h.r,t);g.gain.setValueAtTime(h.g,t);o.connect(g);g.connect(m);o.start(t);o.stop(t+2)})}
 function ps(ns,si,f,v){var T=+ns===7?T7:T6;pf(T.h[si]*Math.pow(2,f/12),v||.2)}
 function bnd(d,ns,si,f,v){var tc=false;d.addEventListener('touchstart',function(e){e.preventDefault();tc=true;ps(ns,si,f,v);d.classList.add('pl');setTimeout(function(){d.classList.remove('pl')},300)},{passive:false});d.addEventListener('click',function(){if(tc){tc=false;return}ps(ns,si,f,v);d.classList.add('pl');setTimeout(function(){d.classList.remove('pl')},300)})}
-function stab(id,el){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});document.querySelectorAll('.tp').forEach(function(p){p.classList.remove('on')});document.getElementById('tp-'+id).classList.add('on');el.classList.add('on');if(id==='iv'&&ivT===0)newIv();if(id==='ch'&&chT===0)newCh()}
+function stab(id,el){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});document.querySelectorAll('.tp').forEach(function(p){p.classList.remove('on')});document.getElementById('tp-'+id).classList.add('on');el.classList.add('on');if(id==='iv'&&ivT===0)newIv();if(id==='ch'&&chT===0)newCh();if(id==='dg'&&!dgStarted){dgStarted=true;newDg()}}
 function fk(el){N.forEach(function(n,i){var o=document.createElement('option');o.value=i;o.textContent=FM[n]?n+' / '+FM[n]:n;el.appendChild(o)})}
 function fsc(el){Object.keys(SC).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;el.appendChild(o)})}
 function rfb(fbId,ftId,fBId,ns,key,scD,maxF,opts){
@@ -212,7 +258,7 @@ function rfb(fbId,ftId,fBId,ns,key,scD,maxF,opts){
   fb.appendChild(dm);var dots=[];
   for(var si=nst-1;si>=0;si--){var row=document.createElement('div');row.className='sr';var sn=document.createElement('div');sn.className='sn';sn.style.height=T.w[si]+'px';sn.style.background=T.c[si];sn.style.opacity='.4';row.appendChild(sn);var lb=document.createElement('div');lb.className='sl';lb.textContent=T.n[si];row.appendChild(lb);
     for(var f=0;f<=maxF;f++){var cell=document.createElement('div');cell.className='fc'+(f===0?' nut':'');var ni=(T.t[si]+f)%12;
-      if(mapB){var inA=sA.has(ni),inB=sB.has(ni);if(inA||inB){var dot=document.createElement('div'),nn=DN(ni);if(inA&&inB){dot.className='nd P5 olap';dot.textContent=nn}else if(inA){var dga=map[ni];dot.className='nd '+DC[dga];if(dp==='deg')dot.textContent=dga;else if(dp==='both')dot.innerHTML='<span style="font-size:.5rem;line-height:1.1">'+nn+'<br>'+dga+'</span>';else dot.textContent=nn}else{dot.className='nd cmp';dot.style.background='var(--P4)';dot.style.color='#fff';dot.innerHTML='<span>'+nn+'</span>'}dot.style.animationDelay=f*10+'ms';bnd(dot,ns,si,f,.2);cell.appendChild(dot);dots.push({dot:dot,s:si,f:f,ni:ni})}}
+      if(mapB){var inA=sA.has(ni),inB=sB.has(ni);if(inA||inB){var dot=document.createElement('div'),nn=DN(ni);if(inA&&inB){var dgc=map[ni]!==undefined?map[ni]:mapB[ni];dot.className='nd P5 olap';if(dp==='deg')dot.textContent=dgc;else if(dp==='both')dot.innerHTML='<span style="font-size:.5rem;line-height:1.1">'+nn+'<br>'+dgc+'</span>';else dot.textContent=nn}else if(inA){var dga=map[ni];dot.className='nd '+DC[dga];if(dp==='deg')dot.textContent=dga;else if(dp==='both')dot.innerHTML='<span style="font-size:.5rem;line-height:1.1">'+nn+'<br>'+dga+'</span>';else dot.textContent=nn}else{var dgb=mapB[ni];dot.className='nd cmp';dot.style.background='var(--P4)';dot.style.color='#fff';if(dp==='deg')dot.innerHTML='<span>'+dgb+'</span>';else if(dp==='both')dot.innerHTML='<span style="font-size:.5rem;line-height:1.1">'+nn+'<br>'+dgb+'</span>';else dot.innerHTML='<span>'+nn+'</span>'}dot.style.animationDelay=f*10+'ms';bnd(dot,ns,si,f,.2);cell.appendChild(dot);dots.push({dot:dot,s:si,f:f,ni:ni})}}
       else if(map[ni]!==undefined){var dg=map[ni],dot=document.createElement('div');dot.className='nd '+DC[dg];if(dp==='deg')dot.textContent=dg;else if(dp==='both')dot.innerHTML='<span style="font-size:.5rem;line-height:1.1">'+DN(ni)+'<br>'+dg+'</span>';else dot.textContent=DN(ni);dot.style.animationDelay=(Math.abs(si-Math.floor(nst/2))*15+f*10)+'ms';bnd(dot,ns,si,f,.2);cell.appendChild(dot);dots.push({dot:dot,s:si,f:f,ni:ni})}
       row.appendChild(cell)}fb.appendChild(row)}return dots}
 var apOn=false,apTm=null,apDir='up',apDots=[];
@@ -249,7 +295,284 @@ document.getElementById('ch-fb').textContent='';document.getElementById('ch-fb')
 function buildChOpts(){var opts=document.getElementById('ch-opts');opts.innerHTML='';if(chHint==='root'){var ids=getChCts();ids.forEach(function(ci){var btn=document.createElement('button');btn.className='trb';btn.textContent=N[chRt]+CTS[ci].s;btn.addEventListener('click',function(){chkCh(chRt,ci,btn)});opts.appendChild(btn)})}else if(chMd==='fixed'){var key=+document.getElementById('ch-k').value,dia=getChDia();var dcs=dia.map(function(d){return{rt:(key+d.o)%12,ti:d.t,lbl:N[(key+d.o)%12]+CTS[d.t].s,dg:d.dg}});dcs.sort(function(){return Math.random()-.5});dcs.forEach(function(dc){var btn=document.createElement('button');btn.className='trb';btn.textContent=dc.lbl+' ('+dc.dg+')';btn.addEventListener('click',function(){chkCh(dc.rt,dc.ti,btn)});opts.appendChild(btn)})}else{var ids=getChCts(),ch=new Set([chTi]),pool=ids.filter(function(v){return v!==chTi});while(ch.size<Math.min(5,ids.length)&&pool.length>0){var ri=Math.floor(Math.random()*pool.length);ch.add(pool[ri]);pool.splice(ri,1)}var arr=[];ch.forEach(function(v){arr.push(v)});arr.sort(function(){return Math.random()-.5});arr.forEach(function(ci){var btn=document.createElement('button');btn.className='trb';btn.textContent=CTS[ci].n;btn.addEventListener('click',function(){chkCh(chRt,ci,btn)});opts.appendChild(btn)})}}
 function rpCh(){var bf=261.63,ct=CTS[chTi];ct.i.forEach(function(iv,i){setTimeout(function(){pf(bf*Math.pow(2,(chRt+iv)/12),.2)},i*120)});setTimeout(function(){ct.i.forEach(function(iv){pf(bf*Math.pow(2,(chRt+iv)/12),.15)})},ct.i.length*120+200)}
 function chkCh(rt,ti,btn){if(chAd)return;chAd=true;chT++;var ok=(rt===chRt&&ti===chTi);document.querySelectorAll('#ch-opts .trb').forEach(function(b){b.style.pointerEvents='none'});var cL=(chHint==='root'||chMd==='fixed')?N[chRt]+CTS[chTi].s:CTS[chTi].n;if(ok){chOk++;chSk++;btn.classList.add('ok');document.getElementById('ch-fb').textContent='✅ 正解！';document.getElementById('ch-fb').className='trfb ok'}else{chSk=0;btn.classList.add('ng');document.getElementById('ch-fb').textContent='❌ 正解は '+cL;document.getElementById('ch-fb').className='trfb ng';document.querySelectorAll('#ch-opts .trb').forEach(function(b){if(chHint==='root'||chMd==='fixed'){if(b.textContent.split(' (')[0]===cL)b.classList.add('ok')}else{if(b.textContent===cL)b.classList.add('ok')}})}document.getElementById('ch-ok').textContent=chOk;document.getElementById('ch-tt').textContent=chT;document.getElementById('ch-st').innerHTML=chSk>=3?'<span class="streak">🔥 '+chSk+'連続</span>':'';document.getElementById('ch-nx').style.display='inline-block'}
+/* ============ 度数トレーナー (degree trainer) — ported from ear_trainer_v2.html ============ */
+var dgCtx=null,dgDry=null,dgVerbIn=null,dgBodyOut=null,dgTone='acoustic';
+var DG_TONE={
+  acoustic:{tau:[3.2,1.6],S:0.42,lp:4200,body:[[102,1.1,7],[196,1.6,4.5],[420,2.0,3],[2600,0.8,2.5]],wet:0.20,pickNoise:0.05,beta:0.12},
+  electric:{tau:[5.0,2.8],S:0.30,lp:3400,body:[[180,1.2,2],[800,1.0,-2],[2200,1.4,3.5]],wet:0.13,pickNoise:0.03,beta:0.09},
+  nylon:{tau:[2.6,1.4],S:0.55,lp:2600,body:[[110,1.2,6],[230,1.8,4],[500,2.2,2]],wet:0.24,pickNoise:0.015,beta:0.22}
+};
+function dgInitAudio(){
+  if(dgCtx)return;
+  dgCtx=new(window.AudioContext||window.webkitAudioContext)();
+  dgBodyOut=dgCtx.createGain();dgBodyOut.gain.value=0.7;
+  var comp=dgCtx.createDynamicsCompressor();
+  comp.threshold.value=-18;comp.knee.value=24;comp.ratio.value=3;comp.attack.value=0.006;comp.release.value=0.25;
+  dgBodyOut.connect(comp);comp.connect(dgCtx.destination);
+  var cv=dgCtx.createConvolver();cv.buffer=dgImpulse(1.8,2.4);
+  dgVerbIn=dgCtx.createGain();dgVerbIn.gain.value=DG_TONE[dgTone].wet;
+  dgVerbIn.connect(cv);cv.connect(comp);
+  dgBuildBody();
+}
+var dgBodyChain=[];
+function dgBuildBody(){
+  dgBodyChain.forEach(function(f){try{f.disconnect()}catch(e){}});
+  dgBodyChain=DG_TONE[dgTone].body.map(function(b){
+    var f=b[0],q=b[1],g=b[2],bf=dgCtx.createBiquadFilter();bf.type='peaking';bf.frequency.value=f;bf.Q.value=q;bf.gain.value=g;return bf;
+  });
+  for(var i=0;i<dgBodyChain.length-1;i++)dgBodyChain[i].connect(dgBodyChain[i+1]);
+  dgBodyChain[dgBodyChain.length-1].connect(dgBodyOut);
+  dgDry=dgBodyChain[0];
+  if(dgVerbIn)dgVerbIn.gain.value=DG_TONE[dgTone].wet;
+}
+function dgImpulse(dur,decay){
+  var sr=dgCtx.sampleRate,len=Math.floor(sr*dur),b=dgCtx.createBuffer(2,len,sr);
+  for(var c=0;c<2;c++){var d=b.getChannelData(c);for(var i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}
+  return b;
+}
+function dgMtof(m){return 440*Math.pow(2,(m-69)/12)}
+var dgKsCache=new Map();
+function dgKsBuffer(midi){
+  var key=dgTone+':'+midi;
+  if(dgKsCache.has(key))return dgKsCache.get(key);
+  var T=DG_TONE[dgTone],sr=dgCtx.sampleRate,f=dgMtof(midi);
+  var D=sr/f,Di=Math.floor(D),frac=D-Di,a=1-frac;
+  var len=Math.floor(sr*3.4);
+  var buf=dgCtx.createBuffer(1,len,sr),d=buf.getChannelData(0);
+  var ex=new Float32Array(Di+2),p=0;
+  for(var i=0;i<ex.length;i++){var w=Math.random()*2-1;p=p*0.62+w*0.38;ex[i]=p;}
+  var pk=Math.max(1,Math.round(Di*T.beta));
+  for(var i=ex.length-1;i>=pk;i--)ex[i]-=ex[i-pk]*0.85;
+  for(var i=0;i<ex.length;i++)d[i]=ex[i]*0.85;
+  var bright=Math.min(1,Math.max(0,(f-80)/620));
+  var tau=T.tau[0]+(T.tau[1]-T.tau[0])*bright;
+  var damp=Math.exp(-1/(f*tau));
+  var S=T.S*(1-0.25*bright),prev=0;
+  for(var i=Di+2;i<len;i++){var x=a*d[i-Di]+(1-a)*d[i-Di-1];prev=(1-S)*x+S*prev;d[i]=damp*prev;}
+  var fade=Math.floor(sr*0.25);
+  for(var i=len-fade;i<len;i++)d[i]*=(len-i)/fade;
+  dgKsCache.set(key,buf);
+  return buf;
+}
+function dgPluck(midi,at,vel,pan){
+  var T=DG_TONE[dgTone];
+  var src=dgCtx.createBufferSource();
+  src.buffer=dgKsBuffer(midi);
+  src.playbackRate.value=Math.pow(2,((Math.random()*2-1)*4)/1200);
+  var g=dgCtx.createGain();
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vel,at+0.004);g.gain.setTargetAtTime(0,at+2.2,0.5);
+  var lp=dgCtx.createBiquadFilter();lp.type='lowpass';
+  lp.frequency.setValueAtTime(T.lp*1.5,at);lp.frequency.exponentialRampToValueAtTime(T.lp*0.55,at+1.2);lp.Q.value=0.4;
+  var pn=dgCtx.createStereoPanner?dgCtx.createStereoPanner():null;
+  if(pn)pn.pan.value=pan;
+  src.connect(lp);lp.connect(g);
+  var out=pn?(g.connect(pn),pn):g;
+  out.connect(dgDry);out.connect(dgVerbIn);
+  src.start(at);src.stop(at+3.4);
+  if(T.pickNoise>0.001){
+    var nb=dgCtx.createBuffer(1,Math.floor(dgCtx.sampleRate*0.03),dgCtx.sampleRate),nd=nb.getChannelData(0);
+    for(var i=0;i<nd.length;i++)nd[i]=(Math.random()*2-1)*Math.pow(1-i/nd.length,3);
+    var ns=dgCtx.createBufferSource();ns.buffer=nb;
+    var nf=dgCtx.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2600;nf.Q.value=1.2;
+    var ng=dgCtx.createGain();ng.gain.value=T.pickNoise*vel;
+    ns.connect(nf);nf.connect(ng);ng.connect(dgDry);
+    ns.start(at);
+  }
+}
+function dgStrum(notes,at,vel,down){
+  vel=vel||0.4;if(down===undefined)down=true;
+  var list=down?notes:notes.slice().reverse();
+  var n=list.length,t=at;
+  list.forEach(function(m,i){
+    if(m===null)return;
+    var idx=down?i:n-1-i;
+    var v=vel*(0.82+0.30*(1-idx/n))*(0.92+Math.random()*0.16);
+    dgPluck(m,t,v,(idx/(n-1)-0.5)*0.35);
+    t+=0.018+Math.random()*0.012;
+  });
+}
+var DG_OPEN=[40,45,50,55,59,64];
+var DG_SHAPES={E_maj:[0,2,2,1,0,0],E_min:[0,2,2,0,0,0],A_maj:[null,0,2,2,2,0],A_min:[null,0,2,2,1,0]};
+function dgGuitarChord(rootPc,minor){
+  var e6=((rootPc-4)%12+12)%12,a5=((rootPc-9)%12+12)%12,shape,base;
+  if(e6<=7){shape=DG_SHAPES[minor?'E_min':'E_maj'];base=e6;}else{shape=DG_SHAPES[minor?'A_min':'A_maj'];base=a5;}
+  return shape.map(function(f,i){return f===null?null:DG_OPEN[i]+base+f});
+}
+var DG_DEG=[{r:'I',off:0,min:false},{r:'ii',off:2,min:true},{r:'iii',off:4,min:true},{r:'IV',off:5,min:false},{r:'V',off:7,min:false},{r:'vi',off:9,min:true}];
+var DG_POOLS={3:[0,3,4],4:[0,3,4,5],6:[0,1,2,3,4,5]};
+var DG_NAMES={0:'C',2:'D',4:'E',5:'F',7:'G',9:'A',10:'B♭'};
+var DG_SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+var DG_FLAT=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+function dgChordName(pc,minor,key){
+  var useFlat=(key===5||key===10||key===0);
+  return (useFlat?DG_FLAT:DG_SHARP)[((pc%12)+12)%12]+(minor?'m':'');
+}
+function dgDegChord(keyPc,d){return dgGuitarChord((keyPc+d.off)%12,d.min)}
+
+var dgMode='quality',dgPool=4,dgKeyPc=4;
+var dgCurrent=null,dgAnswered=false,dgSeq=[],dgGuessQueue=[],dgQRoot=0,dgQMin=false,dgQDeg=0;
+var dgStats={total:0,correct:0,streak:0,best:0,conf:{}};
+var dgStarted=false;
+var DG_LS_KEY='dgTrainerStats';
+function saveDgStats(){try{localStorage.setItem(DG_LS_KEY,JSON.stringify(dgStats));}catch(e){}}
+function loadDgStats(){try{var s=JSON.parse(localStorage.getItem(DG_LS_KEY));if(s)dgStats=Object.assign({total:0,correct:0,streak:0,best:0,conf:{}},s);}catch(e){}renderDgStats();}
+
+function renderDgQ(){
+  var q=document.getElementById('dg-q');
+  if(dgMode==='progression'){
+    q.innerHTML=dgSeq.map(function(){return '<span class="dg-slot">?</span>'}).join('');
+  }else{
+    q.textContent='?';
+  }
+}
+function playDgCadence(t){
+  [0,3,4,0].forEach(function(di,i){dgStrum(dgDegChord(dgKeyPc,DG_DEG[di]),t+i*0.62,0.30,i%2===0)});
+  return t+4*0.62+0.4;
+}
+function schedDgLit(i,ms){
+  setTimeout(function(){
+    var slots=document.querySelectorAll('#dg-q .dg-slot');
+    if(slots[i]){slots[i].style.boxShadow='0 0 0 2px var(--root)';setTimeout(function(){slots[i].style.boxShadow='';},600);}
+  },Math.max(0,ms));
+}
+function playDg(){
+  dgInitAudio();if(dgCtx.state==='suspended')dgCtx.resume();
+  var t=dgCtx.currentTime+0.15;
+  if(dgMode==='quality'){dgStrum(dgDegChord(dgKeyPc,DG_DEG[0]),t,0.24);t+=1.05;}
+  else t=playDgCadence(t);
+  if(dgMode==='progression'){
+    dgSeq.forEach(function(di,i){dgStrum(dgDegChord(dgKeyPc,DG_DEG[di]),t+i*1.05,0.44,i%2===0);schedDgLit(i,(t+i*1.05-dgCtx.currentTime)*1000);});
+  }else if(dgMode==='degree'){
+    dgStrum(dgDegChord(dgKeyPc,DG_DEG[dgCurrent]),t,0.48);schedDgLit(0,(t-dgCtx.currentTime)*1000);
+  }else{
+    dgStrum(dgGuitarChord(dgQRoot,dgQMin),t,0.48);schedDgLit(0,(t-dgCtx.currentTime)*1000);
+  }
+}
+function rpDg(){playDg()}
+function playDgKey(){
+  dgInitAudio();if(dgCtx.state==='suspended')dgCtx.resume();
+  var keySel=document.getElementById('dg-key').value;
+  if(keySel!=='random')dgKeyPc=+keySel;
+  playDgCadence(dgCtx.currentTime+0.1);
+}
+function buildDgOpts(){
+  var opts=document.getElementById('dg-opts');opts.innerHTML='';opts.className='iv-grid';
+  if(dgMode==='quality'){
+    [['メジャー',0],['マイナー',1]].forEach(function(a){
+      var btn=document.createElement('button');btn.className='trb';btn.textContent=a[0];
+      btn.addEventListener('click',function(){chkDg(a[1],btn)});
+      opts.appendChild(btn);
+    });
+  }else{
+    var ids=DG_POOLS[dgPool];
+    opts.classList.toggle('six',ids.length>4);
+    ids.forEach(function(i){
+      var btn=document.createElement('button');btn.className='trb';btn.textContent=DG_DEG[i].r;
+      btn.addEventListener('click',function(){if(dgMode==='progression')pickDgProg(i,btn);else chkDg(i,btn)});
+      opts.appendChild(btn);
+    });
+  }
+}
+function pickDgProg(i,btn){
+  if(dgAnswered)return;
+  dgGuessQueue.push(i);
+  var slots=document.querySelectorAll('#dg-q .dg-slot'),idx=dgGuessQueue.length-1;
+  slots[idx].textContent=DG_DEG[i].r;slots[idx].classList.add('on');
+  if(dgGuessQueue.length===4)gradeDgProgression();
+}
+function recordDg(t,g){var k=t+' → '+g;dgStats.conf[k]=(dgStats.conf[k]||0)+1;}
+function chkDg(val,btn){
+  if(dgAnswered)return;
+  dgAnswered=true;
+  document.querySelectorAll('#dg-opts .trb').forEach(function(b){b.style.pointerEvents='none'});
+  var ok=(val===dgCurrent);
+  var q=document.getElementById('dg-q');
+  if(dgMode==='degree'){
+    var d=DG_DEG[dgCurrent];
+    q.innerHTML=dgChordName((dgKeyPc+d.off)%12,d.min,dgKeyPc)+' <span style="color:var(--root);font-weight:700">'+d.r+'</span>';
+    if(!ok)recordDg(d.r,DG_DEG[val].r);
+  }else{
+    q.innerHTML=dgChordName(dgQRoot,dgQMin,dgKeyPc)+' <span style="color:var(--root);font-weight:700">'+(dgQMin?'マイナー':'メジャー')+'</span>';
+    if(!ok)recordDg(dgQMin?'マイナー':'メジャー',val===1?'マイナー':'メジャー');
+  }
+  var btnVals=dgMode==='quality'?[0,1]:DG_POOLS[dgPool];
+  document.querySelectorAll('#dg-opts .trb').forEach(function(b,idx){
+    if(btnVals[idx]===dgCurrent)b.classList.add('ok');
+    else if(b===btn&&!ok)b.classList.add('ng');
+  });
+  document.getElementById('dg-fb').textContent=ok?'✅ 正解！':'❌ 不正解';
+  document.getElementById('dg-fb').className='trfb '+(ok?'ok':'ng');
+  finishDg(ok);
+}
+function gradeDgProgression(){
+  dgAnswered=true;
+  document.querySelectorAll('#dg-opts .trb').forEach(function(b){b.style.pointerEvents='none'});
+  var ok=true;
+  dgSeq.forEach(function(d,i){if(dgGuessQueue[i]!==d){ok=false;recordDg(DG_DEG[d].r,DG_DEG[dgGuessQueue[i]].r);}});
+  var slots=document.querySelectorAll('#dg-q .dg-slot');
+  dgSeq.forEach(function(d,i){slots[i].textContent=DG_DEG[d].r;slots[i].classList.add('on');});
+  document.getElementById('dg-fb').innerHTML=(ok?'✅ 正解！':'❌ 不正解')
+    +'<div style="font-size:.78rem;color:var(--txd);margin-top:4px;font-weight:400">'
+    +dgSeq.map(function(i){return dgChordName((dgKeyPc+DG_DEG[i].off)%12,DG_DEG[i].min,dgKeyPc)}).join(' – ')+'</div>';
+  document.getElementById('dg-fb').className='trfb '+(ok?'ok':'ng');
+  finishDg(ok);
+}
+function finishDg(ok){
+  dgStats.total++;
+  if(ok){dgStats.correct++;dgStats.streak++;dgStats.best=Math.max(dgStats.best,dgStats.streak);}else dgStats.streak=0;
+  document.getElementById('dg-nx').style.display='inline-block';
+  renderDgStats();saveDgStats();
+}
+function renderDgStats(){
+  document.getElementById('dg-ok').textContent=dgStats.correct;
+  document.getElementById('dg-tt').textContent=dgStats.total;
+  document.getElementById('dg-st').innerHTML=dgStats.streak>=3?'<span class="streak">🔥 '+dgStats.streak+'連続</span>':'';
+  var e=Object.entries(dgStats.conf).sort(function(a,b){return b[1]-a[1]}).slice(0,4);
+  document.getElementById('dg-conf').innerHTML=e.length
+    ?'<div style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--txd);margin-bottom:4px">取り違えの傾向</div>'
+     +e.map(function(kv){return '<div>'+kv[0]+' <span style="color:var(--root)">'+kv[1]+'回</span></div>'}).join('')
+    :'';
+}
+function rstDg(){dgStats={total:0,correct:0,streak:0,best:0,conf:{}};renderDgStats();saveDgStats();}
+function newDg(){
+  dgAnswered=false;dgGuessQueue=[];
+  document.getElementById('dg-fb').textContent='';document.getElementById('dg-fb').className='trfb';
+  document.getElementById('dg-nx').style.display='none';
+  var keySel=document.getElementById('dg-key').value;
+  if(keySel==='random'){var ks=[0,2,4,5,7,9,10];dgKeyPc=ks[Math.floor(Math.random()*ks.length)];}
+  else dgKeyPc=+keySel;
+  dgPool=+document.getElementById('dg-pool').value;
+  if(dgMode==='progression'){
+    var ids=DG_POOLS[dgPool];dgSeq=[0];
+    for(var i=1;i<4;i++){var c;do{c=ids[Math.floor(Math.random()*ids.length)];}while(c===dgSeq[i-1]);dgSeq.push(c);}
+    dgCurrent=0;
+  }else if(dgMode==='degree'){
+    var ids=DG_POOLS[dgPool];dgCurrent=ids[Math.floor(Math.random()*ids.length)];
+  }else{
+    dgCurrent=Math.random()<0.5?0:1;dgQMin=dgCurrent===1;
+    var bank=dgQMin?[1,2,5]:[0,3,4];
+    dgQDeg=bank[Math.floor(Math.random()*bank.length)];
+    dgQRoot=(dgKeyPc+DG_DEG[dgQDeg].off)%12;
+  }
+  renderDgQ();buildDgOpts();
+  setTimeout(playDg,300);
+}
+loadDgStats();
+
 ;(function(){['ap-k','cmp-k','iv-k','ch-k'].forEach(function(id){fk(document.getElementById(id))});['ap-s','cmp-a','cmp-b','iv-sc'].forEach(function(id){fsc(document.getElementById(id))});document.getElementById('cmp-b').selectedIndex=4;['ap-k','ap-s','ap-r','ap-f'].forEach(function(id){document.getElementById(id).addEventListener('change',function(){stopAP();rAP()})});['cmp-k','cmp-a','cmp-b','cmp-r','cmp-f'].forEach(function(id){document.getElementById(id).addEventListener('change',rCMP)});document.getElementById('ap-bpm').addEventListener('input',function(){document.getElementById('ap-bv').textContent=this.value});rAP();rCMP()})();
+var DG_DESC={quality:'キーを聴かせてから出題します（メジャー/マイナー判定）。音名ではなく「キーに対する位置」で覚える練習です。',degree:'キーを聴かせてから出題します。「キーに対する位置（度数）」で聴き取ろう。',progression:'4つのコード進行を聴いて度数（ローマ数字）で当てよう。'};
+document.getElementById('dg-modeSeg').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  dgMode=b.dataset.mode;
+  Array.prototype.forEach.call(document.getElementById('dg-modeSeg').children,function(x){x.classList.toggle('on',x===b)});
+  document.getElementById('dg-desc').textContent=DG_DESC[dgMode];
+  newDg();
+});
+document.getElementById('dg-tone').addEventListener('change',function(e){
+  dgTone=e.target.value;dgInitAudio();dgBuildBody();
+  if(dgCtx.state==='suspended')dgCtx.resume();
+  dgStrum(dgGuitarChord(dgKeyPc,false),dgCtx.currentTime+0.1,0.42);
+});
 </script>
 </body>
 </html>

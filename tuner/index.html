@@ -255,6 +255,7 @@
     vertical-align: middle;
   }
   .btn-scale:hover { border-color: #00ff88; color: #00ff88; }
+  .btn-scale.on { background: #00ff8830; border-color: #00ff88; color: #00ff88; }
 
   canvas { width: 100%; height: 100%; display: block; }
 
@@ -310,12 +311,14 @@
   .mix-note { font-size: 9px; color: #005522; padding: 0 10px 8px; line-height: 1.5; }
   @media (max-width: 860px) { .mix-cards { flex-direction: column; } }
 
-  /* ─── ADVISOR mode (ported from tone-advisor) ─── */
+  /* ─── ADVISOR mode（トーン診断） ─── */
   #advisorPanel { display: none; flex: 1; flex-direction: column; overflow: auto; }
   #advisorPanel.active { display: flex; }
-  .adv-main { padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
-  .adv-panel { border: 1px solid #0d2a0d; border-radius: 3px; background: #050f05; padding: 14px 16px; }
-  .section-label { font-size: 10px; letter-spacing: 3px; color: #005522; text-transform: uppercase; margin-bottom: 8px; }
+  .adv-main { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; max-width: 1200px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+  .adv-panel { border: 1px solid #0d2a0d; border-radius: 4px; background: #050f05; padding: 14px 16px; }
+  .adv-step { display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 3px; color: #00aa55; text-transform: uppercase; margin-bottom: 10px; flex-wrap: wrap; }
+  .adv-step .n { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: #00ff8822; border: 1px solid #00aa55; color: #00ffaa; align-items: center; justify-content: center; font-size: 11px; letter-spacing: 0; flex-shrink: 0; }
+  .adv-step .sub { font-size: 10px; letter-spacing: 1px; color: #006633; text-transform: none; }
   .target-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .chip {
     background: transparent; border: 1px solid #006633; color: #00cc66;
@@ -333,28 +336,61 @@
     border-radius: 2px; outline: none;
   }
   .kw-form input:focus { border-color: #00aa44; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
-  .dim { margin-bottom: 13px; }
-  .dim-head { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: #008844; margin-bottom: 4px; letter-spacing: 1px; flex-wrap: wrap; }
-  .dim-head .gap { font-size: 10px; white-space: nowrap; }
-  .dim-head .nums { color: #007733; }
-  .track { position: relative; height: 14px; background: #0a1a0a; border: 1px solid #0d2a0d; border-radius: 2px; overflow: visible; }
-  .track .fill { position: absolute; top: 0; left: 0; bottom: 0; background: #00ff8830; border-right: 2px solid #00ff88; border-radius: 2px 0 0 2px; }
-  .track .target { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 2px dashed #ffaa00; }
-  .track .base { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1px dotted #00b4ff; }
-  .legend { font-size: 10px; color: #006622; margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap; }
-  .legend span b { font-weight: normal; }
-  .legend .t-cur { color: #00ff88; } .legend .t-tgt { color: #ffaa00; } .legend .t-base { color: #00b4ff; }
-  #specCanvas { width: 100%; height: 120px; display: block; border: 1px solid #0d2a0d; border-radius: 2px; background: #050f05; margin-top: 10px; }
-  .sug-status { font-size: 12px; color: #007733; margin-bottom: 10px; letter-spacing: 1px; }
-  .sug { border: 1px solid #0d2a0d; border-left: 3px solid #00aa55; border-radius: 2px; padding: 9px 12px; margin-bottom: 8px; background: #061206; }
-  .sug.up { border-left-color: #00ffaa; }
-  .sug.down { border-left-color: #ffaa00; }
-  .sug.tip { border-left-color: #00b4ff; }
-  .sug .st { font-size: 12px; color: #00dd88; letter-spacing: 1px; margin-bottom: 3px; }
-  .sug .sh { font-size: 12px; color: #8fbfa0; line-height: 1.6; }
-  .sug .badge { font-size: 9px; color: #004422; border: 1px solid #0d2a0d; border-radius: 2px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
+  /* ② 診断 */
+  .diag-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 12px; }
+  .verdict { font-size: 13px; font-weight: bold; letter-spacing: 2px; padding: 6px 12px; border-radius: 3px; border: 1px solid; white-space: nowrap; }
+  .verdict.ok { color: #00ffaa; border-color: #00aa55; background: #00ff8814; }
+  .verdict.near { color: #ffcc44; border-color: #aa8800; background: #ffaa0014; }
+  .verdict.far { color: #ff8866; border-color: #aa3322; background: #ff550014; }
+  .verdict.wait { color: #5fa; border-color: #0d2a0d; background: transparent; opacity: .7; }
+  .headline { font-size: 14px; color: #cfe; line-height: 1.7; flex: 1; min-width: 240px; }
+  .headline b { color: #00ffaa; font-weight: normal; }
+  .headline .step { color: #ffcc44; }
+  .meas { font-size: 10px; color: #006633; letter-spacing: 1px; display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .meas .lamp { width: 8px; height: 8px; border-radius: 50%; background: #003311; }
+  .meas .lamp.g { background: #00ff88; box-shadow: 0 0 6px #00ff88; }
+  .meas .lamp.y { background: #ffaa00; box-shadow: 0 0 6px #ffaa00; }
+  .meas .lamp.r { background: #ff4433; }
+  .diag-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 18px; }
+  @media (max-width: 900px) { .diag-grid { grid-template-columns: 1fr; } }
+  .diag-title { font-size: 10px; letter-spacing: 2px; color: #007733; margin-bottom: 6px; }
+  #eqCanvas { width: 100%; height: 210px; display: block; border: 1px solid #0d2a0d; border-radius: 3px; background: #040c04; }
+  .eq-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 10px; color: #006633; margin-top: 6px; line-height: 1.5; }
+  .eq-legend .more { color: #ff9955; } .eq-legend .less { color: #55aaff; } .eq-legend .base { color: #00b4ff; }
+  .chars { display: flex; flex-direction: column; gap: 14px; }
+  .char-head { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: #00dd88; letter-spacing: 1px; margin-bottom: 5px; flex-wrap: wrap; }
+  .char-head .val { color: #8fbfa0; font-size: 10.5px; letter-spacing: 0; }
+  .char-head .val b { font-weight: normal; }
+  .char-track { position: relative; height: 16px; background: #0a1a0a; border: 1px solid #0d2a0d; border-radius: 8px; }
+  .char-track .cur { position: absolute; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 6px #00ff88; transform: translateX(-50%); transition: left .25s; }
+  .char-track .tgt { position: absolute; top: -1px; width: 16px; height: 16px; border-radius: 50%; border: 2px dashed #ffaa00; transform: translateX(-50%); box-sizing: border-box; }
+  .char-track .base { position: absolute; top: 3px; width: 2px; height: 8px; background: #00b4ff; transform: translateX(-50%); }
+  .char-track .arrow { position: absolute; top: 5px; height: 4px; background: #ffaa0055; }
+  .char-ends { display: flex; justify-content: space-between; font-size: 10px; color: #006633; margin-top: 3px; }
+  /* ③ やること */
+  .sug-status { font-size: 11px; color: #007733; margin-bottom: 8px; letter-spacing: 1px; min-height: 14px; }
+  .act { border: 1px solid #0d2a0d; border-left: 3px solid #00aa55; border-radius: 3px; background: #061206; padding: 10px 12px; margin-bottom: 8px; }
+  .act.up { border-left-color: #55aaff; } .act.down { border-left-color: #ff9955; } .act.tip { border-left-color: #00b4ff; }
+  .act.minor { opacity: .75; }
+  .act-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .act-top .num { font-size: 16px; color: #00ffaa; font-weight: bold; min-width: 18px; }
+  .act-top .title { font-size: 13px; color: #e6fff2; }
+  .act-top .badge { font-size: 9px; color: #00aa55; border: 1px solid #0d2a0d; border-radius: 2px; padding: 1px 6px; letter-spacing: 1px; }
+  .act-top .badge.big { color: #ff9955; border-color: #552211; }
+  .act-top .badge.mid { color: #ffcc44; border-color: #554411; }
+  .act-do { margin-top: 6px; font-size: 12.5px; color: #aaffdd; line-height: 1.8; }
+  .act-do .knob { display: inline-block; background: #00ff8818; border: 1px solid #00aa55; border-radius: 3px; padding: 0 7px; margin: 0 2px; color: #dfffee; }
+  .act-do .amt { color: #ffcc44; }
+  .act-why { font-size: 11.5px; color: #8fbfa0; line-height: 1.7; margin-top: 4px; }
+  .act-why .fx { color: #cfe; }
+  .act-more { display: inline-block; font-size: 10.5px; color: #007733; margin-top: 5px; cursor: pointer; user-select: none; letter-spacing: 1px; }
+  .act-more:hover { color: #00cc66; }
+  .act-detail { display: none; font-size: 11px; color: #5f9f7a; line-height: 1.7; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #0d2a0d; }
+  .act.open .act-detail { display: block; }
+  .term { border-bottom: 1px dotted #00aa55; cursor: help; position: relative; color: #aaffdd; }
+  .term::after { content: attr(data-def); display: none; position: absolute; left: 0; top: 1.6em; z-index: 5; width: 270px; background: #0a1a0a; border: 1px solid #00aa55; border-radius: 3px; padding: 7px 9px; font-size: 11px; color: #cfe; line-height: 1.55; white-space: normal; box-shadow: 0 4px 16px #000c; letter-spacing: 0; font-weight: normal; }
+  .term:hover::after, .term.on::after { display: block; }
+  /* ④ Before/After */
   .snap-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .rec-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
   .rec-status { font-size: 12px; color: #007733; letter-spacing: 1px; }
@@ -364,6 +400,14 @@
   @keyframes recpulse { 0%,100% { background:#aa333322 } 50% { background:#aa333355 } }
   .rec-hint { font-size: 10px; color: #005522; line-height: 1.6; margin-top: 6px; }
   .rec-stale { color: #ffaa00; font-size: 11px; margin-left: 6px; }
+  /* 詳細データ */
+  .adv-details summary { cursor: pointer; font-size: 11px; letter-spacing: 2px; color: #00aa55; padding: 4px 0; }
+  .dtable { width: 100%; border-collapse: collapse; font-size: 11px; color: #8fbfa0; margin-top: 10px; }
+  .dtable th, .dtable td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #0d2a0d; }
+  .dtable th { color: #00aa55; font-weight: normal; letter-spacing: 1px; font-size: 10px; }
+  .dtable td.num { color: #cfe; font-variant-numeric: tabular-nums; text-align: right; }
+  .dtable td.sm { color: #006633; font-size: 10px; }
+  #specCanvas { width: 100%; height: 110px; display: block; border: 1px solid #0d2a0d; border-radius: 2px; background: #050f05; margin-top: 10px; }
 
   footer {
     display: flex; gap: 8px 28px; padding: 7px 20px;
@@ -522,6 +566,7 @@
     <div class="panel-label">
       <span>Frequency Spectrum — FFT
         <button class="btn-scale" id="scaleBtn" onclick="toggleFftScale()">LOG + 弦ガイド</button>
+        <button class="btn-scale on" id="bandBtn" onclick="toggleBands()">7弦 帯域</button>
       </span>
       <span class="right" id="peakFreqLabel">PEAK: —</span>
     </div>
@@ -558,11 +603,11 @@
   </div>
 </div>
 
-<!-- ADVISOR mode (merged from tone-advisor) -->
+<!-- ADVISOR mode（トーン診断） -->
 <div id="advisorPanel">
   <div class="adv-main">
-    <div>
-      <div class="section-label">① 目標トーン — プリセット or 自由記述</div>
+    <div class="adv-panel">
+      <div class="adv-step"><span class="n">1</span>目指す音 <span class="sub">— プリセットを押すか、言葉で書いて「判定」（例: もっとメタルに / 歌うソロ / Herman Li風）</span></div>
       <div class="target-row">
         <div id="presetChips"></div>
         <form class="kw-form" id="kwForm" onsubmit="return applyKeyword();">
@@ -572,38 +617,45 @@
       </div>
     </div>
 
-    <div class="grid">
-      <div class="adv-panel">
-        <div class="section-label">② 今の音 vs 目標</div>
-        <div id="bars"></div>
-        <div class="legend">
-          <span class="t-cur">▌現在</span>
-          <span class="t-tgt">┊目標</span>
-          <span class="t-base">⋮基準(保存時)</span>
-          <span>数値は 0–100 の相対指標</span>
+    <div class="adv-panel">
+      <div class="adv-step"><span class="n">2</span>診断 <span class="sub">— START して数秒しっかり弾くと更新されます（いつもの音量・いつもの弾き方で）</span></div>
+      <div class="diag-head">
+        <span class="verdict wait" id="verdict">待機中</span>
+        <div class="headline" id="headline">START を押してギターを弾いてください。目標の音と比べて「何が多くて、何が足りないか」を一言でまとめます。</div>
+        <div class="meas"><span class="lamp" id="measLamp"></span><span id="measTxt">入力なし</span></div>
+      </div>
+      <div class="diag-grid">
+        <div>
+          <div class="diag-title">EQ で見る差（帯域ごと）</div>
+          <canvas id="eqCanvas"></canvas>
+          <div class="eq-legend">
+            <span class="more">▲ 線が上（オレンジ）＝目標より多い → その帯域を削る</span>
+            <span class="less">▼ 線が下（ブルー）＝目標より少ない → 足す</span>
+            <span class="base">⋮ 点線＝基準（保存時の音）</span>
+          </div>
         </div>
-        <canvas id="specCanvas"></canvas>
-        <div class="snap-row">
-          <button class="chip" id="snapBtn" onclick="saveBaseline()">📸 今の音を基準に保存</button>
-          <button class="chip" id="snapClr" onclick="clearBaseline()" style="display:none">基準クリア</button>
-          <button class="chip" onclick="copyForAI('target')" title="現在値・目標・差＋提案＋プロンプトをコピー（目標に近づける相談）">📋 AI相談(目標)</button>
-          <button class="chip" onclick="copyForAI('measured')" title="実測値のみ＋汎用アドバイス依頼をコピー（目標なしで音を診てもらう）">📋 AI相談(実測)</button>
-          <button class="chip" onclick="exportJSON()" title="解析数値群を JSON で保存">⬇ JSON</button>
+        <div>
+          <div class="diag-title">キャラクター（EQ 以外の3つ）</div>
+          <div class="chars" id="chars"></div>
         </div>
       </div>
-
-      <div class="adv-panel">
-        <div class="section-label">③ 提案 — あなたのリグ向け（HX Stomp / ブースター / IR）</div>
-        <div class="sug-status" id="sugStatus">START を押してギターを弾いてください。</div>
-        <div id="sugList"></div>
+      <div class="snap-row">
+        <button class="chip" id="snapBtn" onclick="saveBaseline()" title="今の音を記録しておくと、ツマミを動かした後に「どれだけ変わったか」を点線で比較できます">📸 今の音を基準に保存</button>
+        <button class="chip" id="snapClr" onclick="clearBaseline()" style="display:none">基準クリア</button>
       </div>
     </div>
 
     <div class="adv-panel">
-      <div class="section-label">④ Before / After — 録音して試聴</div>
+      <div class="adv-step"><span class="n">3</span>やること <span class="sub">— 効果が大きい順。HX Stomp の「どのブロックの、どのツマミを、どれくらい」。用語は点線の語をタップ/ホバーで解説</span></div>
+      <div class="sug-status" id="sugStatus"></div>
+      <div id="sugList"></div>
+    </div>
+
+    <div class="adv-panel">
+      <div class="adv-step"><span class="n">4</span>試聴で確かめる <span class="sub">— 録音して「提案どおり EQ したらどう聞こえるか」を Before / After で比較</span></div>
       <div class="rec-row">
         <button class="chip btn-rec" id="recBtn" onclick="toggleRec()">● 録音開始</button>
-        <span class="rec-status" id="recStatus">START 中に録音すると、現在の解析と目標トーンに基づいて "AFTER" を生成します（最大20秒）。</span>
+        <span class="rec-status" id="recStatus">START 中に録音すると、現在の診断と目標に基づいて "AFTER" を生成します（最大20秒）。</span>
       </div>
       <div class="rec-row" id="abRow" style="display:none">
         <button class="chip" id="playBeforeBtn" onclick="playWhich('before')">▶ BEFORE</button>
@@ -612,12 +664,24 @@
         <button class="chip" id="regenBtn" onclick="regenerateAfter()" title="目標トーンを変えた後は再生成すると新しい目標が反映されます">♻ AFTER再生成</button>
         <span id="abInfo" class="rec-status"></span>
       </div>
-      <div class="rec-hint">※ AFTER は <b>EQ（5バンド）／ローカット（TIGHT）／コンプ（SUSTAIN）</b> による「提案の方向」のシミュレーションです。アンプ／キャブ／IR の入れ替えや、歪み量（GRIT）の変化は再現しません。BEFORE/AFTER はラウドネスを揃えて再生します。</div>
+      <div class="rec-hint">※ AFTER は <b>EQ（5バンド）／ローカット（締まり）／コンプ（伸び）</b> による「提案の方向」のシミュレーションです。アンプ／キャブ／IR の入れ替えや、歪み量の変化は再現しません。BEFORE/AFTER は音量を揃えて再生します。</div>
     </div>
 
+    <details class="adv-panel adv-details" id="advDetails">
+      <summary>📊 詳細データ（8軸の数値・スペクトル・AI に相談・JSON 保存）</summary>
+      <table class="dtable" id="dtable"></table>
+      <canvas id="specCanvas"></canvas>
+      <div class="snap-row">
+        <button class="chip" onclick="copyForAI('target')" title="現在値・目標・差＋提案＋プロンプトをコピー（目標に近づける相談）">📋 AI相談(目標)</button>
+        <button class="chip" onclick="copyForAI('measured')" title="実測値のみ＋汎用アドバイス依頼をコピー（目標なしで音を診てもらう）">📋 AI相談(実測)</button>
+        <button class="chip" onclick="exportJSON()" title="解析数値群を JSON で保存">⬇ JSON</button>
+      </div>
+      <div class="rec-hint">数値は 0–100 の相対指標（帯域はスペクトル全体に対するエネルギー比、締まり＝低域の重心、歪み＝倍音の多さ、伸び＝音量の変動の少なさ）。マイク/IR/部屋で絶対値はぶれるので、目標との差・基準との差で読んでください。</div>
+    </details>
+
     <div class="rec-hint" style="margin-top:0">
-      <b>使い方:</b> START → 目標を選ぶ/入力 → 数秒間しっかり弾く。鳴っている音を解析して目標との差を具体的なツマミ操作に翻訳します。
-      <b>精度のコツ:</b> マイク/部屋/IRで絶対値はブレるので、まず「基準」を保存して差分で追うと信頼度が上がります。提案は方向のヒントであって絶対値ではありません。DI（IN セレクタ）入力だと精度が上がります。
+      <b>使い方:</b> START → ① 目標を選ぶ → ② 数秒間しっかり弾く → ③ 上から順に1つずつ試す → ④ 気になれば録音して聴き比べ。
+      <b>精度のコツ:</b> 先に「📸 基準に保存」してからツマミを動かすと、変化が点線で見えます。DI（IN セレクタでオーディオIF）入力だと安定します。提案は「方向と目安」で、絶対値ではありません。
     </div>
   </div>
 </div>
@@ -645,6 +709,7 @@ let strobePhase = [0, 0, 0];
 let strobeLastTs = null;
 let strobeLastMidi = -1;
 let fftScale = 'log';  // 'log' (with string guides) or 'linear' (legacy)
+let showBands = true;  // 7-string EQ band-highlight overlay on the FFT
 
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
@@ -657,6 +722,20 @@ const GUITAR_STRINGS = [
   { label: '3G', freq: 196.00 },
   { label: '2B', freq: 246.94 },
   { label: '1E', freq: 329.63 },
+];
+
+// 7-string fundamental range (open low B → 1st-string 24th-fret E6) and the
+// EQ-decision zones drawn as the "帯域ハイライト" overlay on the FFT. Tuned to
+// how a 7-string sits under an HX Stomp Parametric / Global EQ.
+const SEVEN_FUND = { lo: 61.74, hi: 1318.5 };
+const EQ_ZONES = [
+  { lo: 60,   hi: 110,   label: '重低音',     sub: '締め',       color: '150,80,220' },
+  { lo: 110,  hi: 250,   label: '低音の土台', sub: 'ベース被り', color: '70,120,255' },
+  { lo: 250,  hi: 500,   label: 'こもり',     sub: '濁り',       color: '40,190,200' },
+  { lo: 500,  hi: 1500,  label: '中音の芯',   sub: '太さ/抜け',  color: '0,210,120' },
+  { lo: 1500, hi: 4000,  label: 'アタック',   sub: '明瞭',       color: '235,185,40' },
+  { lo: 4000, hi: 7000,  label: 'ジャリ',     sub: '耳障り',     color: '235,90,55' },
+  { lo: 7000, hi: 10000, label: '空気',       sub: '艶',         color: '235,120,90' },
 ];
 
 // Locked-note MIDI → "which open string" label (7-string standard).
@@ -924,6 +1003,7 @@ function switchMode(mode) {
   document.getElementById('visualizersPanel').style.display = mode === 'visualizer' ? '' : 'none';
   document.getElementById('mixPanel').classList.toggle('active', mode === 'mix');
   document.getElementById('advisorPanel').classList.toggle('active', mode === 'advisor');
+  if (mode === 'advisor' && typeof renderEQ === 'function') setTimeout(renderEQ, 60);  // canvas was display:none → redraw once visible
   document.getElementById('tunerPanel').classList.toggle('active', mode === 'tuner' || mode === 'strobe');
   if (mode !== 'advisor' && typeof stopPlay === 'function') stopPlay();  // stop A/B audition when leaving advisor
   if (mode !== 'visualizer') {
@@ -946,6 +1026,12 @@ function toggleFftScale() {
   fftScale = fftScale === 'log' ? 'linear' : 'log';
   document.getElementById('scaleBtn').textContent =
     fftScale === 'log' ? 'LOG + 弦ガイド' : 'LINEAR (旧)';
+  if (typeof saveSettings === 'function') saveSettings();
+}
+
+function toggleBands() {
+  showBands = !showBands;
+  document.getElementById('bandBtn').classList.toggle('on', showBands);
   if (typeof saveSettings === 'function') saveSettings();
 }
 
@@ -1682,7 +1768,7 @@ function drawFFT(data, f0) {
   const isLog = fftScale === 'log';
 
   // Frequency-axis mapping (log spreads out the musical low end; linear is the legacy view)
-  const fMin = 50, fMax = 8000;
+  const fMin = 50, fMax = 10000;
   const logMin = Math.log10(fMin), logMax = Math.log10(fMax);
   const freqToX = isLog
     ? f => (Math.log10(Math.max(f, fMin)) - logMin) / (logMax - logMin) * W
@@ -1691,6 +1777,18 @@ function drawFFT(data, f0) {
     ? x => Math.pow(10, logMin + (x / W) * (logMax - logMin))
     : x => (x / W) * fMax;
   const dbToY = db => ((maxDb - Math.max(minDb, Math.min(maxDb, db))) / (maxDb - minDb)) * H;
+
+  // 7-string EQ band highlight — faint zone fills behind the grid + spectrum
+  if (showBands) {
+    EQ_ZONES.forEach(z => {
+      if (z.lo >= fMax) return;
+      const x0 = freqToX(Math.max(z.lo, fMin)), x1 = freqToX(Math.min(z.hi, fMax));
+      ctx.fillStyle = 'rgba(' + z.color + ',0.06)';
+      ctx.fillRect(x0, 0, x1 - x0, H);
+      ctx.strokeStyle = 'rgba(' + z.color + ',0.18)'; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(x1, 0); ctx.lineTo(x1, H); ctx.stroke();
+    });
+  }
 
   // dB gridlines
   ctx.font = '9px Courier New';
@@ -1705,8 +1803,8 @@ function drawFFT(data, f0) {
 
   // Hz gridlines
   const freqMarks = isLog
-    ? [100, 200, 300, 500, 1000, 2000, 3000, 5000, 8000]
-    : [100, 200, 300, 500, 700, 1000, 1500, 2000, 3000, 5000, 7000];
+    ? [100, 200, 300, 500, 1000, 2000, 3000, 5000, 8000, 10000]
+    : [100, 200, 300, 500, 700, 1000, 1500, 2000, 3000, 5000, 7000, 10000];
   freqMarks.forEach(f => {
     if (f > fMax) return;
     const x = freqToX(f);
@@ -1791,6 +1889,34 @@ function drawFFT(data, f0) {
       'PEAK: ' + pf.toFixed(0) + ' Hz  /  ' + peakDb.toFixed(1) + ' dB';
   } else {
     document.getElementById('peakFreqLabel').textContent = 'PEAK: —';
+  }
+
+  // 7-string band labels + fundamental-range bracket (drawn on top, readable)
+  if (showBands) {
+    ctx.textAlign = 'center';
+    EQ_ZONES.forEach(z => {
+      if (z.lo >= fMax) return;
+      const x0 = freqToX(Math.max(z.lo, fMin)), x1 = freqToX(Math.min(z.hi, fMax));
+      const xc = (x0 + x1) / 2, w = x1 - x0;
+      if (w < 26) return;
+      ctx.fillStyle = 'rgba(' + z.color + ',0.92)'; ctx.font = 'bold 9px Courier New';
+      ctx.fillText(z.label, xc, 11);
+      if (w >= 46) {
+        ctx.fillStyle = 'rgba(' + z.color + ',0.55)'; ctx.font = '8px Courier New';
+        ctx.fillText(z.sub, xc, 21);
+      }
+    });
+    // Fundamental range: open low B → 1st-string 24th-fret (E6)
+    const bx0 = freqToX(SEVEN_FUND.lo), bx1 = freqToX(SEVEN_FUND.hi), by = H - 15;
+    ctx.strokeStyle = 'rgba(0,180,255,0.7)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(bx0, by - 3); ctx.lineTo(bx0, by + 3);
+    ctx.moveTo(bx0, by); ctx.lineTo(bx1, by);
+    ctx.moveTo(bx1, by - 3); ctx.lineTo(bx1, by + 3);
+    ctx.stroke();
+    ctx.fillStyle = '#00b4ff'; ctx.font = 'bold 9px Courier New';
+    ctx.fillText('7弦 基音域 (B0–E6)', (bx0 + bx1) / 2, by - 5);
+    ctx.textAlign = 'left';
   }
 }
 
@@ -2099,10 +2225,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// ADVISOR mode — ported from the standalone tone-advisor. Reuses this
-// app's audio graph (audioCtx/analyser/gainNode/stream), level/clip
-// metering, input-device picker, wake-lock and settings. Only the
-// analysis + UI + Before/After auditioner are app-specific here.
+// ADVISOR mode — トーン診断。この app の audio graph（audioCtx/analyser/
+// gainNode/stream）・レベル/クリップ計・入力デバイス選択・Wake Lock・設定を共有し、
+// 解析 + 診断 UI + Before/After 試聴だけがここ固有。
+// 表示の考え方: ①一言診断（何が多い/足りない）→ ②EQ カーブで帯域差、3本のスライダーで
+// キャラクター差 → ③やること（ブロック・ツマミ・量・理由・効果）。数値は詳細に退避。
 // ═══════════════════════════════════════════════════════════════════
 const ADV_BANDS = [
   { key: 'sub',   lo: 60,   hi: 95 },
@@ -2114,30 +2241,32 @@ const ADV_BANDS = [
 ];
 const ADV_LO = 60, ADV_HI = 9000;
 
+// 8軸: EQ 5帯域 + キャラクター 3軸。jp=平易な名前、sub=帯域、fc=EQ カーブ上の代表周波数
 const DIMS = [
-  { key: 'LOW',     name: 'LOW 低域(60–160)' },
-  { key: 'BODY',    name: 'BODY 中低域・太さ(160–400)' },
-  { key: 'MID',     name: 'MID 中域・芯/抜け(400–2k)' },
-  { key: 'PRES',    name: 'PRES プレゼンス・食付き(2–5k)' },
-  { key: 'AIR',     name: 'AIR 空気感/フィズ(5–9k)' },
-  { key: 'TIGHT',   name: 'TIGHT 低域の締まり' },
-  { key: 'GRIT',    name: 'GRIT 歪み量' },
-  { key: 'SUSTAIN', name: 'SUSTAIN 伸び/圧縮' },
+  { key: 'LOW',     name: 'LOW 低域(60–160)',            jp: '低音',       sub: '60–160Hz',    fc: 100,  eq: true },
+  { key: 'BODY',    name: 'BODY 中低域・太さ(160–400)',   jp: '太さ',       sub: '160–400Hz',   fc: 250,  eq: true },
+  { key: 'MID',     name: 'MID 中域・芯/抜け(400–2k)',    jp: '芯・抜け',   sub: '400Hz–2kHz',  fc: 900,  eq: true },
+  { key: 'PRES',    name: 'PRES プレゼンス・食付き(2–5k)', jp: '食いつき',   sub: '2–5kHz',      fc: 3200, eq: true },
+  { key: 'AIR',     name: 'AIR 空気感/フィズ(5–9k)',      jp: '空気・ジャリ', sub: '5–9kHz',    fc: 6700, eq: true },
+  { key: 'TIGHT',   name: 'TIGHT 低域の締まり',           jp: '低音の締まり', left: '緩い・ブーミー', right: '硬い・タイト' },
+  { key: 'GRIT',    name: 'GRIT 歪み量',                  jp: '歪みの量',   left: 'クリーン',        right: 'ハイゲイン' },
+  { key: 'SUSTAIN', name: 'SUSTAIN 伸び/圧縮',            jp: '伸び',       left: '歯切れ・強弱が出る', right: 'よく伸びる・圧縮' },
 ];
+const DIM_BY_KEY = {}; DIMS.forEach(d => DIM_BY_KEY[d.key] = d);
 
 const TARGETS = {
-  metal_rhythm: { label: 'メタル(リフ)', v: { LOW: .20, BODY: .24, MID: .28, PRES: .22, AIR: .06, TIGHT: .80, GRIT: .85, SUSTAIN: .70 }, emph: ['TIGHT', 'GRIT', 'PRES'], tips: ['Noise Gate を入れてリフの隙間（無音）を締める。', 'パームミュートは Low Cut とタイトな IR が効く。'] },
-  metal_lead: { label: 'メタル(リード/ソロ)', v: { LOW: .18, BODY: .26, MID: .36, PRES: .16, AIR: .04, TIGHT: .72, GRIT: .82, SUSTAIN: .90 }, emph: ['MID', 'SUSTAIN', 'GRIT'], tips: ['Mid を持ち上げると埋もれず "歌う"。', 'Delay+Reverb でソロの余韻と空間を。'] },
-  djent: { label: 'Djent/モダン', v: { LOW: .18, BODY: .20, MID: .26, PRES: .28, AIR: .08, TIGHT: .88, GRIT: .90, SUSTAIN: .72 }, emph: ['TIGHT', 'GRIT', 'PRES'], tips: ['Low Cut を高め(90–110Hz)＋強い Noise Gate でジェントの粒立ちを。', '低域はタイトに、刻みは Presence で前に。'] },
-  hardrock: { label: 'ハードロック', v: { LOW: .20, BODY: .28, MID: .36, PRES: .13, AIR: .03, TIGHT: .60, GRIT: .60, SUSTAIN: .55 }, emph: ['MID', 'GRIT'], tips: ['Marshall系の中域を活かす。Gain は上げ過ぎずクランチ寄りに。', 'ピッキングのダイナミクスを残すと "ロック" の躍動感。'] },
-  classic: { label: 'クラシック/ヴィンテージ', v: { LOW: .22, BODY: .30, MID: .35, PRES: .10, AIR: .03, TIGHT: .50, GRIT: .45, SUSTAIN: .50 }, emph: ['BODY', 'MID'], tips: ['低〜中域の太さが肝。Gain控えめ＋スプリングReverb。', 'High Cut で角を取りヴィンテージの丸みを。'] },
-  blues: { label: 'ブルース(粘り/枯れ)', v: { LOW: .22, BODY: .30, MID: .34, PRES: .11, AIR: .03, TIGHT: .50, GRIT: .45, SUSTAIN: .70 }, emph: ['MID', 'BODY', 'SUSTAIN'], tips: ['軽いブレイクアップ＋強弱で表情を。Gainは指で操る程度に。', 'Mid を太く、Presenceは控えめにして枯れた質感。'] },
-  lead_sing: { label: '歌うリード(汎用)', v: { LOW: .18, BODY: .26, MID: .38, PRES: .14, AIR: .04, TIGHT: .65, GRIT: .60, SUSTAIN: .92 }, emph: ['MID', 'SUSTAIN'], tips: ['Mid 800Hz–1.2kHz を軸に。コンプでサステイン。', 'Delay(1/8等)+Reverb を薄く足すと "歌う"。'] },
-  shred: { label: '速弾き/ブライトHG(Herman Li系)', v: { LOW: .17, BODY: .20, MID: .28, PRES: .27, AIR: .08, TIGHT: .80, GRIT: .82, SUSTAIN: .85 }, emph: ['PRES', 'AIR', 'TIGHT'], tips: ['明るく・軽くスクープ＋Delay/Reverbで速弾きの分離と広がりを。', '低域をタイトに保つと高速フレーズが潰れない。'] },
-  funk: { label: 'ファンク・カッティング', v: { LOW: .18, BODY: .22, MID: .30, PRES: .22, AIR: .08, TIGHT: .78, GRIT: .15, SUSTAIN: .30 }, emph: ['GRIT', 'PRES', 'SUSTAIN'], tips: ['コンプの Attack を速めて粒を揃える。', '低域を締め、Treble/Presenceで歯切れよく。'] },
-  clean: { label: 'クリーン(コード/アルペジオ)', v: { LOW: .22, BODY: .28, MID: .28, PRES: .16, AIR: .06, TIGHT: .60, GRIT: .12, SUSTAIN: .45 }, emph: ['GRIT', 'AIR'], tips: ['コンプ薄め＋Reverb/Chorusでクリーンの艶を。', '歪ませたくない時はブースターを切るか Drive 最小に。'] },
-  jazz: { label: 'ジャズ(暖かい/フロント)', v: { LOW: .24, BODY: .34, MID: .34, PRES: .06, AIR: .02, TIGHT: .45, GRIT: .15, SUSTAIN: .55 }, emph: ['BODY', 'AIR'], tips: ['フロントPU＋Tone絞り気味、High Cut低めで丸く太く。', 'Reverb薄め、歪みはほぼ無しでまろやかに。'] },
-  country: { label: 'カントリー(トゥワング)', v: { LOW: .18, BODY: .22, MID: .30, PRES: .22, AIR: .08, TIGHT: .80, GRIT: .25, SUSTAIN: .30 }, emph: ['PRES', 'AIR', 'TIGHT'], tips: ['リアPU＋ブライト、コンプで粒立ちとスナップを。', 'Slapback Delay でトゥワング感を強調。'] },
+  metal_rhythm: { label: 'メタル(リフ)', v: { LOW: .20, BODY: .24, MID: .28, PRES: .22, AIR: .06, TIGHT: .80, GRIT: .85, SUSTAIN: .70 }, emph: ['TIGHT', 'GRIT', 'PRES'], tips: ['{Gate} を入れてリフの隙間（無音）を締める。', 'パームミュートは {Low Cut} とタイトな {IR} が効く。'] },
+  metal_lead: { label: 'メタル(リード/ソロ)', v: { LOW: .18, BODY: .26, MID: .36, PRES: .16, AIR: .04, TIGHT: .72, GRIT: .82, SUSTAIN: .90 }, emph: ['MID', 'SUSTAIN', 'GRIT'], tips: ['{MID} を持ち上げると埋もれず "歌う"。', 'Delay+Reverb でソロの余韻と空間を。'] },
+  djent: { label: 'Djent/モダン', v: { LOW: .18, BODY: .20, MID: .26, PRES: .28, AIR: .08, TIGHT: .88, GRIT: .90, SUSTAIN: .72 }, emph: ['TIGHT', 'GRIT', 'PRES'], tips: ['{Low Cut} を高め(90–110Hz)＋強い {Gate} でジェントの粒立ちを。', '低域はタイトに、刻みは {PRESENCE} で前に。'] },
+  hardrock: { label: 'ハードロック', v: { LOW: .20, BODY: .28, MID: .36, PRES: .13, AIR: .03, TIGHT: .60, GRIT: .60, SUSTAIN: .55 }, emph: ['MID', 'GRIT'], tips: ['Marshall系の中域を活かす。{Gain} は上げ過ぎずクランチ寄りに。', 'ピッキングのダイナミクスを残すと "ロック" の躍動感。'] },
+  classic: { label: 'クラシック/ヴィンテージ', v: { LOW: .22, BODY: .30, MID: .35, PRES: .10, AIR: .03, TIGHT: .50, GRIT: .45, SUSTAIN: .50 }, emph: ['BODY', 'MID'], tips: ['低〜中域の太さが肝。{Gain} 控えめ＋スプリング Reverb。', '{High Cut} で角を取りヴィンテージの丸みを。'] },
+  blues: { label: 'ブルース(粘り/枯れ)', v: { LOW: .22, BODY: .30, MID: .34, PRES: .11, AIR: .03, TIGHT: .50, GRIT: .45, SUSTAIN: .70 }, emph: ['MID', 'BODY', 'SUSTAIN'], tips: ['軽いブレイクアップ＋強弱で表情を。{Gain} は指で操る程度に。', '{MID} を太く、{PRESENCE} は控えめにして枯れた質感。'] },
+  lead_sing: { label: '歌うリード(汎用)', v: { LOW: .18, BODY: .26, MID: .38, PRES: .14, AIR: .04, TIGHT: .65, GRIT: .60, SUSTAIN: .92 }, emph: ['MID', 'SUSTAIN'], tips: ['{MID} 800Hz–1.2kHz を軸に。{Comp} でサステイン。', 'Delay(1/8等)+Reverb を薄く足すと "歌う"。'] },
+  shred: { label: '速弾き/ブライトHG(Herman Li系)', v: { LOW: .17, BODY: .20, MID: .28, PRES: .27, AIR: .08, TIGHT: .80, GRIT: .82, SUSTAIN: .85 }, emph: ['PRES', 'AIR', 'TIGHT'], tips: ['明るく・軽く{スクープ}＋Delay/Reverb で速弾きの分離と広がりを。', '低域をタイトに保つと高速フレーズが潰れない。'] },
+  funk: { label: 'ファンク・カッティング', v: { LOW: .18, BODY: .22, MID: .30, PRES: .22, AIR: .08, TIGHT: .78, GRIT: .15, SUSTAIN: .30 }, emph: ['GRIT', 'PRES', 'SUSTAIN'], tips: ['{Comp} の Attack を速めて粒を揃える。', '低域を締め、{TREBLE}/{PRESENCE} で歯切れよく。'] },
+  clean: { label: 'クリーン(コード/アルペジオ)', v: { LOW: .22, BODY: .28, MID: .28, PRES: .16, AIR: .06, TIGHT: .60, GRIT: .12, SUSTAIN: .45 }, emph: ['GRIT', 'AIR'], tips: ['{Comp} 薄め＋Reverb/Chorus でクリーンの艶を。', '歪ませたくない時はブースターを切るか Drive 最小に。'] },
+  jazz: { label: 'ジャズ(暖かい/フロント)', v: { LOW: .24, BODY: .34, MID: .34, PRES: .06, AIR: .02, TIGHT: .45, GRIT: .15, SUSTAIN: .55 }, emph: ['BODY', 'AIR'], tips: ['フロントPU＋Tone絞り気味、{High Cut} 低めで丸く太く。', 'Reverb 薄め、歪みはほぼ無しでまろやかに。'] },
+  country: { label: 'カントリー(トゥワング)', v: { LOW: .18, BODY: .22, MID: .30, PRES: .22, AIR: .08, TIGHT: .80, GRIT: .25, SUSTAIN: .30 }, emph: ['PRES', 'AIR', 'TIGHT'], tips: ['リアPU＋ブライト、{Comp} で粒立ちとスナップを。', 'Slapback Delay でトゥワング感を強調。'] },
 };
 const TARGET_ORDER = ['metal_rhythm', 'metal_lead', 'djent', 'shred', 'hardrock', 'classic', 'blues', 'lead_sing', 'funk', 'clean', 'jazz', 'country'];
 
@@ -2158,15 +2287,80 @@ const KEYWORDS = [
 ];
 const INTENS_RE = /(もっと|さらに|めちゃ|超|very|ガッツリ|強め|思いっきり|もっとも|極端|バキバキ)/i;
 
-const SUG = {
-  LOW: { up: { t: '低域が薄い', h: 'Amp の Bass を上げる / Low Cut(HPF) の周波数を下げる / IR を低域の出るマイク位置に。' }, down: { t: '低域が多い', h: 'Bass を下げる / Low Cut(HPF) を 80–100Hz に設定 / ブースター前段で低域を削る。' } },
-  BODY: { up: { t: '線が細い・薄い（中低域不足）', h: '200–350Hz を少し足して太さを出す / Mid の下側・Bass を補強 / 近接効果の出る IR に。' }, down: { t: '濁る・ボワつく（箱鳴り/中低域過多）', h: '200–300Hz を削る / IR のマイクをオフアクシス寄りに / Low Cut を少し上げる。' } },
-  MID: { up: { t: '中域が薄い（抜け・芯が不足、埋もれる）', h: 'Mid を 800Hz–1.2kHz で持ち上げる / TS 系ブースター（中域こぶ）で前段を押す。' }, down: { t: '中域が前に出過ぎ（ホンキー/箱っぽい）', h: 'Mid 600–900Hz を少し下げる / 軽くスクープして抜けを整える。' } },
-  PRES: { up: { t: 'アタック・食い付きが不足', h: 'Presence を上げる / 2–4kHz を少しブースト / アタックの立つ IR(オンアクシス)に。' }, down: { t: '耳に刺さる・荒い（プレゼンス過多）', h: 'Presence を下げる / 3–4kHz を抑える / 少しオフアクシスの IR に。' } },
-  AIR: { up: { t: '上が詰まっている（モコモコ）', h: 'High Cut の周波数を上げる(7–9kHz) / 明るい IR・キャビに変える。' }, down: { t: 'フィズ・シャリつき（高域ノイズ）', h: 'High Cut を 6–7kHz に下げる / オフアクシス IR でフィズを低減 / Gain を少し下げる。' } },
-  TIGHT: { up: { t: '低域がブーミー・緩い', h: 'Low Cut(HPF) で 60–90Hz の膨らみを削る / タイトな IR / ブースター前段でローを整理。' }, down: { t: '低域が硬い・痩せ気味', h: 'Low Cut の周波数を下げて膨らみを少し戻す / Bass を気持ち上げる。' } },
-  GRIT: { up: { t: '歪みが足りない', h: 'Amp Gain を上げる、または前段ブースターの Drive を上げる。EMG はホットなので上げ過ぎ注意 — まず Level で押す。' }, down: { t: '歪みが多すぎる（潰れ・濁り）', h: 'Gain を下げる / ブースターは Drive より Level で / よりタイトな IR でローを締める。' } },
-  SUSTAIN: { up: { t: '伸び・サステインが不足', h: 'コンプ（サステイナー）を追加 / Gain を少し上げる / Delay+Reverb で余韻を補強。' }, down: { t: '圧縮され過ぎ（ダイナミクスが死ぬ）', h: 'コンプの Ratio を下げ Attack を速める / Gain を下げてピッキングの強弱を残す。' } },
+// 用語集 — {語} で書いた語はホバー/タップで解説が出る
+const GLOSS = {
+  'Low Cut': 'ローカット（ハイパスフィルター）。指定した周波数より下の低音を削る。HX Stomp では Cab/IR ブロックの Low Cut か、EQ ブロックにある。数字を上げるほど低音が減る。',
+  'High Cut': 'ハイカット（ローパスフィルター）。指定周波数より上の高音を削る。歪みのジャリつき（フィズ）を取る定番。数字を下げるほど高音が減る。',
+  'BASS': 'アンプ・ブロックの Bass ツマミ。低音の量。',
+  'MID': 'アンプ・ブロックの Mid ツマミ。中音域（芯・抜け）の量。バンドの中で聞こえるかどうかを最も左右する。',
+  'TREBLE': 'アンプ・ブロックの Treble ツマミ。高音の量。',
+  'PRESENCE': 'アンプ・ブロックの Presence。2〜5kHz あたりの「前に出る感じ」「ピッキングの食いつき」。',
+  'Parametric EQ': '周波数・幅(Q)・量(dB)を指定して山や谷を作れる EQ。HX Stomp の EQ ブロック → Parametric。',
+  'Q': 'EQ の効く幅。大きいほど狭い範囲にピンポイントで効く。迷ったら 1 前後。',
+  'IR': 'インパルス・レスポンス。スピーカーキャビネット＋マイクの音をデータ化したもの。IR を変えると音の骨格が大きく変わるので、EQ で追い切れない時はこちら。',
+  'オフアクシス': 'マイクをスピーカーの中心から外した位置で録った IR。高音が丸くなり、刺さり・ジャリつきが減る。',
+  'オンアクシス': 'マイクをスピーカー中心に向けた IR。明るくアタックが立つ。',
+  'Gate': 'ノイズゲート。音が小さい瞬間に出力を閉じ、ノイズや濁った余韻を消す。刻みの隙間が締まって聞こえる。',
+  'Comp': 'コンプレッサー。大きい音を抑え小さい音を持ち上げて、粒を揃えたり伸びを作る。Sustain/Threshold を上げるほど効く。',
+  'Gain': '歪みの量（Drive）。EMG などアクティブ PU は出力が大きいので、少なめから始めて足していく。',
+  'TS 系ブースター': 'Tube Screamer 系のオーバードライブ（HX Stomp なら Scream 808 など）。アンプの前に置くと中域が持ち上がり低音が締まる。メタルでは Drive 最小・Level 高めが定番。',
+  'スクープ': '中域を削って低音と高音を強調した EQ の形。派手だがバンドの中では埋もれやすい。',
+  'クレストファクタ': 'ピークと平均音量の比。大きい＝音がすぐ減衰する（歯切れ）、小さい＝音量が一定（伸びる・圧縮）。',
+  'スペクトル平坦度': '倍音がどれだけ広く均一に出ているか。歪むほど倍音が増えて平坦になる＝歪み量の目安。',
+};
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+function termify(s) { // '{語}' → 用語チップ
+  return String(s).replace(/\{([^}]+)\}/g, (m, w) => GLOSS[w] ? '<span class="term" data-def="' + esc(GLOSS[w]) + '" onclick="this.classList.toggle(\'on\')">' + esc(w) + '</span>' : '<span class="knob">' + esc(w) + '</span>');
+}
+
+// 提案テンプレ: 軸 × 方向（up=目標より足りない→増やす / down=多い→減らす）
+//  t: 見出し / do: 操作（{語}=用語, 〔〕=ツマミ） / why: 測定上の理由 / fx: 変えると何が起きるか / amt: 量の目安（gap 0–1 → 文字列）
+const dbAmt = g => { const d = Math.max(1, Math.min(6, Math.round(g * 20))); return '目安 ' + d + 'dB 前後（まず ' + Math.max(1, d - 1) + 'dB から）'; };
+const ACTIONS = {
+  LOW: {
+    up:   { t: '低音が足りない', do: 'Amp の {BASS} を上げる（＋1〜2目盛）、または {Low Cut} の周波数を下げる（例 100Hz → 70Hz）', why: '60–160Hz のエネルギーが目標より少なく、土台が薄く軽い', fx: '重み・迫力が出る。上げ過ぎるとボワつくので少しずつ', amt: dbAmt, block: 'Amp / EQ' },
+    down: { t: '低音が多すぎる', do: '{Low Cut} を 80〜100Hz に設定、または Amp の {BASS} を下げる（−1〜2目盛）', why: '60–160Hz が目標より多く、ベース・キックと同じ場所を奪い合う', fx: '低音が整理されて刻みの輪郭がはっきりする', amt: dbAmt, block: 'EQ / Amp' },
+  },
+  BODY: {
+    up:   { t: '線が細い（太さ不足）', do: '{Parametric EQ} で 200〜350Hz を足す（{Q} 1 前後）、または {IR} を近接気味のものに', why: '160–400Hz が目標より少ない＝胴の厚みが無い', fx: '太さ・押し出しが増す', amt: dbAmt, block: 'EQ / IR' },
+    down: { t: '濁る・ボワつく（中低域過多）', do: '{Parametric EQ} で 200〜300Hz を削る、{Low Cut} を少し上げる、{IR} を {オフアクシス} 寄りに', why: '160–400Hz が目標より多い＝濁り・箱鳴りの原因', fx: '濁りが取れて輪郭と分離が出る', amt: dbAmt, block: 'EQ / IR' },
+  },
+  MID: {
+    up:   { t: '芯が無い・埋もれる（中域不足）', do: 'Amp の {MID} を上げる、{Parametric EQ} で 800Hz〜1.2kHz を足す、前段に {TS 系ブースター}', why: '400Hz–2kHz が目標より少ない＝バンドの中で聞こえなくなる帯域', fx: '抜けと存在感が出て、ソロなら "歌う"', amt: dbAmt, block: 'Amp / EQ / Boost' },
+    down: { t: '中域が出過ぎ（ホンキー/箱っぽい）', do: 'Amp の {MID} を少し下げる、{Parametric EQ} で 600〜900Hz を削る（軽い{スクープ}）', why: '400Hz–2kHz が目標より多い＝鼻づまり感', fx: '抜けは保ったまま耳障りさが減る', amt: dbAmt, block: 'Amp / EQ' },
+  },
+  PRES: {
+    up:   { t: 'アタックの食いつきが弱い', do: 'Amp の {PRESENCE} を上げる、{Parametric EQ} で 2〜4kHz を足す、{IR} を {オンアクシス} に', why: '2–5kHz が目標より少ない＝ピッキングの立ち上がりが埋もれる', fx: '粒がはっきり前に出る。刻みが見える', amt: dbAmt, block: 'Amp / EQ / IR' },
+    down: { t: '耳に刺さる・荒い（プレゼンス過多）', do: 'Amp の {PRESENCE} を下げる、{Parametric EQ} で 3〜4kHz を削る、{IR} を少し {オフアクシス} に', why: '2–5kHz が目標より多い＝キンキンする帯域', fx: '長く聴いても疲れない音になる', amt: dbAmt, block: 'Amp / EQ / IR' },
+  },
+  AIR: {
+    up:   { t: '上が詰まっている（モコモコ）', do: '{High Cut} の周波数を上げる（例 6kHz → 8kHz）、明るい {IR}／キャビに変える', why: '5–9kHz が目標より少ない＝こもって聞こえる', fx: '空気感・艶が出る', amt: dbAmt, block: 'Cab/IR / EQ' },
+    down: { t: 'ジャリつく（フィズ・高域ノイズ）', do: '{High Cut} を 6〜7kHz に下げる、{Gain} を少し下げる、{オフアクシス} の {IR} に', why: '5–9kHz が目標より多い＝歪みの粗い成分', fx: '歪みが滑らかになり録音映えする', amt: dbAmt, block: 'Cab/IR / EQ / Amp' },
+  },
+  TIGHT: {
+    up:   { t: '低音が緩い・ブーミー', do: '{Low Cut} で 60〜90Hz の膨らみを削る、前段に {TS 系ブースター}（Drive 低・Level 高）、タイトな {IR}', why: '60–95Hz が 95–160Hz より多い＝低音の重心が低すぎて輪郭がない', fx: '刻みが締まりキレが出る', amt: g => 'Low Cut の目安 ' + (Math.round((60 + g * 110) / 10) * 10) + 'Hz あたり', block: 'EQ / Boost / IR' },
+    down: { t: '低音が硬い・痩せ気味', do: '{Low Cut} の周波数を下げて膨らみを少し戻す、Amp の {BASS} を気持ち上げる', why: '低音の重心が高すぎる', fx: '低音に丸みと自然さが戻る', amt: g => 'Low Cut を ' + Math.round(g * 40) + 'Hz ほど下げる', block: 'EQ / Amp' },
+  },
+  GRIT: {
+    up:   { t: '歪みが足りない', do: 'Amp の {Gain} を上げる、または前段ブースターの Drive を上げる（EMG はホットなので少しずつ）', why: '倍音の量（{スペクトル平坦度}）が目標より少ない', fx: '歪み感とサステインが増える', amt: g => 'Gain の目安 ＋' + Math.max(1, Math.round(g * 4)) + '目盛', block: 'Amp / Boost' },
+    down: { t: '歪みが多すぎる（潰れ・濁り）', do: 'Amp の {Gain} を下げる、ブースターは Drive を絞って Level で押す、{Gate} を入れる', why: '倍音の量が目標より多い＝コードが潰れて濁る', fx: 'コード感が明瞭に、刻みの分離が良くなる', amt: g => 'Gain の目安 −' + Math.max(1, Math.round(g * 4)) + '目盛', block: 'Amp / Boost / Gate' },
+  },
+  SUSTAIN: {
+    up:   { t: '伸びが足りない', do: '{Comp} を追加（Sustain 高め）、{Gain} を少し上げる、Delay＋Reverb で余韻を補う', why: '音量の落ち方が速い（{クレストファクタ} 大）', fx: 'ソロが伸びて "歌う"', amt: g => '変化量: ' + (g > .25 ? '大' : g > .12 ? '中' : '小'), block: 'Comp / Amp / FX' },
+    down: { t: '圧縮され過ぎ（強弱が死ぬ）', do: '{Comp} の Ratio を下げて Attack を速める、{Gain} を下げてピッキングの強弱を残す', why: '音量がほぼ一定＝ダイナミクスが潰れている', fx: '強弱が出て躍動感が戻る', amt: g => '変化量: ' + (g > .25 ? '大' : g > .12 ? '中' : '小'), block: 'Comp / Amp' },
+  },
+};
+const PHRASE = { // 一言診断用の短い言い回し
+  LOW: { up: '低音が薄い', down: '低音が多い' }, BODY: { up: '線が細い', down: '中低域がボワつく' },
+  MID: { up: '芯（中域）が足りない', down: '中域が出過ぎ' }, PRES: { up: 'アタックの食いつきが弱い', down: '高域が刺さる' },
+  AIR: { up: '上が詰まっている', down: 'ジャリつく' }, TIGHT: { up: '低音が緩い', down: '低音が硬すぎ' },
+  GRIT: { up: '歪みが足りない', down: '歪みが多すぎ' }, SUSTAIN: { up: '伸びが足りない', down: '圧縮され過ぎ' },
+};
+const FIRST_STEP = { // 一言診断の「まず〜」
+  LOW: { up: 'Bass を少し上げる', down: 'Low Cut を 80〜100Hz に' }, BODY: { up: '250Hz 付近を少し足す', down: '250Hz 付近を削る' },
+  MID: { up: 'Mid を上げる', down: 'Mid を少し下げる' }, PRES: { up: 'Presence を上げる', down: 'Presence を下げる' },
+  AIR: { up: 'High Cut を上げる', down: 'High Cut を 6〜7kHz に' }, TIGHT: { up: 'Low Cut を上げる', down: 'Low Cut を下げる' },
+  GRIT: { up: 'Gain を上げる', down: 'Gain を下げる' }, SUSTAIN: { up: 'コンプを足す', down: 'コンプを緩める' },
 };
 
 let currentTargetKey = 'metal_rhythm';
@@ -2205,10 +2399,8 @@ function extractFeatures(freqData, peak, rms) {
 }
 
 function updateFingerprint() {
-  if (_frames.length < 8) {
-    document.getElementById('sugStatus').textContent = isRunning ? 'ギターを弾き続けてください…（解析中）' : '';
-    return;
-  }
+  renderMeas();
+  if (_frames.length < 8) return;
   const acc = {}; for (const b of ADV_BANDS) acc[b.key] = 0;
   let cTot = 0, cFlat = 0, cCrest = 0;
   for (const f of _frames) {
@@ -2226,8 +2418,7 @@ function updateFingerprint() {
     GRIT: clamp01((Math.log10(flatness + 1e-6) + 4) / 3),
     SUSTAIN: clamp01((4.0 - crest) / (4.0 - 1.3)),
   };
-  renderBars();
-  renderSuggestions();
+  renderAll();
 }
 
 function targetVec() {
@@ -2239,43 +2430,200 @@ function targetVec() {
   return out;
 }
 
-function renderBars() {
+// ── 差分の計算（全表示で共有） ──
+// EQ 軸は dB 差も持つ（10·log10(現在/目標)）。mag は線形差と dB 差の大きい方（AIR のような小さい帯域も拾う）
+function eqDb(cur, tgt) { return 10 * Math.log10((cur + 0.01) / (tgt + 0.01)); }
+function computeGaps() {
+  if (!_liveFP) return [];
+  const t = TARGETS[currentTargetKey], tv = targetVec();
+  return DIMS.map(d => {
+    const k = d.key, cur = _liveFP[k], tgt = tv[k], delta = tgt - cur;   // >0: 足りない(up)
+    const db = d.eq ? eqDb(cur, tgt) : 0;
+    const mag = Math.max(Math.abs(delta), d.eq ? Math.min(0.5, Math.abs(db) / 24) : 0);
+    const w = (t.emph && t.emph.indexOf(k) >= 0) ? 1.4 : 1.0;
+    return { key: k, dim: d, cur, tgt, delta, db, mag, score: mag * w, dir: delta > 0 ? 'up' : 'down', emph: w > 1 };
+  });
+}
+function gapLevel(mag) { return mag < 0.07 ? 0 : mag < 0.16 ? 1 : 2; }
+
+function renderAll() { renderDiagnosis(); renderEQ(); renderChars(); renderActions(); renderTable(); }
+
+// ── 測定状態ランプ ──
+function renderMeas() {
+  const lamp = document.getElementById('measLamp'), txt = document.getElementById('measTxt');
+  let cls = '', msg;
+  if (!isRunning) { msg = '入力なし — START を押す'; }
+  else if (_inputDb < -45) { cls = 'y'; msg = '入力が小さい／無音 — 弾いてください'; }
+  else if (_frames.length < 30) { cls = 'y'; msg = '解析中… 弾き続けて（' + _frames.length + '/30）'; }
+  else { cls = 'g'; msg = '測定OK（直近 ' + _frames.length + ' フレーム平均）'; }
+  lamp.className = 'lamp ' + cls; txt.textContent = msg;
+}
+
+// ── ② 一言診断 ──
+function renderDiagnosis() {
+  const v = document.getElementById('verdict'), h = document.getElementById('headline');
+  const t = TARGETS[currentTargetKey];
+  if (!_liveFP) { v.className = 'verdict wait'; v.textContent = '待機中'; h.innerHTML = 'START を押してギターを弾いてください。目標「<b>' + esc(t.label) + '</b>」と比べて「何が多くて、何が足りないか」を一言でまとめます。'; return; }
+  const gaps = computeGaps().sort((a, b) => b.score - a.score);
+  const sig = gaps.filter(g => g.mag >= 0.07);
+  const worst = gaps[0] ? gaps[0].mag : 0, lvl = gapLevel(worst);
+  v.className = 'verdict ' + (lvl === 0 ? 'ok' : lvl === 1 ? 'near' : 'far');
+  v.textContent = lvl === 0 ? '◎ ほぼ目標どおり' : lvl === 1 ? '○ あと少し' : '△ 調整が必要';
+  const lab = '<b>' + esc(t.label) + (intensity > 1 ? '（強め）' : '') + '</b>';
+  if (!sig.length) { h.innerHTML = '今の音は目標 ' + lab + ' にかなり近いです。細かい詰めは「📸 基準に保存」→ ツマミを動かして点線との差で追ってください。'; return; }
+  const top = sig.slice(0, 2);
+  const phr = top.map(g => '<b>' + PHRASE[g.key][g.dir] + '</b>').join('、');
+  const steps = top.map(g => '<span class="step">' + FIRST_STEP[g.key][g.dir] + '</span>');
+  h.innerHTML = '今の音は目標 ' + lab + ' に比べて「' + phr + '」。まず ' + steps[0] + (steps[1] ? '、次に ' + steps[1] : '') + '。'
+    + (sig.length > 2 ? '<span style="color:#5f9f7a">（他 ' + (sig.length - 2) + ' 件は下の「やること」）</span>' : '');
+}
+
+// ── ② EQ カーブ（帯域ごとの dB 差） ──
+function renderEQ() {
+  const c = document.getElementById('eqCanvas');
+  const { ctx, W, H } = prepCanvas(c);
+  ctx.fillStyle = '#040c04'; ctx.fillRect(0, 0, W, H);
+  const padL = 36, padR = 12, padT = 30, padB = 30, w = W - padL - padR, h = H - padT - padB;
+  const fMin = 60, fMax = 9000, lmin = Math.log10(fMin), lmax = Math.log10(fMax);
+  const fx = f => padL + (Math.log10(f) - lmin) / (lmax - lmin) * w;
+  const dbMax = 12, y0 = padT + h / 2;
+  const fy = db => y0 - Math.max(-dbMax, Math.min(dbMax, db)) / dbMax * (h / 2);
+  // grid
+  ctx.font = '9px Courier New'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  [-12, -6, 0, 6, 12].forEach(db => {
+    ctx.strokeStyle = db === 0 ? '#1e4a1e' : '#0d200d'; ctx.lineWidth = db === 0 ? 1.2 : 0.6;
+    ctx.beginPath(); ctx.moveTo(padL, fy(db)); ctx.lineTo(W - padR, fy(db)); ctx.stroke();
+    ctx.fillStyle = db === 0 ? '#00aa55' : '#0a5a2a'; ctx.fillText((db > 0 ? '+' : '') + db + 'dB', padL - 4, fy(db));
+  });
+  ctx.fillStyle = '#0a5a2a'; ctx.textAlign = 'right'; ctx.fillText('多い', padL - 4, padT + 4); ctx.fillText('少ない', padL - 4, padT + h - 4);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  [160, 400, 2000, 5000].forEach(f => { const x = fx(f); ctx.strokeStyle = '#0d260d'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x, padT - 4); ctx.lineTo(x, padT + h); ctx.stroke(); });
+  [100, 200, 500, 1000, 2000, 5000].forEach(f => { ctx.fillStyle = '#0a5a2a'; ctx.fillText(f >= 1000 ? (f / 1000) + 'k' : f, fx(f), H - padB + 12); });
+  const eqDims = DIMS.filter(d => d.eq);
+  // band names on top
+  eqDims.forEach((d, i) => {
+    const lo = i === 0 ? fMin : Math.sqrt(eqDims[i - 1].fc * d.fc), hi = i === eqDims.length - 1 ? fMax : Math.sqrt(d.fc * eqDims[i + 1].fc);
+    const xc = (fx(lo) + fx(hi)) / 2;
+    ctx.fillStyle = '#00cc77'; ctx.font = 'bold 10px Courier New'; ctx.fillText(d.jp, xc, 11);
+    ctx.fillStyle = '#0a5a2a'; ctx.font = '8px Courier New'; ctx.fillText(d.sub, xc, 21);
+  });
+  if (!_liveFP) {
+    ctx.fillStyle = '#0a5a2a'; ctx.font = '11px Courier New'; ctx.fillText('弾くと、目標との差が線で出ます（上＝多い・下＝少ない）', padL + w / 2, y0 - 10);
+    return;
+  }
+  const gaps = computeGaps().filter(g => g.dim.eq);
+  const curve = pts => { // log-f 上でコサイン補間した滑らかな曲線（両端は水平に延長）
+    const p = [{ lf: lmin, db: pts[0].db }].concat(pts.map(g => ({ lf: Math.log10(g.dim.fc), db: g.db }))).concat([{ lf: lmax, db: pts[pts.length - 1].db }]);
+    const out = []; const n = Math.max(60, Math.floor(w));
+    for (let i = 0; i <= n; i++) {
+      const lf = lmin + (lmax - lmin) * i / n; let j = 0; while (j < p.length - 2 && lf > p[j + 1].lf) j++;
+      const a = p[j], b = p[j + 1], t = (lf - a.lf) / (b.lf - a.lf || 1), s = (1 - Math.cos(Math.PI * Math.max(0, Math.min(1, t)))) / 2;
+      out.push({ x: padL + (lf - lmin) / (lmax - lmin) * w, db: a.db * (1 - s) + b.db * s });
+    }
+    return out;
+  };
+  const cur = curve(gaps);
+  // fill: 多い＝オレンジ / 少ない＝ブルー
+  ctx.save(); ctx.beginPath(); ctx.rect(padL, padT, w, h); ctx.clip();
+  const drawFill = (sign, color) => {
+    ctx.beginPath(); ctx.moveTo(cur[0].x, y0);
+    cur.forEach(pt => ctx.lineTo(pt.x, sign * pt.db > 0 ? fy(pt.db) : y0));
+    ctx.lineTo(cur[cur.length - 1].x, y0); ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+  };
+  drawFill(1, 'rgba(255,140,70,0.28)'); drawFill(-1, 'rgba(70,150,255,0.28)');
+  // baseline (dotted)
+  if (baseline) {
+    const tv = targetVec();
+    const bpts = gaps.map(g => ({ dim: g.dim, db: eqDb(baseline[g.key], tv[g.key]) }));
+    const bc = curve(bpts);
+    ctx.setLineDash([3, 4]); ctx.strokeStyle = '#00b4ff'; ctx.lineWidth = 1.2; ctx.beginPath();
+    bc.forEach((pt, i) => i ? ctx.lineTo(pt.x, fy(pt.db)) : ctx.moveTo(pt.x, fy(pt.db))); ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 2; ctx.beginPath();
+  cur.forEach((pt, i) => i ? ctx.lineTo(pt.x, fy(pt.db)) : ctx.moveTo(pt.x, fy(pt.db))); ctx.stroke();
+  ctx.restore();
+  // per-band markers + verdict text
+  gaps.forEach(g => {
+    const x = fx(g.dim.fc), yy = fy(g.db), lvl = gapLevel(g.mag);
+    const col = lvl === 0 ? '#00ffaa' : g.db > 0 ? '#ff9955' : '#55aaff';
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, yy, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 10px Courier New'; ctx.textAlign = 'center';
+    const txt = lvl === 0 ? 'OK' : (g.db > 0 ? '+' : '') + g.db.toFixed(1) + 'dB ' + (g.db > 0 ? '多い' : '少ない');
+    const ty = g.db > 0 ? yy - 9 : yy + 15;
+    ctx.fillStyle = '#040c04'; ctx.fillRect(x - txt.length * 3.3, ty - 9, txt.length * 6.6, 12);
+    ctx.fillStyle = col; ctx.fillText(txt, x, ty);
+  });
+}
+
+// ── ② キャラクター 3軸 ──
+function renderChars() {
+  const wrap = document.getElementById('chars');
   const tv = targetVec();
-  document.getElementById('bars').innerHTML = DIMS.map(d => {
-    const k = d.key, cur = _liveFP ? _liveFP[k] : 0, tgt = tv[k];
-    const gap = cur - tgt, aGap = Math.abs(gap);
-    const col = aGap < .07 ? '#00ffaa' : aGap < .15 ? '#ffaa00' : '#ff5500';
-    const gapTxt = aGap < .07 ? 'OK' : (gap > 0 ? '+' : '−') + Math.round(aGap * 100);
-    const baseMark = baseline ? '<div class="base" style="left:' + (baseline[k] * 100).toFixed(1) + '%"></div>' : '';
-    return '<div class="dim"><div class="dim-head"><span>' + d.name + '</span>'
-      + '<span class="gap"><span class="nums">現在 ' + Math.round(cur * 100) + ' ／ 目標 ' + Math.round(tgt * 100) + '</span> <b style="color:' + col + '">' + gapTxt + '</b></span></div>'
-      + '<div class="track"><div class="fill" style="width:' + (cur * 100).toFixed(1) + '%;border-right-color:' + col + ';background:' + col + '22"></div>'
-      + '<div class="target" style="left:' + (tgt * 100).toFixed(1) + '%"></div>' + baseMark + '</div></div>';
+  wrap.innerHTML = DIMS.filter(d => !d.eq).map(d => {
+    const k = d.key, cur = _liveFP ? _liveFP[k] : null, tgt = tv[k];
+    let val = '<span style="color:#006633">— 弾くと表示</span>', arrow = '';
+    if (cur != null) {
+      const gap = tgt - cur, mag = Math.abs(gap), lvl = gapLevel(mag);
+      const col = lvl === 0 ? '#00ffaa' : lvl === 1 ? '#ffcc44' : '#ff8866';
+      const word = lvl === 0 ? 'ほぼ目標どおり' : '目標より' + (gap > 0 ? '「' + d.left.split('・')[0] + '」寄り → 右へ' : '「' + d.right.split('・')[0] + '」寄り → 左へ');
+      val = '<b style="color:' + col + '">' + word + '</b> <span style="color:#5f9f7a">(' + Math.round(cur * 100) + '→' + Math.round(tgt * 100) + ')</span>';
+      const a = Math.min(cur, tgt) * 100, b = Math.max(cur, tgt) * 100;
+      if (lvl > 0) arrow = '<div class="arrow" style="left:' + a.toFixed(1) + '%;width:' + (b - a).toFixed(1) + '%"></div>';
+    }
+    const baseMark = baseline ? '<div class="base" style="left:' + (baseline[k] * 100).toFixed(1) + '%" title="基準"></div>' : '';
+    return '<div class="char"><div class="char-head"><span>' + esc(d.jp) + '</span><span class="val">' + val + '</span></div>'
+      + '<div class="char-track">' + arrow + '<div class="tgt" style="left:' + (tgt * 100).toFixed(1) + '%" title="目標"></div>' + baseMark
+      + (cur != null ? '<div class="cur" style="left:' + (cur * 100).toFixed(1) + '%" title="現在"></div>' : '') + '</div>'
+      + '<div class="char-ends"><span>◀ ' + esc(d.left) + '</span><span>' + esc(d.right) + ' ▶</span></div></div>';
   }).join('');
 }
 
-function renderSuggestions() {
+// ── ③ やること ──
+function renderActions() {
   const status = document.getElementById('sugStatus'), list = document.getElementById('sugList');
-  if (!_liveFP) { list.innerHTML = ''; return; }
-  const t = TARGETS[currentTargetKey], tv = targetVec();
-  const items = [];
-  for (const d of DIMS) {
-    const k = d.key, delta = tv[k] - _liveFP[k], mag = Math.abs(delta);
-    if (mag < 0.06) continue;
-    const dir = delta > 0 ? 'up' : 'down', s = SUG[k][dir];
-    const w = (t.emph && t.emph.indexOf(k) >= 0) ? 1.4 : 1.0;
-    items.push({ score: mag * w, dir, title: s.t, how: s.h, pct: Math.round(mag * 100) });
+  const t = TARGETS[currentTargetKey];
+  if (!_liveFP) {
+    status.textContent = '';
+    list.innerHTML = '<div class="act tip"><div class="act-why">弾くと、目標「' + esc(t.label) + '」に近づけるための操作が効果順に並びます。</div></div>'
+      + (t.tips || []).map(tip => '<div class="act tip"><div class="act-why">💡 ' + termify(tip) + '</div></div>').join('');
+    return;
   }
-  items.sort((a, b) => b.score - a.score);
-  const top = items.slice(0, 5);
-  status.innerHTML = '目標: <b style="color:#00ffaa">' + t.label + '</b>'
-    + (intensity > 1 ? ' <span style="color:#ffaa00">(強め)</span>' : '')
-    + ' — ' + (top.length ? top.length + '件の改善ポイント' : 'ほぼ目標どおり ✓');
-  let html = top.map(it => '<div class="sug ' + it.dir + '"><div class="st">' + (it.dir === 'up' ? '▲ ' : '▼ ') + it.title
-    + '<span class="badge">差 ' + it.pct + '</span></div><div class="sh">' + it.how + '</div></div>').join('');
-  if (!top.length) html = '<div class="sug up"><div class="st">✓ 目標に近い音です</div><div class="sh">大きなズレは見当たりません。微調整は基準を保存して差分で追ってください。</div></div>';
-  html += (t.tips || []).map(tip => '<div class="sug tip"><div class="sh">💡 ' + tip + '</div></div>').join('');
+  const items = computeGaps().filter(g => g.mag >= 0.07).sort((a, b) => b.score - a.score);
+  status.innerHTML = '目標: <b style="color:#00ffaa">' + esc(t.label) + '</b>' + (intensity > 1 ? ' <span style="color:#ffaa00">(強め)</span>' : '')
+    + ' — ' + (items.length ? items.length + ' 件。番号順に1つずつ試して、弾きながら診断が変わるのを確認' : 'ほぼ目標どおり ✓');
+  let html = '';
+  items.forEach((g, i) => {
+    const a = ACTIONS[g.key][g.dir], lvl = gapLevel(g.mag);
+    const impact = lvl === 2 ? '<span class="badge big">効果 大</span>' : lvl === 1 ? '<span class="badge mid">効果 中</span>' : '<span class="badge">効果 小</span>';
+    const addBlk = /ブースター|\{Comp\}|\{Gate\}/.test(a.do) ? '<span class="badge">ブロック追加あり</span>' : '<span class="badge">ツマミ調整</span>';
+    const emph = g.emph ? '<span class="badge" style="color:#ffcc44;border-color:#554411">このジャンルの要</span>' : '';
+    const cls = 'act ' + g.dir + (i >= 3 ? ' minor' : '');
+    const dbTxt = g.dim.eq ? '帯域 ' + g.dim.sub + ' の量: 目標比 ' + (g.db > 0 ? '+' : '') + g.db.toFixed(1) + 'dB（指標 ' + Math.round(g.cur * 100) + ' → 目標 ' + Math.round(g.tgt * 100) + '）' : '指標 ' + Math.round(g.cur * 100) + ' → 目標 ' + Math.round(g.tgt * 100) + '（0–100 の相対値）';
+    html += '<div class="' + cls + '"><div class="act-top"><span class="num">' + (i + 1) + '</span><span class="title">' + (g.dir === 'up' ? '▲ ' : '▼ ') + esc(a.t) + '</span>' + impact + addBlk + emph + '</div>'
+      + '<div class="act-do">' + termify(a.do) + ' <span class="amt">— ' + esc(a.amt(g.mag)) + '</span></div>'
+      + '<div class="act-why">なぜ: ' + termify(a.why) + '　<span class="fx">→ 変えると: ' + termify(a.fx) + '</span></div>'
+      + '<span class="act-more" onclick="this.parentElement.classList.toggle(\'open\')">▸ 測定値・触るブロック</span>'
+      + '<div class="act-detail">' + esc(dbTxt) + '<br>触るブロック: ' + esc(a.block) + '　／　' + (baseline ? '基準(保存時)の指標: ' + Math.round(baseline[g.key] * 100) : '基準は未保存') + '</div></div>';
+  });
+  if (!items.length) html = '<div class="act"><div class="act-top"><span class="title">✓ 目標に近い音です</span></div><div class="act-why">大きなズレは見当たりません。微調整は「📸 基準に保存」→ ツマミを動かして点線との差で追ってください。</div></div>';
+  html += (t.tips || []).map(tip => '<div class="act tip"><div class="act-why">💡 ' + termify(tip) + '</div></div>').join('');
   list.innerHTML = html;
+}
+
+// ── 詳細テーブル ──
+function renderTable() {
+  const tb = document.getElementById('dtable'); if (!tb) return;
+  const tv = targetVec();
+  let h = '<tr><th>軸</th><th>帯域/意味</th><th style="text-align:right">現在</th><th style="text-align:right">目標</th><th style="text-align:right">差</th>' + (baseline ? '<th style="text-align:right">基準</th>' : '') + (true ? '<th style="text-align:right">dB差</th>' : '') + '</tr>';
+  DIMS.forEach(d => {
+    const k = d.key, cur = _liveFP ? _liveFP[k] : null, tgt = tv[k];
+    h += '<tr><td>' + esc(d.jp) + ' <span class="sm">' + k + '</span></td><td class="sm">' + esc(d.sub || (d.left + ' ⇄ ' + d.right)) + '</td>'
+      + '<td class="num">' + (cur == null ? '—' : Math.round(cur * 100)) + '</td><td class="num">' + Math.round(tgt * 100) + '</td>'
+      + '<td class="num">' + (cur == null ? '—' : ((cur - tgt) >= 0 ? '+' : '') + Math.round((cur - tgt) * 100)) + '</td>'
+      + (baseline ? '<td class="num">' + Math.round(baseline[k] * 100) + '</td>' : '')
+      + '<td class="num">' + (cur == null || !d.eq ? '—' : ((eqDb(cur, tgt) >= 0 ? '+' : '') + eqDb(cur, tgt).toFixed(1))) + '</td></tr>';
+  });
+  tb.innerHTML = h;
 }
 
 function advDrawSpectrum() {
@@ -2312,7 +2660,8 @@ function advisorFrame(timeData) {
   analyser.getFloatFrequencyData(_freqBuf);
   const pct = Math.max(0, Math.min(100, (_inputDb + 60) / 60 * 100));
   document.getElementById('meterFill').style.width = pct.toFixed(1) + '%';
-  advDrawSpectrum();
+  const det = document.getElementById('advDetails');
+  if (det && det.open) advDrawSpectrum();
   if (_inputDb > -45) {
     let sumSq = 0, peak = 0;
     for (let i = 0; i < timeData.length; i++) { const v = timeData[i]; sumSq += v * v; const a = v < 0 ? -v : v; if (a > peak) peak = a; }
@@ -2326,7 +2675,7 @@ function setTarget(key, fromUser) {
   currentTargetKey = key;
   if (fromUser) intensity = 1.0;
   document.querySelectorAll('#presetChips .chip').forEach(c => c.classList.toggle('active', c.dataset.key === key));
-  if (_liveFP) { renderBars(); renderSuggestions(); }
+  renderAll();
   if (afterBuffer) updateAbInfo();
   saveSettings();
 }
@@ -2347,9 +2696,9 @@ function saveBaseline() {
   if (!_liveFP) { document.getElementById('sugStatus').textContent = 'まず弾いて解析させてから保存してください。'; return; }
   baseline = Object.assign({}, _liveFP);
   document.getElementById('snapClr').style.display = '';
-  renderBars();
+  renderAll();
 }
-function clearBaseline() { baseline = null; document.getElementById('snapClr').style.display = 'none'; renderBars(); }
+function clearBaseline() { baseline = null; document.getElementById('snapClr').style.display = 'none'; renderAll(); }
 
 function buildReport() {
   if (!_liveFP) return null;
@@ -2357,24 +2706,19 @@ function buildReport() {
   const axes = DIMS.map(d => {
     const k = d.key, cur = _liveFP[k], tgt = tv[k];
     const o = { key: k, name: d.name, current: +cur.toFixed(3), target: +tgt.toFixed(3), delta: +(cur - tgt).toFixed(3), current_0to100: Math.round(cur * 100), target_0to100: Math.round(tgt * 100) };
+    if (d.eq) o.delta_db = +eqDb(cur, tgt).toFixed(2);
     if (baseline) o.baseline_0to100 = Math.round(baseline[k] * 100);
     return o;
   });
-  const items = [];
-  for (const d of DIMS) {
-    const k = d.key, delta = tv[k] - _liveFP[k], mag = Math.abs(delta);
-    if (mag < 0.06) continue;
-    const dir = delta > 0 ? 'up' : 'down', s = SUG[k][dir];
-    const w = (t.emph && t.emph.indexOf(k) >= 0) ? 1.4 : 1.0;
-    items.push({ axis: k, direction: dir, title: s.t, how: s.h, gap_0to100: Math.round(mag * 100), score: +(mag * w).toFixed(3) });
-  }
-  items.sort((a, b) => b.score - a.score);
+  const strip = s => String(s).replace(/[{}]/g, '');
+  const items = computeGaps().filter(g => g.mag >= 0.07).sort((a, b) => b.score - a.score)
+    .map(g => { const a = ACTIONS[g.key][g.dir]; return { axis: g.key, direction: g.dir, title: a.t, how: strip(a.do), why: strip(a.why), amount: a.amt(g.mag), gap_0to100: Math.round(g.mag * 100), score: +g.score.toFixed(3) }; });
   return {
-    app: 'tone-advisor', schema_version: 1, timestamp: new Date().toISOString(),
-    note: '値は 0–1（出力では0–100換算）の相対指標。LOW/BODY/MID/PRES/AIR は全体スペクトルに対するエネルギー比、TIGHT は低域の締まり、GRIT は歪み量(スペクトル平坦度)、SUSTAIN は伸び/圧縮(クレストファクタ)。マイク/IR/部屋で絶対値はぶれるため、目標との差分で読むこと。',
+    app: 'tone-advisor', schema_version: 2, timestamp: new Date().toISOString(),
+    note: '値は 0–1（出力では0–100換算）の相対指標。LOW/BODY/MID/PRES/AIR は全体スペクトルに対するエネルギー比（delta_db は目標比 dB）、TIGHT は低域の締まり、GRIT は歪み量(スペクトル平坦度)、SUSTAIN は伸び/圧縮(クレストファクタ)。マイク/IR/部屋で絶対値はぶれるため、目標との差分で読むこと。',
     rig: '7弦標準チューニング / Line6 HX Stomp + IR / EMG(アクティブ)PU',
     target: { key: currentTargetKey, label: t.label, intensity: intensity },
-    axes: axes, suggestions: items.slice(0, 8), tips: t.tips || []
+    axes: axes, suggestions: items.slice(0, 8), tips: (t.tips || []).map(strip)
   };
 }
 
@@ -2396,13 +2740,12 @@ function buildAIText(mode) {
     return s;
   }
 
-  // mode === 'target' (default)
   s += '- 目標トーン: ' + r.target.label + (r.target.intensity > 1 ? '（強め）' : '') + '\n';
-  s += '\n## 各軸の数値（0–100換算）\n| 軸 | 現在 | 目標 | 差 |' + (hasBase ? ' 基準 |' : '') + '\n|---|---|---|---|' + (hasBase ? '---|' : '') + '\n';
-  r.axes.forEach(a => { s += '| ' + a.name + ' | ' + a.current_0to100 + ' | ' + a.target_0to100 + ' | ' + (a.delta >= 0 ? '+' : '') + Math.round(a.delta * 100) + ' |' + (hasBase ? ' ' + a.baseline_0to100 + ' |' : '') + '\n'; });
+  s += '\n## 各軸の数値（0–100換算）\n| 軸 | 現在 | 目標 | 差 | 目標比dB |' + (hasBase ? ' 基準 |' : '') + '\n|---|---|---|---|---|' + (hasBase ? '---|' : '') + '\n';
+  r.axes.forEach(a => { s += '| ' + a.name + ' | ' + a.current_0to100 + ' | ' + a.target_0to100 + ' | ' + (a.delta >= 0 ? '+' : '') + Math.round(a.delta * 100) + ' | ' + (a.delta_db != null ? (a.delta_db >= 0 ? '+' : '') + a.delta_db.toFixed(1) : '—') + ' |' + (hasBase ? ' ' + a.baseline_0to100 + ' |' : '') + '\n'; });
   s += '\n## 現在のヒューリスティック提案（参考）\n';
   if (!r.suggestions.length) s += '- 目標に近く、大きなズレなし\n';
-  r.suggestions.forEach(it => { s += '- [' + (it.direction === 'up' ? '上げる' : '下げる') + '] ' + it.title + ' → ' + it.how + '\n'; });
+  r.suggestions.forEach(it => { s += '- [' + (it.direction === 'up' ? '上げる' : '下げる') + '] ' + it.title + ' → ' + it.how + '（' + it.amount + '）\n'; });
   r.tips.forEach(tp => s += '- 💡 ' + tp + '\n');
   s += '\n## お願い\nあなたは経験豊富なギターのトーンエンジニアです。上記は私のギター音の周波数解析結果と、目標トーン「' + r.target.label + '」との差分です。'
     + 'Line6 HX Stomp（アンプ/キャブ・IR・EQ・ブースター・コンプ等）でこの目標に近づけるための具体策を、優先順位をつけて提案してください。'
@@ -2598,8 +2941,12 @@ function initAdvisor() {
     wrap.appendChild(b);
   });
   document.querySelectorAll('#presetChips .chip').forEach(c => c.classList.toggle('active', c.dataset.key === currentTargetKey));
-  renderBars();
+  renderAll(); renderMeas();
   observeCanvas(document.getElementById('specCanvas'));
+  observeCanvas(document.getElementById('eqCanvas'));
+  // canvas は ResizeObserver 後にサイズが決まるので、表示直後・リサイズ時に描き直す（未 START 時は drawLoop が回らない）
+  setTimeout(renderEQ, 200);
+  window.addEventListener('resize', () => { if (currentMode === 'advisor') setTimeout(renderEQ, 60); });
 }
 
 // ─── Init ───

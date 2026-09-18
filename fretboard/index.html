@@ -205,12 +205,11 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 <nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a>
   <a href="index.html" class="nav-link active">🎸 Fretboard</a>
   <a href="practice.html" class="nav-link">🎵 Practice</a>
-  <a href="theory.html" class="nav-link">📖 Theory</a>
-  <a href="compose.html" class="nav-link">🎼 Compose</a>
-  <a href="../tuner/index.html" class="nav-link" style="margin-left:auto">🎚 Tuner</a>
-  <a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a>
+  <a href="../theory/index.html" class="nav-link" style="margin-left:auto">📖 Theory</a>
+  <a href="../theory/compose.html" class="nav-link">🎼 Compose</a>
+  <a href="../tuner/index.html" class="nav-link">🎚 Tuner</a>
   <a href="../studio/index.html" class="nav-link">🎹 Studio</a>
-  <a href="../tuner/index.html#advisor" class="nav-link">🎛 Advisor</a>
+  <a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a>
 </nav>
 <div class="app">
   <header>
@@ -542,5 +541,6 @@ function toggleAcc(){acc=acc==='flat'?'sharp':'flat';var b=document.getElementBy
   if(/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.navigator.standalone)document.getElementById('ih').style.display='block';
 })();
 </script>
+<script src="../nav.js" defer></script>
 </body>
 </html>

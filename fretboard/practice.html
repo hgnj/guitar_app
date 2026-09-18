@@ -101,7 +101,15 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 </style>
 </head>
 <body>
-<nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a><a href="index.html" class="nav-link">🎸 Fretboard</a><a href="practice.html" class="nav-link active">🎵 Practice</a><a href="theory.html" class="nav-link">📖 Theory</a><a href="compose.html" class="nav-link">🎼 Compose</a><a href="../tuner/index.html" class="nav-link" style="margin-left:auto">🎚 Tuner</a><a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a><a href="../studio/index.html" class="nav-link">🎹 Studio</a><a href="../tuner/index.html#advisor" class="nav-link">🎛 Advisor</a></nav>
+<nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a>
+  <a href="index.html" class="nav-link">🎸 Fretboard</a>
+  <a href="practice.html" class="nav-link active">🎵 Practice</a>
+  <a href="../theory/index.html" class="nav-link" style="margin-left:auto">📖 Theory</a>
+  <a href="../theory/compose.html" class="nav-link">🎼 Compose</a>
+  <a href="../tuner/index.html" class="nav-link">🎚 Tuner</a>
+  <a href="../studio/index.html" class="nav-link">🎹 Studio</a>
+  <a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a>
+</nav>
 <div class="app">
   <header><div class="logo"><i>♮</i><h1>Practice Tools <em>/ 練習ツール</em></h1></div></header>
   <div class="tabs">
@@ -574,5 +582,6 @@ document.getElementById('dg-tone').addEventListener('change',function(e){
   dgStrum(dgGuitarChord(dgKeyPc,false),dgCtx.currentTime+0.1,0.42);
 });
 </script>
+<script src="../nav.js" defer></script>
 </body>
 </html>

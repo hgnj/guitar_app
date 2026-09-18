@@ -86,17 +86,18 @@ var CSS = [
 "  font-size:11px; letter-spacing:.28em; color:#7d8ea9; text-transform:uppercase; font-weight:700;}",
 "#gnavDr .gx{background:none; border:none; color:#7d8ea9; font-size:20px; line-height:1; cursor:pointer; padding:4px 6px;}",
 "#gnavDr a{display:block; text-decoration:none; color:#e7edf6;}",
-"#gnavDr .ga{display:flex; align-items:center; gap:11px; padding:11px 14px; border-left:3px solid transparent;}",
+"#gnavDr .ga{display:flex; align-items:center; gap:11px; padding:9px 14px; border-left:3px solid transparent;}",
 "#gnavDr .ga:hover{background:#1c2434;}",
 "#gnavDr .ga .gi{font-size:19px; width:24px; text-align:center; flex:0 0 auto;}",
 "#gnavDr .ga .gt{display:block; font-size:15px; font-weight:700; letter-spacing:.02em;}",
 "#gnavDr .ga .gd{display:block; font-size:10.5px; color:#8a9ab5; font-weight:400; margin-top:2px;}",
 "#gnavDr .ga.cur{border-left-color:#ff8a4d; background:#1a2130;}",
 "#gnavDr .ga.cur .gt{color:#ffb454;}",
-"#gnavDr .gsubs{padding:0 0 6px;}",
-"#gnavDr .gs{display:block; padding:8px 14px 8px 52px; font-size:12.5px; color:#a9b8d0; border-left:3px solid transparent;}",
+"#gnavDr .gsubs{padding:0 0 5px;}",
+"#gnavDr .gs{display:block; padding:6px 14px 6px 52px; font-size:12px; color:#8b9bb4; border-left:3px solid transparent;}",
+"#gnavDr .gsubs.cur .gs{color:#b9c7dc;}",
 "#gnavDr .gs:hover{background:#1c2434; color:#fff;}",
-"#gnavDr .gs.cur{color:#4db6ff; border-left-color:#4db6ff; background:#18202e;}",
+"#gnavDr .gsubs .gs.cur{color:#4db6ff; border-left-color:#4db6ff; background:#18202e; font-weight:700;}",   /* .gsubs.cur .gs より詳細度を下げないこと */
 "#gnavDr .gsep{height:1px; background:#232c3d; margin:6px 14px;}",
 "#gnavDr .gf{padding:12px 16px 0; font-size:10.5px; line-height:1.7; color:#6f7f99;}",
 "#gnavDr .gf kbd{background:#212a3b; border:1px solid #2e3852; border-radius:4px; padding:1px 5px; font-size:10px;}",
@@ -104,6 +105,14 @@ var CSS = [
 ".app-nav{display:none !important;}",
 "nav.site-nav>a{display:none !important;}",
 "nav.site-nav{display:flex; align-items:center; gap:8px;}",
+/* 縦が短い端末では、全部入りでもスクロールせずに収まるよう説明文を省く */
+"@media (max-height:780px){",
+"  #gnavDr .ga .gd{display:none;}",            /* ← 基本ルールと同じ詳細度にしないと負ける */
+"  #gnavDr .ga{padding:7px 14px;}",
+"  #gnavDr .gs{padding:5px 14px 5px 52px;}",
+"  #gnavDr .gh{padding-bottom:8px;}",
+"  #gnavDr .gf{display:none;}",
+"}",
 "@media (prefers-reduced-motion:reduce){#gnavDr,#gnavOv,#gnavBtn i{transition:none;}}"
 ].join("\n");
 
@@ -131,6 +140,8 @@ function build(){
   var dr=document.createElement("nav"); dr.id="gnavDr";
   dr.setAttribute("aria-label","アプリ切替"); dr.setAttribute("aria-hidden","true");
 
+  /* サブページは全アプリぶん最初から開いておく（どこに何があるか一目で分かるように）。
+     data-app / data-file / data-hash は、現在地マークを後から付け直すための目印。 */
   var h='<div class="gh"><span>Guitar Apps</span><button class="gx" type="button" aria-label="閉じる">✕</button></div>';
   APPS.forEach(function(app,i){
     var cur = app.id===CUR;
@@ -138,19 +149,38 @@ function build(){
          '<span class="gi">'+app.icon+'</span>'+
          '<span><span class="gt">'+app.name+'</span><span class="gd">'+app.desc+'</span></span>'+
        '</a>';
-    if(app.subs && cur){
-      h+='<div class="gsubs">';
+    if(app.subs){
+      h+='<div class="gsubs'+(cur?" cur":"")+'">';
       app.subs.forEach(function(s){
-        var f=(s.href.match(/[^\/]*$/)||[""])[0].split("#")[0];
-        var sc = app.byFile && (f===CURFILE);
-        h+='<a class="gs'+(sc?" cur":"")+'" href="'+url(s.href)+'">'+s.name+'</a>';
+        var tail=(s.href.match(/[^\/]*$/)||[""])[0], p=tail.split("#");
+        h+='<a class="gs" data-app="'+app.id+'" data-file="'+p[0]+'" data-hash="'+(p[1]||"")+'"'+
+             ' href="'+url(s.href)+'">'+s.name+'</a>';
       });
       h+='</div>';
     }
     if(i===0) h+='<div class="gsep"></div>';
   });
-  h+='<div class="gf">すべてブラウザ内で完結（通信なし）。<br><kbd>Esc</kbd> で閉じる。</div>';
+  h+='<div class="gf">すべてブラウザ内で完結（通信なし）。<kbd>Esc</kbd> で閉じる。</div>';
   dr.innerHTML=h;
+
+  /* 現在地のサブページに印を付ける。
+     ・必ず「今いるアプリ」の中だけを見る（そうしないと index.html 同士が別アプリ間で一致してしまう）
+     ・tuner / studio は #hash でモードを切り替えるので、ハッシュでも判定し、切替に追従する */
+  var subEls = Array.prototype.slice.call(dr.querySelectorAll(".gs"));
+  var byFile = {}; APPS.forEach(function(a){ byFile[a.id] = !!a.byFile; });
+  function markCurrentSub(){
+    var hash = (location.hash||"").replace("#","").toLowerCase();
+    subEls.forEach(function(el){
+      var mine = el.getAttribute("data-app")===CUR, on=false;
+      if(mine){
+        if(byFile[CUR]) on = el.getAttribute("data-file")===CURFILE;
+        else if(el.getAttribute("data-hash")) on = el.getAttribute("data-hash").toLowerCase()===hash;
+      }
+      el.classList.toggle("cur", on);
+    });
+  }
+  markCurrentSub();
+  window.addEventListener("hashchange", markCurrentSub);
 
   document.body.appendChild(ov);
   document.body.appendChild(dr);

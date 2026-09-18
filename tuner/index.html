@@ -258,6 +258,10 @@
   .btn-scale.on { background: #00ff8830; border-color: #00ff88; color: #00ff88; }
 
   canvas { width: 100%; height: 100%; display: block; }
+  /* .panel は「ラベル＋キャンバス」の縦 flex。キャンバスに height:100% が効くと
+     "パネル全体の高さ" になってラベルのぶん下にはみ出し、overflow:hidden で下端が切れる
+     （＝Hz 目盛りや帯域の境界表示が見えなくなる）。残りの空間だけを占める flex アイテムにする。 */
+  .panel > canvas { flex: 1 1 auto; height: auto; min-height: 0; }
 
   /* ─── Tuner Panel ─── */
   #tunerPanel {
@@ -1762,9 +1766,9 @@ function drawWaveform(data) {
 // bounds: [{f, color}] sorted ascending. f2x: frequency → x.
 function drawBandEdgeHz(ctx, W, H, bounds, f2x) {
   const prevAlign = ctx.textAlign, prevFont = ctx.font;
-  ctx.font = '9px Courier New';
+  ctx.font = 'bold 10px Courier New';
   ctx.textAlign = 'center';
-  const y = H - 3;
+  const y = H - 4;
   let lastRight = -Infinity;
   bounds.forEach(b => {
     const x = f2x(b.f);
@@ -1774,9 +1778,11 @@ function drawBandEdgeHz(ctx, W, H, bounds, f2x) {
     const cx = Math.max(w / 2 + 1, Math.min(W - w / 2 - 1, x));  // keep edge labels on-canvas
     if (cx - w / 2 < lastRight + 5) return;                       // would overlap the previous one
     lastRight = cx + w / 2;
-    ctx.strokeStyle = 'rgba(' + b.color + ',0.75)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x, y - 14); ctx.lineTo(x, y - 9); ctx.stroke();
-    ctx.fillStyle = 'rgba(' + b.color + ',0.95)';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';                       // keep the number off the spectrum
+    ctx.fillRect(cx - w / 2 - 3, y - 10, w + 6, 13);
+    ctx.strokeStyle = 'rgba(' + b.color + ',0.9)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x, y - 20); ctx.lineTo(x, y - 12); ctx.stroke();
+    ctx.fillStyle = 'rgb(' + b.color + ')';
     ctx.fillText(t, cx, y);
   });
   ctx.textAlign = prevAlign; ctx.font = prevFont;
@@ -1947,7 +1953,7 @@ function drawFFT(data, f0) {
       }
     });
     // Fundamental range: open low B → 1st-string 24th-fret (E6)
-    const bx0 = freqToX(SEVEN_FUND.lo), bx1 = freqToX(SEVEN_FUND.hi), by = H - 15;
+    const bx0 = freqToX(SEVEN_FUND.lo), bx1 = freqToX(SEVEN_FUND.hi), by = H - 30;  // 下端の Hz 表示のぶん上げる
     ctx.strokeStyle = 'rgba(0,180,255,0.7)'; ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(bx0, by - 3); ctx.lineTo(bx0, by + 3);

@@ -203,6 +203,7 @@
 .tabs .tab.active{color:#141414;}
 .tabs .tab[data-app="chord"].active{background:linear-gradient(180deg,#ffc36e,#ffb043); border-color:#ffb454;}
 .tabs .tab[data-app="drum"].active{background:linear-gradient(180deg,#ff8555,#ff5f2e); border-color:#ff7a45; color:#2a1004;}
+.tabs .tab[data-app="rhythm"].active{background:linear-gradient(180deg,#7bd0ff,#3da7ee); border-color:#4db6ff; color:#04121f;}
 .tabs .spacer{flex:1;}
 .tabs .hint{font-size:11px; color:var(--sub); white-space:nowrap;}
 .tabs .app-nav{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
@@ -227,6 +228,56 @@
 .snd label{display:flex; align-items:center; gap:7px;}
 .snd input[type=range]{width:110px;}
 .snd select{padding:6px 8px; font-size:12.5px;}
+
+  /* ══ RHYTHM TRAINER（裏拍トレーナー） ══ */
+  #rhythmApp .stage{display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 14px;}
+  #rhythmApp .stage button{flex:1 1 120px; text-align:left; padding:10px 12px; line-height:1.35;}
+  #rhythmApp .stage button b{display:block; font-size:13.5px; font-weight:700;}
+  #rhythmApp .stage button span{display:block; font-size:10.5px; color:var(--sub); margin-top:3px;}
+  #rhythmApp .stage button.sel{background:linear-gradient(180deg,#2b3550,#222b3e); border-color:var(--accent2);
+    box-shadow:inset 0 0 0 1px rgba(77,182,255,.45);}
+  #rhythmApp .stage button.sel b{color:var(--accent2);}
+
+  .pulse{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 14px; margin:12px 0;}
+  .pulse .lane{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
+  .pulse .bt{display:flex; flex-direction:column; align-items:center; gap:7px;}
+  .pulse .dot{width:34px; height:34px; border-radius:50%; background:#1d2536; border:2px solid #2e3852;
+    transition:background .05s, border-color .05s, transform .05s;}
+  .pulse .dot.up{width:18px; height:18px; margin-top:8px;}
+  .pulse .dot.hit{border-color:var(--accent); box-shadow:0 0 0 2px rgba(255,107,61,.18) inset;}
+  .pulse .dot.now{background:var(--accent2); border-color:var(--accent2); transform:scale(1.14);}
+  .pulse .dot.hit.now{background:var(--accent); border-color:var(--accent);}
+  .pulse .lbl{font-size:10px; color:var(--sub); font-variant-numeric:tabular-nums;}
+  .pulse .meta{display:flex; justify-content:center; gap:16px; margin-top:14px; font-size:11.5px; color:var(--sub);}
+  .pulse .meta b{color:var(--txt); font-variant-numeric:tabular-nums; font-size:14px;}
+  .pulse .lead{margin-top:12px; text-align:center; font-size:12px; color:var(--accent); min-height:17px;}
+
+  #rhythmApp .find{display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 0 4px;}
+  #rhythmApp .find select,#rhythmApp .find input[type=number]{padding:8px 9px; font-size:13px;}
+  #rhythmApp .find input[type=number]{width:74px; font-family:inherit; color:var(--txt);
+    background:var(--panel2); border:1px solid var(--line); border-radius:9px;}
+  #rhythmApp .q{flex:1 1 100%; font-size:12px; color:var(--sub); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:8px 10px; word-break:break-all;}
+  #rhythmApp .go{background:var(--accent2); border-color:var(--accent2); color:#04121f; font-weight:700;
+    text-decoration:none; display:inline-block; padding:9px 13px; border-radius:9px; font-size:13px;}
+  #rhythmApp .tip{font-size:12px; line-height:1.85; color:var(--sub); padding:6px 0 10px;}
+  #rhythmApp .tip b{color:var(--txt);}
+  #rhythmApp .tip a{color:var(--accent2);}
+  @media(max-width:520px){
+    .pulse .dot{width:28px; height:28px;}
+    .pulse .dot.up{width:15px; height:15px;}
+    .pulse .lane{gap:6px;}
+  }
+  @media(max-width:430px){
+    #rhythmApp .stage button{flex:1 1 100%;}
+    #rtBpm{width:108px !important;}
+    #rtSwing,#rtVol{width:72px !important;}
+    #rhythmApp .find input[type=number]{width:64px;}
+    #rhythmApp .q{font-size:11px;}
+    .pulse{padding:14px 8px;}
+    .pulse .lane{gap:4px;}
+    .pulse .meta{gap:10px; font-size:11px;}
+  }
 </style>
 </head>
 <body>
@@ -234,7 +285,8 @@
   <div class="brand">🎼 STUDIO</div>
   <button class="tab active" data-app="chord">🎸 コードプレイヤー</button>
   <button class="tab" data-app="drum">🥁 ドラムマシーン</button>
-  <span class="hint">タブで切替（もう片方は自動停止）</span>
+  <button class="tab" data-app="rhythm">🕗 リズム練習</button>
+  <span class="hint">タブで切替（他は自動停止）</span>
   <div class="spacer"></div>
   <nav class="app-nav">
     <a href="../index.html" class="app-link">🏠 Home</a>
@@ -383,6 +435,172 @@
   <div class="footnote">
     音源はすべてブラウザ内で合成（物理モデル風にレンダリングした共有キット＝コードプレイヤーと同じ音）。ネット接続が無くても途切れず動きます。<br>
     iPhone / iPad は最初に画面のどこかを一度タップすると音が有効になります。
+  </div>
+</div>
+</section>
+
+<section id="rhythmApp" class="app hidden">
+<div class="wrap">
+  <h1>🕗 <b>RHYTHM TRAINER</b> — 裏拍・間引きクリック＋ドラムループ</h1>
+
+  <h2>段階を選ぶ</h2>
+  <div class="stage" id="rtStage"></div>
+
+  <div class="pulse">
+    <div class="lane" id="rtLane"></div>
+    <div class="lead" id="rtLead"></div>
+    <div class="meta">
+      <span>小節 <b id="rtBars">0</b></span>
+      <span>BPM <b id="rtNowBpm">90</b></span>
+      <span>クリック <b id="rtModeName">2・4拍</b></span>
+    </div>
+  </div>
+
+  <div class="bar">
+    <button id="rtPlay" class="primary">▶ 再生</button>
+    <div class="tempo">
+      <label>BPM</label>
+      <span class="val" id="rtBpmVal">90</span>
+      <input id="rtBpm" type="range" min="40" max="220" value="90" style="width:130px">
+    </div>
+    <button id="rtTap" class="ghost" title="4回以上タップしてテンポ入力">TAP</button>
+    <div class="grow"></div>
+    <div class="seg" id="rtMeter" title="拍子">
+      <button data-beats="4" class="sel">4/4</button>
+      <button data-beats="3">3/4</button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <label class="toggle" title="どんな音でクリックを鳴らすか">クリック音
+      <select id="rtVoice">
+        <option value="click">クリック（ビープ）</option>
+        <option value="rim">リムショット</option>
+        <option value="chh">ハイハット</option>
+        <option value="snare">スネア</option>
+      </select>
+    </label>
+    <label class="toggle" title="クリックの代わり／上にドラムのノリを重ねる">ノリ（ドラムループ）
+      <select id="rtGroove"></select>
+    </label>
+    <div class="tempo">
+      <label>SWING</label>
+      <span class="val" id="rtSwingVal" style="font-size:14px">0</span>
+      <input id="rtSwing" type="range" min="0" max="66" value="0" style="width:80px">
+    </div>
+    <div class="grow"></div>
+    <div class="tempo">
+      <label>VOL</label>
+      <input id="rtVol" type="range" min="0" max="100" value="85" style="width:90px">
+    </div>
+  </div>
+
+  <div class="row2">
+    <label class="toggle" title="裏拍モードに入る前に表拍で助走する小節数"><span>助走</span>
+      <select id="rtLeadIn">
+        <option value="0">なし</option>
+        <option value="2" selected>2小節だけ表拍</option>
+        <option value="4">4小節だけ表拍</option>
+      </select>
+    </label>
+    <label class="toggle"><input type="checkbox" id="rtClickOn" checked> クリックを鳴らす</label>
+    <label class="toggle" title="ランダム間引きモードで消す割合"><span>間引き率</span>
+      <input id="rtThin" type="range" min="10" max="90" value="50" style="width:80px">
+      <span class="val" id="rtThinVal" style="font-size:13px">50%</span>
+    </label>
+  </div>
+
+  <h2>テンポアップ練習</h2>
+  <div class="row2">
+    <label class="toggle"><input type="checkbox" id="rtUpOn"> 自動で上げる</label>
+    <label class="toggle"><span>毎</span>
+      <select id="rtUpEvery"><option value="4">4小節</option><option value="8" selected>8小節</option><option value="16">16小節</option></select>
+    </label>
+    <label class="toggle"><span>＋</span>
+      <select id="rtUpBy"><option value="2">2</option><option value="5" selected>5</option><option value="10">10</option></select><span>BPM</span>
+    </label>
+    <label class="toggle"><span>上限</span>
+      <input id="rtUpMax" type="number" min="40" max="240" value="140" style="width:70px">
+    </label>
+  </div>
+
+  <details>
+    <summary>🎧 ドラムループ／バッキングトラックを探す</summary>
+    <div class="tip">
+      <b>ドラムループ</b>は素のクリックと違って 8ビートやシャッフルといった「ノリ」そのものが入っているので、
+      リズムが体に入りやすくなります。特にバッキングやカッティングの練習では効果が大きいです。
+      ただし<b>ループだけだとコード感がない</b>ので、最終的にはバッキングトラックと併用するのがおすすめです。
+      <div class="find">
+        <span style="font-size:12px">BPM</span><input type="number" id="fdBpm" min="40" max="240" value="90">
+        <select id="fdPat">
+          <option value="8beat">8beat</option>
+          <option value="16beat">16beat</option>
+          <option value="shuffle">shuffle</option>
+          <option value="rock">rock</option>
+          <option value="funk">funk</option>
+          <option value="bossa nova">bossa nova</option>
+          <option value="jazz swing">jazz swing</option>
+          <option value="half time">half time</option>
+        </select>
+        <a class="go" id="fdGo" target="_blank" rel="noopener">▶ YouTube で検索</a>
+        <button class="ghost" id="fdCopy">クエリをコピー</button>
+        <div class="q" id="fdQ"></div>
+      </div>
+
+      <b>バッキングトラック</b>はコード進行つきの伴奏音源です。ソロやアドリブの練習には必須と言っていい存在です。
+      キーとテンポとジャンルを指定すれば大体見つかります。
+      <div class="find">
+        <select id="bkRoot"></select>
+        <select id="bkQual"><option value="minor">minor</option><option value="major">major</option></select>
+        <select id="bkGenre">
+          <option value="blues">blues</option>
+          <option value="rock">rock</option>
+          <option value="pop">pop</option>
+          <option value="funk">funk</option>
+          <option value="jazz">jazz</option>
+          <option value="ballad">ballad</option>
+          <option value="bossa nova">bossa nova</option>
+          <option value="city pop">city pop</option>
+        </select>
+        <span style="font-size:12px">BPM</span><input type="number" id="bkBpm" min="40" max="240" value="80">
+        <a class="go" id="bkGo" target="_blank" rel="noopener">▶ YouTube で検索</a>
+        <button class="ghost" id="bkCopy">クエリをコピー</button>
+        <div class="q" id="bkQ"></div>
+      </div>
+
+      <b>そのほかの入手先</b><br>
+      ・<b>iReal Pro</b>（有料アプリ・1500円程度）＝何千曲ものコード進行が入っていて、キー・テンポ・スタイルを自由に変えられます。ジャズ系が強いですが、ポップスやブルースも豊富。<br>
+      ・<b>BOSS Tuner + Rhythm</b> など iOS / Android のドラムマシン系アプリ＝BPM とパターンを自由に変えられて手軽。<br>
+      ・<b>Guitar Pro / Songsterr</b>＝練習曲そのものの伴奏が欲しいときは、ギターパートをミュートして再生する手があります。<br>
+      ・Spotify にもドラムループ集のプレイリストがあります。<br>
+      ・コード進行が決まっているなら、このアプリの <a href="index.html#chord">🎸 コードプレイヤー</a> で自分用のバッキングを作れます（オフラインで鳴ります）。<br>
+      ・見つけた動画は <a href="../bookmark/index.html">🔖 Bookmark</a> に登録すると、A-B ループで繰り返し練習できます。
+    </div>
+  </details>
+
+  <details open>
+    <summary>なぜ裏拍なのか・進め方</summary>
+    <div class="tip">
+      表拍にクリックを置いていると「クリックに合わせている」だけで、実は自分のタイム感は育ちません。
+      裏拍にすると、<b>自分が主体でテンポを刻んでいる</b>状態になります。地味ですが、数週間で明らかに変わります。<br><br>
+      <b>第1段階：2拍4拍にクリック</b><br>
+      120 BPM の曲を練習するなら、メトロノームを 60 BPM に設定して、その音を「2拍目と4拍目」として感じます。スネアの位置ですね。
+      ポップスでもジャズでも、この感覚が基本です。<br>
+      <b>第2段階：8分の裏</b><br>
+      クリックを完全に拍の裏に置きます。最初は表で合わせてから、意識だけを切り替えるとやりやすいです（＝<b>助走</b>）。
+      一度ズレると全く戻れなくなるので、自分のタイムがどれだけ甘いかが残酷なほど分かります。<br>
+      <b>第3段階：間引く</b><br>
+      1小節に1回、さらに2小節に1回だけ鳴らす。クリックが鳴っていない間、自分の中でテンポを保ち続ける訓練です。<br><br>
+      <b>テンポのコツ</b>：まず遅いテンポで完璧に弾けるようにしてから上げること。
+      弾けないテンポで繰り返すと、<b>間違ったフォームが定着します</b>。「テンポアップ練習」を ON にすると、
+      指定した小節数ごとに自動で少しずつ BPM が上がります。<br>
+      <b>キーボード</b>：<kbd>Space</kbd> 再生 / 停止、<kbd>←</kbd><kbd>→</kbd> で BPM ±1。
+    </div>
+  </details>
+
+  <div class="footnote">
+    クリックもドラムもブラウザ内で合成（外部ファイル・通信なし）。設定はこの端末に保存されます。<br>
+    iPhone / iPad は最初に一度どこかをタップすると音が出ます。
   </div>
 </div>
 </section>
@@ -1737,18 +1955,357 @@ buildGrid();
 </script>
 <script>
 (function(){
-  var tabs=Array.prototype.slice.call(document.querySelectorAll(".tabs .tab"));
-  function show(key){
-    window.__STUDIO_ACTIVE=key;
-    ["chord","drum"].forEach(function(k){ document.getElementById(k+"App").classList.toggle("hidden", k!==key); });
-    ["chord","drum"].forEach(function(k){ if(k!==key && window.__apps && window.__apps[k]){ try{ window.__apps[k].stop(); }catch(e){} } });
-    tabs.forEach(function(t){ t.classList.toggle("active", t.dataset.app===key); });
-    try{ localStorage.setItem("studio.tab", key); }catch(e){}
+
+"use strict";
+/* ═══════════════════════════════════════════════════════════════
+   RHYTHM TRAINER — 裏拍／間引きクリック＋ドラムループ
+   ・すべて 16分グリッドで走らせ、クリックもドラムも同じ時間軸に乗せる
+     （＝裏拍クリックも SWING に追従してハネる）
+   ・段階：表拍 → 2・4拍 → 8分の裏 → 1小節に1回 → 2小節に1回 → ランダム間引き
+   ═══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const K = window.StudioKit;
+
+/* ── audio ── */
+let AC=null, master=null, drumBus=null;
+function audio(){
+  if(AC) return AC;
+  AC = new (window.AudioContext||window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value = 0.85*0.9; master.connect(AC.destination);
+  drumBus = K.makeDrumBus(AC, master).input;   // makeDrumBus は {input,room} を返す。鳴らす先は .input
+  K.prewarm(AC.sampleRate);
+  return AC;
+}
+const PAN = { kick:0, snare:0.04, rim:0.05, chh:0.22, ohh:0.25, ride:-0.22, crash:-0.3, tomL:0.18, tomH:-0.15 };
+
+/* クリック音（合成ビープ）。アクセント＝小節頭 */
+function beep(t, accent){
+  const o=AC.createOscillator(), g=AC.createGain(), f=AC.createBiquadFilter();
+  o.type="square"; o.frequency.value = accent ? 1760 : 1245;
+  f.type="bandpass"; f.frequency.value = accent ? 1760 : 1245; f.Q.value=1.4;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(accent?0.55:0.36, t+0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.042);
+  o.connect(f); f.connect(g); g.connect(master);
+  o.start(t); o.stop(t+0.06);
+}
+function voice(t, accent){
+  if(cfg.voice==="click") beep(t,accent);
+  else K.play(AC, cfg.voice, t, accent?1.0:0.7, drumBus, PAN[cfg.voice]||0);
+}
+
+/* ── 段階（クリックをどこに置くか） ── */
+const MODES = [
+  { id:"all",  tag:"ウォームアップ", name:"表拍（4分）",   desc:"まずテンポに慣れる" },
+  { id:"24",   tag:"第1段階",       name:"2・4拍だけ",    desc:"スネアの位置。すべての基本" },
+  { id:"off8", tag:"第2段階",       name:"8分の裏だけ",   desc:"自分が主体でテンポを刻む" },
+  { id:"bar1", tag:"第3段階",       name:"1小節に1回",    desc:"鳴らない間もテンポを保つ" },
+  { id:"bar2", tag:"第3段階＋",     name:"2小節に1回",    desc:"さらに間引く" },
+  { id:"rand", tag:"応用",          name:"ランダム間引き", desc:"表拍をランダムに消す" }
+];
+const MODEBY = {}; MODES.forEach(m=>MODEBY[m.id]=m);
+
+/* ── ノリ（ドラムループ）。16分×16ステップ。3/4 では先頭 12 ステップを使用 ── */
+const GROOVES = {
+  "":                { p:null },
+  "8ビート":         { p:{ kick:"x.......x.......", snare:"....x.......x...", chh:"x.x.x.x.x.x.x.x." } },
+  "8ビート（ロック）":{ p:{ kick:"x.....x.....x...", snare:"....x.......x...", chh:"x.x.x.x.x.x.x.x." } },
+  "16ビート":        { p:{ kick:"x..x..x...x..x..", snare:"....x.......x...", chh:"xxxxxxxxxxxxxxxx" } },
+  "シャッフル":      { swing:60, p:{ kick:"x.......x.......", snare:"....x.......x...", chh:"x.x.x.x.x.x.x.x." } },
+  "ハーフタイム":    { p:{ kick:"x...........x...", snare:"........x.......", chh:"x.x.x.x.x.x.x.x." } },
+  "ファンク":        { p:{ kick:"x..x..x...x..x..", snare:"....x.......x...", chh:"xxxxxxxxxxxxxxxx", ohh:"..............x." } },
+  "4つ打ち（裏ハット）":{ p:{ kick:"x...x...x...x...", chh:"..x...x...x...x.", clap:"....x.......x..." } },
+  "ボサノバ":        { p:{ kick:"x.....x.x.....x.", rim:"..x..x..x.x..x..", chh:"x.x.x.x.x.x.x.x." } },
+  "ジャズ（スウィング）":{ swing:62, p:{ ride:"x.x.x.x.x.x.x.x.", chh:"....x.......x..." } }
+};
+
+/* ── 設定 ── */
+const DEF = { bpm:90, beats:4, mode:"24", voice:"click", groove:"", swing:0, vol:85,
+              leadIn:2, clickOn:true, thin:50, upOn:false, upEvery:8, upBy:5, upMax:140 };
+let cfg = Object.assign({}, DEF);
+function save(){ try{ localStorage.setItem("rhythm.cfg", JSON.stringify(cfg)); }catch(e){} }
+function load(){
+  try{ const s=localStorage.getItem("rhythm.cfg"); if(s) Object.assign(cfg, JSON.parse(s)||{}); }catch(e){}
+  if(!MODEBY[cfg.mode]) cfg.mode="24";
+  if(!(cfg.groove in GROOVES)) cfg.groove="";
+}
+
+/* ── クリック位置の判定：0=鳴らさない 1=通常 2=アクセント ── */
+function clickAt(mode, s, bar, beats){
+  const sub=s%4, beat=(s/4)|0;
+  switch(mode){
+    case "all":  return sub===0 ? (beat===0?2:1) : 0;
+    case "24":   return (sub===0 && (beats===4 ? (beat===1||beat===3) : beat>=1)) ? 1 : 0;
+    case "off8": return sub===2 ? 1 : 0;
+    case "bar1": return s===0 ? 2 : 0;
+    case "bar2": return (s===0 && bar%2===0) ? 2 : 0;
+    case "rand": return (sub===0 && Math.random()*100 >= cfg.thin) ? (beat===0?2:1) : 0;
   }
-  tabs.forEach(function(t){ t.onclick=function(){ show(t.dataset.app); }; });
-  var start="chord"; try{ var s=localStorage.getItem("studio.tab"); if(s==="chord"||s==="drum") start=s; }catch(e){}
-  show(start);
+  return 0;
+}
+/* レーン上で「ここで鳴る」と見せる位置（ランダム間引きは表拍すべてを候補として表示） */
+function nominalHit(mode, li, beats){
+  const isUp = li%2===1, beat=(li/2)|0;
+  switch(mode){
+    case "all":  return !isUp;
+    case "24":   return !isUp && (beats===4 ? (beat===1||beat===3) : beat>=1);
+    case "off8": return isUp;
+    case "bar1":
+    case "bar2": return li===0;
+    case "rand": return !isUp;
+  }
+  return false;
+}
+
+/* ── 段階ボタン ── */
+const stageEl=$("rtStage");
+MODES.forEach(m=>{
+  const b=document.createElement("button");
+  b.dataset.mode=m.id;
+  b.innerHTML='<b>'+m.name+'</b><span>'+m.tag+' — '+m.desc+'</span>';
+  b.onclick=()=>{ cfg.mode=m.id; if(playing) leadFrom=barIdx; syncStage(); save(); };
+  stageEl.appendChild(b);
+});
+function syncStage(){
+  Array.prototype.forEach.call(stageEl.children, b=>b.classList.toggle("sel", b.dataset.mode===cfg.mode));
+  $("rtModeName").textContent = MODEBY[cfg.mode].name;
+  paintNominal();
+}
+
+/* ── ビート・レーン ── */
+let laneDots=[];
+function buildLane(){
+  const lane=$("rtLane"); lane.innerHTML=""; laneDots=[];
+  for(let b=0;b<cfg.beats;b++){
+    for(let u=0;u<2;u++){
+      const w=document.createElement("div"); w.className="bt";
+      const d=document.createElement("div"); d.className="dot"+(u?" up":"");
+      const l=document.createElement("div"); l.className="lbl"; l.textContent = u ? "&" : String(b+1);
+      w.appendChild(d); w.appendChild(l); lane.appendChild(w); laneDots.push(d);
+    }
+  }
+  paintNominal();
+}
+function paintNominal(){
+  var m = playing ? effMode(barsDone) : cfg.mode;
+  laneDots.forEach((d,li)=>d.classList.toggle("hit", nominalHit(m, li, cfg.beats)));
+}
+let lastLi=-1;
+function paintNow(li){
+  if(lastLi>=0 && laneDots[lastLi]) laneDots[lastLi].classList.remove("now");
+  if(laneDots[li]) laneDots[li].classList.add("now");
+  lastLi=li;
+}
+function clearNow(){ if(lastLi>=0&&laneDots[lastLi]) laneDots[lastLi].classList.remove("now"); lastLi=-1; }
+
+/* ── 助走（N 小節だけ表拍で走り、そのあと本来の段階へ） ──
+   小節番号そのものではなく「段階を選んだ小節」からの経過で見る。
+   そうしないと、再生したまま段階を切り替えたときに助走が付かない。 */
+let leadFrom=0;
+function effMode(bar){
+  const n=bar-leadFrom;
+  if(cfg.leadIn>0 && cfg.mode!=="all" && n<cfg.leadIn) return "all";
+  return cfg.mode;
+}
+function updateLead(bar){
+  const el=$("rtLead"), n=bar-leadFrom;
+  if(cfg.leadIn>0 && cfg.mode!=="all" && n<cfg.leadIn){
+    el.textContent="助走：表拍 — あと "+(cfg.leadIn-n)+" 小節で〈"+MODEBY[cfg.mode].name+"〉に切り替わります";
+  } else if(cfg.leadIn>0 && cfg.mode!=="all" && n===cfg.leadIn){
+    el.textContent="▶ 切替！ ここからは〈"+MODEBY[cfg.mode].name+"〉";
+  } else el.textContent="";
+}
+
+/* ── スケジューラ（1小節ずつ先読み） ── */
+let playing=false, timer=null, runId=0, barIdx=0, barsDone=0, barStart=0, drawTimers=[];
+const AHEAD=0.12;
+function secPerStep(bpm){ return (60/bpm)/4; }
+
+function scheduleBar(bar, t0, bpm){
+  const sp=secPerStep(bpm), spb=cfg.beats*4, sw=sp*(cfg.swing/100);
+  const mode=effMode(bar), G=GROOVES[cfg.groove];
+  const myRun=runId;
+  for(let s=0;s<spb;s++){
+    const t = t0 + s*sp + (s%4===2 ? sw : 0);
+    if(G && G.p){
+      for(const k in G.p){
+        const row=G.p[k], ch=row.charAt(s%row.length);
+        if(ch==="x"||ch==="X") K.play(AC, k, t, ch==="X"?1.0:0.72, drumBus, PAN[k]||0);
+      }
+    }
+    if(cfg.clickOn){ const v=clickAt(mode,s,bar,cfg.beats); if(v) voice(t, v===2); }
+    if(s%2===0){
+      const li=s/2, delay=Math.max(0,(t-AC.currentTime)*1000);
+      drawTimers.push(setTimeout(()=>{
+        if(myRun!==runId) return;
+        if(li===0){ barsDone=bar; $("rtBars").textContent=bar+1; updateLead(bar); paintNominal(); }
+        paintNow(li);
+      }, delay));
+    }
+  }
+}
+
+function tick(){
+  while(barStart < AC.currentTime + AHEAD){
+    const bpmThisBar=cfg.bpm;
+    scheduleBar(barIdx, barStart, bpmThisBar);
+    barStart += secPerStep(bpmThisBar)*cfg.beats*4;
+    barIdx++;
+    if(cfg.upOn && barIdx % cfg.upEvery === 0 && cfg.bpm < cfg.upMax){
+      setBpm(Math.min(cfg.upMax, cfg.bpm + cfg.upBy));
+    }
+  }
+  if(drawTimers.length>400) drawTimers=drawTimers.slice(-200);
+  timer=setTimeout(tick, 25);
+}
+
+function start(){
+  const ctx=audio(); if(ctx.state==="suspended") ctx.resume();
+  playing=true; runId++; barIdx=0; barsDone=0; leadFrom=0; barStart=ctx.currentTime+0.08;
+  $("rtBars").textContent="0"; updateLead(0); paintNominal();
+  tick();
+  const b=$("rtPlay"); b.textContent="■ 停止"; b.classList.add("playing");
+}
+function stop(){
+  playing=false; runId++; clearTimeout(timer);
+  drawTimers.forEach(clearTimeout); drawTimers=[];
+  clearNow(); $("rtLead").textContent=""; barsDone=0; paintNominal();
+  const b=$("rtPlay"); if(b){ b.textContent="▶ 再生"; b.classList.remove("playing"); }
+}
+function toggle(){ playing?stop():start(); }
+
+/* ── コントロール ── */
+function setBpm(v){
+  cfg.bpm=Math.max(40,Math.min(220,Math.round(v)));
+  $("rtBpm").value=cfg.bpm; $("rtBpmVal").textContent=cfg.bpm; $("rtNowBpm").textContent=cfg.bpm;
+  if(!fdBpmTouched) $("fdBpm").value=cfg.bpm;
+  buildQueries();
+  save();
+}
+$("rtPlay").onclick=toggle;
+$("rtBpm").oninput=()=>setBpm(+$("rtBpm").value);
+$("rtVol").oninput=()=>{ cfg.vol=+$("rtVol").value; if(master) master.gain.value=cfg.vol/100*0.9; save(); };
+$("rtSwing").oninput=()=>{ cfg.swing=+$("rtSwing").value; $("rtSwingVal").textContent=cfg.swing; save(); };
+$("rtThin").oninput=()=>{ cfg.thin=+$("rtThin").value; $("rtThinVal").textContent=cfg.thin+"%"; save(); };
+$("rtVoice").onchange=()=>{ cfg.voice=$("rtVoice").value; save(); };
+$("rtClickOn").onchange=()=>{ cfg.clickOn=$("rtClickOn").checked; save(); };
+$("rtLeadIn").onchange=()=>{ cfg.leadIn=+$("rtLeadIn").value; if(playing) leadFrom=barIdx; save(); };
+$("rtUpOn").onchange=()=>{ cfg.upOn=$("rtUpOn").checked; save(); };
+$("rtUpEvery").onchange=()=>{ cfg.upEvery=+$("rtUpEvery").value; save(); };
+$("rtUpBy").onchange=()=>{ cfg.upBy=+$("rtUpBy").value; save(); };
+$("rtUpMax").onchange=()=>{ cfg.upMax=Math.max(40,Math.min(240,+$("rtUpMax").value||140)); $("rtUpMax").value=cfg.upMax; save(); };
+
+const grooveSel=$("rtGroove");
+Object.keys(GROOVES).forEach(name=>{
+  const o=document.createElement("option");
+  o.value=name; o.textContent = name==="" ? "なし（クリックのみ）" : name;
+  grooveSel.appendChild(o);
+});
+grooveSel.onchange=()=>{
+  cfg.groove=grooveSel.value;
+  const g=GROOVES[cfg.groove];
+  if(g && g.swing!=null){ cfg.swing=g.swing; $("rtSwing").value=g.swing; $("rtSwingVal").textContent=g.swing; }
+  save();
+};
+
+$("rtMeter").querySelectorAll("button").forEach(b=>{
+  b.onclick=()=>{
+    cfg.beats=+b.dataset.beats;
+    $("rtMeter").querySelectorAll("button").forEach(x=>x.classList.toggle("sel", x===b));
+    buildLane(); save();
+    if(playing){ stop(); start(); }
+  };
+});
+
+/* TAP テンポ */
+let taps=[];
+$("rtTap").onclick=()=>{
+  const now=performance.now();
+  if(taps.length && now-taps[taps.length-1]>2200) taps=[];
+  taps.push(now); if(taps.length>6) taps.shift();
+  if(taps.length>=3){
+    let sum=0; for(let i=1;i<taps.length;i++) sum+=taps[i]-taps[i-1];
+    setBpm(60000/(sum/(taps.length-1)));
+  }
+};
+
+document.addEventListener("keydown",e=>{
+  if(window.__STUDIO_ACTIVE!=="rhythm") return;
+  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT"||e.target.tagName==="TEXTAREA") return;
+  if(e.code==="Space"){ e.preventDefault(); toggle(); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); setBpm(cfg.bpm-1); }
+  else if(e.key==="ArrowRight"){ e.preventDefault(); setBpm(cfg.bpm+1); }
+});
+
+/* ── 音源の探し方：YouTube 検索クエリ組み立て ── */
+const ROOTS=["A","A#","B","C","C#","D","D#","E","F","F#","G","G#"];
+ROOTS.forEach(r=>{ const o=document.createElement("option"); o.value=r; o.textContent=r; if(r==="A") o.selected=true; $("bkRoot").appendChild(o); });
+let fdBpmTouched=false;   // ユーザーが「探す」の BPM を手で直したら、以後トレーナー側から上書きしない
+function yt(q){ return "https://www.youtube.com/results?search_query="+encodeURIComponent(q); }
+function buildQueries(){
+  const dq = "drum loop "+(+$("fdBpm").value||90)+"bpm "+$("fdPat").value;
+  $("fdQ").textContent=dq; $("fdGo").href=yt(dq);
+  const bq = "backing track "+$("bkRoot").value+" "+$("bkQual").value+" "+$("bkGenre").value+" "+(+$("bkBpm").value||80)+"bpm";
+  $("bkQ").textContent=bq; $("bkGo").href=yt(bq);
+}
+["fdBpm","fdPat","bkRoot","bkQual","bkGenre","bkBpm"].forEach(id=>{
+  const el=$(id);
+  const h=()=>{ if(id==="fdBpm") fdBpmTouched=true; buildQueries(); };
+  el.addEventListener("input",h); el.addEventListener("change",h);
+});
+function copyText(btn, text){
+  const done=()=>{ const o=btn.textContent; btn.textContent="コピーしました"; setTimeout(()=>btn.textContent=o,1200); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,()=>{});
+  else { const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select();
+         try{ document.execCommand("copy"); done(); }catch(e){} document.body.removeChild(ta); }
+}
+$("fdCopy").onclick=()=>copyText($("fdCopy"), $("fdQ").textContent);
+$("bkCopy").onclick=()=>copyText($("bkCopy"), $("bkQ").textContent);
+
+/* ── 初期化 ── */
+load();
+$("rtBpm").value=cfg.bpm; $("rtBpmVal").textContent=cfg.bpm; $("rtNowBpm").textContent=cfg.bpm;
+$("rtVol").value=cfg.vol; $("rtSwing").value=cfg.swing; $("rtSwingVal").textContent=cfg.swing;
+$("rtThin").value=cfg.thin; $("rtThinVal").textContent=cfg.thin+"%";
+$("rtVoice").value=cfg.voice; grooveSel.value=cfg.groove;
+$("rtClickOn").checked=cfg.clickOn; $("rtLeadIn").value=cfg.leadIn;
+$("rtUpOn").checked=cfg.upOn; $("rtUpEvery").value=cfg.upEvery; $("rtUpBy").value=cfg.upBy; $("rtUpMax").value=cfg.upMax;
+$("rtMeter").querySelectorAll("button").forEach(x=>x.classList.toggle("sel", +x.dataset.beats===cfg.beats));
+$("fdBpm").value=cfg.bpm;
+buildLane(); syncStage(); buildQueries();
+
+["touchstart","mousedown","keydown"].forEach(ev=>
+  document.addEventListener(ev,()=>{ if(window.__STUDIO_ACTIVE!=="rhythm")return; if(AC&&AC.state==="suspended") AC.resume(); },{passive:true}));
+
+window.__apps=window.__apps||{}; window.__apps.rhythm={stop:function(){ try{ stop(); }catch(e){} }};
+
 })();
 </script>
+<script>
+(function(){
+  var KEYS=["chord","drum","rhythm"];
+  var tabs=Array.prototype.slice.call(document.querySelectorAll(".tabs .tab"));
+  function show(key,fromHash){
+    if(KEYS.indexOf(key)<0) key="chord";
+    window.__STUDIO_ACTIVE=key;
+    KEYS.forEach(function(k){ var el=document.getElementById(k+"App"); if(el) el.classList.toggle("hidden", k!==key); });
+    KEYS.forEach(function(k){ if(k!==key && window.__apps && window.__apps[k]){ try{ window.__apps[k].stop(); }catch(e){} } });
+    tabs.forEach(function(t){ t.classList.toggle("active", t.dataset.app===key); });
+    try{ localStorage.setItem("studio.tab", key); }catch(e){}
+    if(!fromHash){ try{ history.replaceState(null,"","#"+key); }catch(e){} }
+  }
+  tabs.forEach(function(t){ t.onclick=function(){ show(t.dataset.app); }; });
+  /* ディープリンク: #chord / #drum / #rhythm（共通ナビから飛んでくる） */
+  function fromHash(){
+    var h=(location.hash||"").replace("#","").toLowerCase();
+    return KEYS.indexOf(h)>=0 ? h : null;
+  }
+  window.addEventListener("hashchange",function(){ var h=fromHash(); if(h) show(h,true); });
+  var start=fromHash();
+  if(!start){ try{ var s=localStorage.getItem("studio.tab"); if(KEYS.indexOf(s)>=0) start=s; }catch(e){} }
+  show(start||"chord", true);
+})();
+</script>
+<script src="../nav.js" defer></script>
 </body>
 </html>

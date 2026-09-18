@@ -1756,6 +1756,42 @@ function drawWaveform(data) {
   ctx.stroke();
 }
 
+// Draw the Hz value of each band boundary along the bottom edge, with a tick that
+// ties the number to its vertical divider. Labels that would collide are dropped
+// (matters on the LINEAR scale, where the low boundaries bunch up on the left).
+// bounds: [{f, color}] sorted ascending. f2x: frequency → x.
+function drawBandEdgeHz(ctx, W, H, bounds, f2x) {
+  const prevAlign = ctx.textAlign, prevFont = ctx.font;
+  ctx.font = '9px Courier New';
+  ctx.textAlign = 'center';
+  const y = H - 3;
+  let lastRight = -Infinity;
+  bounds.forEach(b => {
+    const x = f2x(b.f);
+    if (x < -1 || x > W + 1) return;
+    const t = b.f >= 1000 ? (b.f / 1000) + 'k' : String(b.f);
+    const w = ctx.measureText(t).width;
+    const cx = Math.max(w / 2 + 1, Math.min(W - w / 2 - 1, x));  // keep edge labels on-canvas
+    if (cx - w / 2 < lastRight + 5) return;                       // would overlap the previous one
+    lastRight = cx + w / 2;
+    ctx.strokeStyle = 'rgba(' + b.color + ',0.75)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y - 14); ctx.lineTo(x, y - 9); ctx.stroke();
+    ctx.fillStyle = 'rgba(' + b.color + ',0.95)';
+    ctx.fillText(t, cx, y);
+  });
+  ctx.textAlign = prevAlign; ctx.font = prevFont;
+}
+
+// Contiguous zones → the list of boundaries between them (plus both outer edges).
+// Each boundary is tinted with the zone that starts there, so the number reads as
+// "this band begins here".
+function zoneEdges(zones) {
+  const out = zones.map(z => ({ f: z.lo, color: z.color }));
+  const last = zones[zones.length - 1];
+  out.push({ f: last.hi, color: last.color });
+  return out;
+}
+
 function drawFFT(data, f0) {
   const c = document.getElementById('fftCanvas');
   const { ctx, W, H } = prepCanvas(c);
@@ -1810,8 +1846,12 @@ function drawFFT(data, f0) {
     const x = freqToX(f);
     ctx.strokeStyle = '#0a200a'; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    ctx.fillStyle = '#0d350d';
-    ctx.fillText(f >= 1000 ? (f/1000)+'k' : f, x+2, H-3);
+    // With the band overlay on, the bottom row shows the band boundaries instead,
+    // so the generic marks keep their gridlines but drop their labels (no double row).
+    if (!showBands) {
+      ctx.fillStyle = '#0d350d';
+      ctx.fillText(f >= 1000 ? (f/1000)+'k' : f, x+2, H-3);
+    }
   });
 
   // Spectrum path, sampled per pixel column (max-hold within each column's bin range)
@@ -1917,6 +1957,9 @@ function drawFFT(data, f0) {
     ctx.fillStyle = '#00b4ff'; ctx.font = 'bold 9px Courier New';
     ctx.fillText('7弦 基音域 (B0–E6)', (bx0 + bx1) / 2, by - 5);
     ctx.textAlign = 'left';
+
+    // Where each band starts/ends, in Hz
+    drawBandEdgeHz(ctx, W, H, zoneEdges(EQ_ZONES).filter(b => b.f <= fMax), freqToX);
   }
 }
 
@@ -2013,12 +2056,6 @@ function drawMix(freqData, timeData) {
   });
   ctx.textAlign = 'left';
 
-  // Hz ticks
-  ctx.font = '8px Courier New'; ctx.fillStyle = '#0d350d';
-  [50, 100, 250, 500, 1000, 2000, 5000, 9000].forEach(f => {
-    ctx.fillText(f >= 1000 ? (f / 1000) + 'k' : f, f2x(f) + 2, H - 3);
-  });
-
   // guitar spectrum curve (max-hold per pixel column), filled
   const minDb = -100, maxDb = -10, top = labelY + 4;
   const db2y = db => top + ((maxDb - Math.max(minDb, Math.min(maxDb, db))) / (maxDb - minDb)) * (H - top - 12);
@@ -2053,6 +2090,9 @@ function drawMix(freqData, timeData) {
       ctx.textAlign = 'left';
     });
   }
+
+  // Band boundaries in Hz — drawn last so the spectrum fill cannot wash them out
+  drawBandEdgeHz(ctx, W, H, zoneEdges(MIX_VIS_ZONES), f2x);
 
   if (++_mixCardTick >= 6) { _mixCardTick = 0; updateMixCards(); }
 }

@@ -348,6 +348,7 @@
     <div class="snd">
       <label>マスター <input type="range" id="sndVol" min="0" max="100" value="85"></label>
       <label>リバーブ <input type="range" id="sndVerb" min="0" max="100" value="50"></label>
+      <label title="100 までが従来の範囲。そこから先も歪まないようクリッパーを通します">クリック音量 <input type="range" id="sndMetro" min="0" max="200" value="100"></label>
       <label class="toggle"><input type="checkbox" id="sndHuman" checked> ヒューマナイズ（タイミング/強弱の揺らぎ）</label>
       <label>鍵盤 <select id="sndKeys"><option value="auto">スタイル自動</option><option value="piano">アコースティック・ピアノ</option><option value="ep">エレピ(Rhodes系)</option></select></label>
       <label>ギター <select id="sndGtr"><option value="auto">スタイル自動</option><option value="ac">アコースティック(スチール弦)</option><option value="ny">ナイロン弦</option><option value="el">エレキ(クリーン)</option></select></label>
@@ -412,7 +413,8 @@
     <div class="grow"></div>
     <div class="tempo">
       <label>MASTER</label>
-      <input id="master" type="range" min="0" max="100" value="85" style="width:90px">
+      <input id="master" type="range" min="0" max="150" value="85" style="width:90px"
+             title="100 までが従来の範囲。そこから先はソフトクリッパーで受け止めます">
     </div>
   </div>
 
@@ -491,7 +493,8 @@
     <div class="grow"></div>
     <div class="tempo">
       <label>VOL</label>
-      <input id="rtVol" type="range" min="0" max="100" value="85" style="width:90px">
+      <input id="rtVol" type="range" min="0" max="200" value="85" style="width:90px"
+             title="100 までが従来の範囲。そこから先はソフトクリッパーで歪ませずに音圧を上げます">
     </div>
   </div>
 
@@ -665,6 +668,21 @@ function metalCluster(out,sr,bpF,hpF,envFn){ // 808 系: 6 矩形波クラスタ
   }
 }
 
+/* シンバル系のノイズ床。
+   実機のハイハットやシンバルは「濃いノイズ＋わずかな金属の鳴り」で、
+   部分音の集まりではない。以前はここが 808 系の矩形波クラスタと
+   18〜22 本の部分音だけで出来ていて、スペクトル平坦度が 0.0004 だった
+   （＝ほぼ純音の束。スネアは 0.249）。リッチなのに「変な音」に
+   聞こえていた正体がこれ。ノイズを主役に置き直す。 */
+function noiseBed(out,sr,hpF,bpF,q,envFn,amt){
+  const hp=new BQ("hp",hpF,0.7,0,sr), bp=new BQ("bp",bpF,q,0,sr), n=out.length;
+  for(let i=0;i<n;i++){
+    const t=i/sr, e=envFn(t); if(e<1e-5&&i>sr*0.02) break;
+    const w=Math.random()*2-1;
+    out[i]+=(hp.p(w)*0.85+bp.p(w)*0.55)*e*amt;
+  }
+}
+
 /* ── drum renderers: (sr, hard) → Float32Array (mono) ── */
 const R={};
 R.kick=(sr,hard)=>{
@@ -730,40 +748,43 @@ R.clap=(sr,hard)=>{
 };
 R.chh=(sr,hard)=>{
   const len=Math.round(sr*0.2), out=new Float32Array(len);
-  metalCluster(out,sr,9500,7500,t=>(Math.exp(-t/0.022)+0.25*Math.exp(-t/0.07))*(hard?1:0.75));
-  const hp=new BQ("hp",8500,0.7,0,sr);
-  for(let i=0;i<len;i++){ const t=i/sr; out[i]+=hp.p(Math.random()*2-1)*Math.exp(-t/0.018)*(hard?0.6:0.35); }
-  const list=[]; for(let k=0;k<18;k++) list.push({f:logRand(3000,12000),a:rnd(0.25,0.6),tau:rnd(0.03,0.08),ph:Math.random()*TWO_PI});
+  const env=t=>(Math.exp(-t/0.019)+0.22*Math.exp(-t/0.055))*(1-Math.exp(-t/0.0006))*(hard?1:0.78);
+  noiseBed(out,sr,3800,6800,0.55,env,hard?1.25:1.0);
+  metalCluster(out,sr,9500,7500,t=>env(t)*(hard?0.28:0.20));   // 金属感は隠し味まで下げる
+  const list=[]; for(let k=0;k<44;k++) list.push({f:logRand(2200,11000),a:rnd(0.04,0.11),tau:rnd(0.015,0.045),ph:Math.random()*TWO_PI});
   partialBank(out,sr,list);
   fadeOut(out,sr,0.03); return normalize(out,0.9);
 };
 R.ohh=(sr,hard)=>{
   const len=Math.round(sr*0.85), out=new Float32Array(len), tau=hard?0.30:0.21;
-  metalCluster(out,sr,9500,7000,t=>Math.exp(-t/tau)*(1+0.4*Math.exp(-t/0.01)));
-  const hp=new BQ("hp",7000,0.7,0,sr);
-  for(let i=0;i<len;i++){ const t=i/sr; out[i]+=hp.p(Math.random()*2-1)*Math.exp(-t/(tau*0.9))*0.5; }
-  const list=[]; for(let k=0;k<22;k++) list.push({f:logRand(3000,12000),a:rnd(0.2,0.5),tau:rnd(0.15,0.45),ph:Math.random()*TWO_PI});
+  const env=t=>Math.exp(-t/tau)*(1+0.45*Math.exp(-t/0.008))*(1-Math.exp(-t/0.0008));
+  noiseBed(out,sr,3600,6600,0.5,env,hard?1.2:0.95);
+  metalCluster(out,sr,9500,7000,t=>env(t)*0.26);
+  const list=[]; for(let k=0;k<56;k++) list.push({f:logRand(2200,11000),a:rnd(0.03,0.09),tau:rnd(0.10,0.40),ph:Math.random()*TWO_PI});
   partialBank(out,sr,list);
   fadeOut(out,sr,0.06); return normalize(out,0.9);
 };
 R.ride=(sr,hard)=>{
+  /* ライドは「ピン」と鳴る芯があるので部分音を残すが、
+     ウォッシュ（ざわつき）が無いと鐘になる。ノイズ床を厚くする。 */
   const len=Math.round(sr*1.8), out=new Float32Array(len), list=[];
-  for(let k=0;k<48;k++){ const f=logRand(500,10000), u=Math.log(f/500)/Math.log(20);
-    list.push({f,a:rnd(0.2,0.6)*(f<3000?1.3:0.8),tau:rnd(0.5,1.3)*(1-0.55*u)+0.15,ph:Math.random()*TWO_PI}); }
-  [[890,1.5,1.4],[1345,1.1,1.2],[2010,0.8,0.9],[3190,0.5,0.6]].forEach(p=>list.push({f:p[0]*rnd(0.995,1.005),a:p[1]*(hard?1.2:1),tau:p[2],ph:Math.random()*TWO_PI}));
+  for(let k=0;k<96;k++){ const f=logRand(500,12000), u=Math.log(f/500)/Math.log(24);
+    list.push({f,a:rnd(0.08,0.22)*(f<3000?1.3:0.8),tau:rnd(0.5,1.3)*(1-0.55*u)+0.15,ph:Math.random()*TWO_PI}); }
+  [[890,0.5,1.4],[1345,0.38,1.2],[2010,0.28,0.9],[3190,0.18,0.6]].forEach(q=>list.push({f:q[0]*rnd(0.995,1.005),a:q[1]*(hard?1.2:1),tau:q[2],ph:Math.random()*TWO_PI}));
   partialBank(out,sr,list);
-  const bp=new BQ("bp",6000,0.5,0,sr), hp=new BQ("hp",350,0.7,0,sr);
-  for(let i=0;i<len;i++){ const t=i/sr; out[i]=hp.p(out[i]+bp.p(Math.random()*2-1)*Math.exp(-t/0.45)*(hard?0.5:0.3)); }
+  const env=t=>Math.exp(-t/0.55)*(1-Math.exp(-t/0.002));
+  noiseBed(out,sr,2500,6000,0.45,env,hard?0.85:0.65);
+  const hp=new BQ("hp",350,0.7,0,sr);
+  for(let i=0;i<len;i++) out[i]=hp.p(out[i]);
   fadeOut(out,sr,0.15); return normalize(out,0.9);
 };
 R.crash=(sr,hard)=>{
   const len=Math.round(sr*2.6), out=new Float32Array(len), list=[];
-  for(let k=0;k<64;k++){ const f=logRand(600,14000), u=Math.log(f/600)/Math.log(14000/600);
-    list.push({f,a:rnd(0.3,0.8),tau:rnd(0.6,1.6)*(1-0.45*u)+0.25,ph:Math.random()*TWO_PI,att:0.004}); }
+  for(let k=0;k<120;k++){ const f=logRand(600,15000), u=Math.log(f/600)/Math.log(25);
+    list.push({f,a:rnd(0.06,0.18),tau:rnd(0.6,1.6)*(1-0.45*u)+0.25,ph:Math.random()*TWO_PI,att:0.004}); }
   partialBank(out,sr,list);
-  const hp=new BQ("hp",3500,0.7,0,sr), bp=new BQ("bp",7500,0.6,0,sr);
-  for(let i=0;i<len;i++){ const t=i/sr, w=Math.random()*2-1;
-    out[i]+=(hp.p(w)*0.6+bp.p(w)*0.5)*(1-Math.exp(-t/0.006))*Math.exp(-t/(hard?1.1:0.9))*0.9; }
+  const env=t=>(1-Math.exp(-t/0.006))*Math.exp(-t/(hard?1.0:0.8));
+  noiseBed(out,sr,3000,7500,0.5,env,hard?1.5:1.25);
   fadeOut(out,sr,0.3); return normalize(out,0.9);
 };
 function tom(sr,hard,f0,dur){
@@ -813,12 +834,20 @@ function getBuffer(ctx,kind,vel){
   return b;
 }
 function panNode(ctx,v){ if(ctx.createStereoPanner){ const p=ctx.createStereoPanner(); p.pan.value=v||0; return p; } return ctx.createGain(); }
+/* 打点ごとのピッチ揺れ。
+   以前は全部まとめて ±1.5%（= ±26 セント）振っていた。
+   キックやタムのような音程のある太鼓でそれをやると、
+   一定のパターンを叩いているのにピッチがふらついて「変な音」になる。
+   音程を持たないノイズ系は振っても気にならず、機械的な繰り返しが和らぐので残す。 */
+const WOBBLE={kick:0.002,tomL:0.003,tomH:0.003,rim:0.004,snare:0.006,clap:0.012,
+              chh:0.02,ohh:0.018,ride:0.012,crash:0.012,shaker:0.025};
 function play(ctx,kind,t,vel,dest,pan,opts){
   if(!R[kind]) return null;
   vel=clamp(vel==null?0.8:vel,0.02,1);
   const b=getBuffer(ctx,kind,vel);
   const s=ctx.createBufferSource(); s.buffer=b;
-  s.playbackRate.value=(1+(Math.random()-0.5)*0.03)*((opts&&opts.rate)||1);
+  const wob=WOBBLE[kind]!=null?WOBBLE[kind]:0.01;
+  s.playbackRate.value=(1+(Math.random()-0.5)*2*wob)*((opts&&opts.rate)||1);
   const g=ctx.createGain(); g.gain.value=(0.2+0.8*Math.pow(vel,1.5))*LEVEL[kind]*((opts&&opts.gain)||1);
   const p=panNode(ctx,pan||0);
   s.connect(g); g.connect(p); p.connect(dest); s.start(t);
@@ -893,7 +922,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const $=id=>document.getElementById(id);
 
 /* ── sound settings（localStorage: chord.snd） ── */
-const SND={vol:0.85, verb:0.5, human:true, countIn:false, keys:"auto", gtr:"auto", mix:{Drums:0.9,Bass:0.85,Piano:0.7,Guitar:0.9}};
+const SND={vol:0.85, verb:0.5, metro:1, human:true, countIn:false, keys:"auto", gtr:"auto", mix:{Drums:0.9,Bass:0.85,Piano:0.7,Guitar:0.9}};
 try{ const s=JSON.parse(localStorage.getItem("chord.snd")||"null"); if(s){ const m=Object.assign({},SND.mix,s.mix||{}); Object.assign(SND,s); SND.mix=m; } }catch(e){}
 function saveSnd(){ try{ localStorage.setItem("chord.snd",JSON.stringify(SND)); }catch(e){} }
 
@@ -901,7 +930,7 @@ function saveSnd(){ try{ localStorage.setItem("chord.snd",JSON.stringify(SND)); 
    mix → air shelf → glue comp → makeup → soft clip(tanh) → volume → out
    melodic bus: piano/guitar → hall reverb send
    drums: StudioKit drum bus（パラレルコンプ＋ルーム） / bass: 弦モデル → アンプ段 */
-let AC=null, mix=null, masterOut=null, melodic=null, verbSend=null, drumBus=null;
+let AC=null, mix=null, masterOut=null, melodic=null, verbSend=null, drumBus=null, metroBus=null;
 let bassIn=null, subIn=null, pianoBus=null, epBus=null, gtrAc=null, gtrEl=null;
 const busG={};
 function audio(){
@@ -915,6 +944,10 @@ function audio(){
   const clip=ctx.createWaveShaper(); clip.curve=K.tanhCurve(1.5); try{ clip.oversample="2x"; }catch(e){}
   masterOut=ctx.createGain(); masterOut.gain.value=SND.vol;
   mix.connect(air); air.connect(comp); comp.connect(mk); mk.connect(clip); clip.connect(masterOut); masterOut.connect(ctx.destination);
+  /* クリックはマスターコンプを通さない。
+     通すと、クリックが鳴るたびに曲全体の音量が引っ込んで「ポンピング」する。
+     ただしクリッパーは通す。そうしないと音量を上げたときに頭が潰れて歪む。 */
+  metroBus=ctx.createGain(); metroBus.connect(clip);
 
   melodic=ctx.createGain(); melodic.connect(mix);
   const pre=ctx.createDelay(0.1); pre.delayTime.value=0.02;
@@ -995,7 +1028,27 @@ function dampVoices(list,t,tau){ // 鳴っている声部を t からフェー�
 
 /* ── Karplus-Strong 弦モデル（ギター/ベース）──
    ループ長 N の周波数 sr/N で描画し、再生時 playbackRate で正確な音程に補正。
-   ラウンドロビン3。tone: ac(スチール弦) / el(エレキ・クリーン) / ny(ナイロン) */
+   ラウンドロビン3。tone: ac(スチール弦) / el(エレキ・クリーン) / ny(ナイロン)
+
+   【実効ループ長について】
+   遅延線の長さは N だが、ループの中を通るフィルタが遅延を足し引きするので、
+   実際に鳴る周波数は sr/N ではない。
+
+     - 平均フィルタ (cur+nxt)/2 は「1つ先」を読む。つまり -0.5 サンプル
+     - 1極ローパス y=y*(1-b)+y1*b は基本波で +（位相遅延）サンプル
+
+   合わせて D = N - 0.5 + 位相遅延。playbackRate をこの D から出さないと、
+   N が小さい高音ほどシャープになる。2026-09-19 に実測したときの誤差:
+
+     E2 +1.4¢ / E4 +5.7¢ / A5 +15.6¢ / E6 +23.0¢
+
+   低音はほぼ合っているのに高音だけ上ずるので、単体では気づきにくく、
+   コードを鳴らすと高い弦だけ浮いて「変な和音」に聞こえていた。
+   D で補正すると全域 1¢ 以内に収まる（実測）。 */
+/* 1極ローパス y=(1-a)x+a·y1 の、周波数 w における位相遅延（サンプル） */
+function onePoleDelay(a,w){ return Math.atan2(a*Math.sin(w),1-a*Math.cos(w))/w; }
+/* 平均フィルタ（-0.5）＋1極ローパス を通る場合の実効ループ長。ベース側で使う */
+function ksLoopLen(N,b){ const w=TWO_PI/N; return N-0.5+onePoleDelay(b,w); }
 const KSC={};
 function ksRender(sr,f,tone){
   const N=Math.max(2,Math.floor(sr/f)), el=tone==="el", ny=tone==="ny";
@@ -1003,23 +1056,64 @@ function ksRender(sr,f,tone){
   const g=Math.pow(10,-3/(T60*f));
   const len=Math.round(sr*Math.min(T60,4.6));
   const out=new Float32Array(len), d=new Float32Array(N);
-  const lpc=el?0.45:ny?0.62:0.32; let prev=0;
+  /* 励起ノイズのローパス。弾いた瞬間の明るさを決める。
+     ループフィルタが時間方向の暗くなり方を受け持つようになったので、
+     頭は以前より明るくしてよい（弱いほど明るい）。 */
+  const lpc=el?0.30:ny?0.55:0.18; let prev=0;
   for(let i=0;i<N;i++){ const w=Math.random()*2-1; prev=prev*lpc+w*(1-lpc); d[i]=prev; }
   const pk=Math.max(1,Math.round(N*(ny?0.2:0.11+Math.random()*0.09)));  // ピック位置コーム
   for(let i=N-1;i>=pk;i--) d[i]-=d[i-pk]*0.92;
   let mean=0; for(let i=0;i<N;i++) mean+=d[i]; mean/=N; for(let i=0;i<N;i++) d[i]-=mean;
-  const b=el?0.10:ny?0.16:0.06; let idx=0, y1=0;
+  /* ── ループフィルタ ──
+     ここが音色の心臓部。ループを1周するたびに高域が少しずつ削れ、
+     その積み重ねが「弾いた瞬間は明るく、すぐ落ち着く」という弦の時間変化になる。
+
+     【2026-09-19 まで】係数が固定（ac なら 0.06）だった。
+     ところがループは1秒間に f 回しか回らない。低音弦は 82 回/秒、
+     高音弦は 659 回/秒。同じ「1周あたりの減衰」だと、
+     低音はほとんど高域が減らず、高音は削れすぎる。実測でも:
+
+       E2  頭 9.2dB → 伸び 9.2dB（まったく変化なし＝ブザーのように静的）
+       A4  頭 -2.4dB → 伸び -13.1dB（倍音が消えて正弦波に近い＝ペラい）
+
+     【対策】「1秒あたりの減衰」から逆算してカットオフを決める。
+     実際の弦は周波数 F の成分ほど速く減る（おおよそ F の2乗に比例）。
+     T60(F) = T60_0 / (1 + (F/F0)^2) を狙うと、1周あたりに必要な追加減衰は
+
+         60/(T60_0·f) · (F/F0)^2  [dB]
+
+     1極ローパスの減衰は小信号域で 4.343·(F/Fc)^2 [dB] なので、両者を等しく置いて
+
+         Fc = F0 · sqrt(4.343·T60_0·f/60)
+
+     F0 が「明るさ」のつまみになる。低音弦ほど Fc が下がり、高音弦ほど上がるので、
+     1秒あたりの倍音の減り方がどの音程でも揃う。
+
+     ローパスは基音も少し削るので、その分を h1 で戻してから g を掛ける。
+     戻さないと T60 が設計値より短くなる。 */
+  const F0 = el?1750 : ny?820 : 1250;                 // 明るさ。上げるほど高域が残る
+  const Fc = Math.min(F0*Math.sqrt(0.0724*T60*f), sr*0.45);
+  const w1 = TWO_PI/N;
+  const a  = Math.exp(-TWO_PI*Fc/sr);
+  const h1 = (1-a)/Math.hypot(1-a*Math.cos(w1), a*Math.sin(w1));
+  const loopG = g/h1;
+  let idx=0, y1=0;
   for(let i=0;i<len;i++){
-    const cur=d[idx], nxt=d[(idx+1)%N]; out[i]=cur;
-    let y=(cur+nxt)*0.5; y=y*(1-b)+y1*b; y1=y;
-    d[idx]=y*g; idx=(idx+1)%N;
+    const cur=d[idx]; out[i]=cur;
+    y1=(1-a)*cur + a*y1;
+    d[idx]=y1*loopG; idx=(idx+1)%N;
   }
-  K.fadeOut(out,sr,0.08); rmsNorm(out,sr,0.08,0.22);
-  return {data:out,N};
+  /* 音量に音程の傾斜を付ける。
+     以前は全音 0.22 に揃えていたので、低音弦も高音弦もまったく同じ大きさで
+     鳴っていた。実際のギターは低音弦のほうが太くて大きい。
+     揃っていると、ジャランと弾いたときに土台が無く薄く聞こえる。 */
+  const lvl = clamp(0.22*Math.pow(82.41/f,0.25), 0.10, 0.30);
+  K.fadeOut(out,sr,0.08); rmsNorm(out,sr,0.08,lvl);
+  return {data:out,loop:N+onePoleDelay(a,w1)};
 }
 function ksGet(ctx,f,tone){
   const key=tone+"|"+f.toFixed(2); let arr=KSC[key]; if(!arr) arr=KSC[key]=[];
-  if(arr.length<3){ const r=ksRender(ctx.sampleRate,f,tone); const b=ctx.createBuffer(1,r.data.length,ctx.sampleRate); b.copyToChannel(r.data,0); arr.push({buf:b,N:r.N}); }
+  if(arr.length<3){ const r=ksRender(ctx.sampleRate,f,tone); const b=ctx.createBuffer(1,r.data.length,ctx.sampleRate); b.copyToChannel(r.data,0); arr.push({buf:b,loop:r.loop}); }
   return arr[(Math.random()*arr.length)|0];
 }
 function bassRender(sr,f){
@@ -1031,12 +1125,12 @@ function bassRender(sr,f){
   let idx=0, y1=0;
   for(let i=0;i<len;i++){ const cur=d[idx], nxt=d[(idx+1)%N]; out[i]=cur; let y=(cur+nxt)*0.5; y=y*0.65+y1*0.35; y1=y; d[idx]=y*g; idx=(idx+1)%N; }
   K.fadeOut(out,sr,0.08); rmsNorm(out,sr,0.08,0.3);
-  return {data:out,N};
+  return {data:out,loop:ksLoopLen(N,0.35)};
 }
 const BSC={};
 function bassGet(ctx,f){
   const key=f.toFixed(2); let arr=BSC[key]; if(!arr) arr=BSC[key]=[];
-  if(arr.length<2){ const r=bassRender(ctx.sampleRate,f); const b=ctx.createBuffer(1,r.data.length,ctx.sampleRate); b.copyToChannel(r.data,0); arr.push({buf:b,N:r.N}); }
+  if(arr.length<2){ const r=bassRender(ctx.sampleRate,f); const b=ctx.createBuffer(1,r.data.length,ctx.sampleRate); b.copyToChannel(r.data,0); arr.push({buf:b,loop:r.loop}); }
   return arr[(Math.random()*arr.length)|0];
 }
 
@@ -1087,7 +1181,7 @@ function pluck(midi,t,vel,pan,opt){
   const ctx=AC, tone=(opt&&opt.tone)||"ac", mute=opt&&opt.mute;
   const f=mtof(midi), rec=ksGet(ctx,f,tone), v=clamp(vel,0.05,1);
   const s=ctx.createBufferSource(); s.buffer=rec.buf;
-  s.playbackRate.value=f*rec.N/ctx.sampleRate*(1+(Math.random()-0.5)*0.002);
+  s.playbackRate.value=f*rec.loop/ctx.sampleRate*(1+(Math.random()-0.5)*0.002);
   const lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.Q.value=0.4;
   lp.frequency.value= mute==="palm"?700 : 1800+v*v*(tone==="ny"?5000:9000);
   const g=ctx.createGain(); g.gain.setValueAtTime((0.15+0.85*v*v)*0.55,t);
@@ -1114,7 +1208,7 @@ function fretNoise(t){ // コードチェンジ時の運指ノイズ
 }
 function bassNote(midi,t,vel,dur){
   const ctx=AC, f=mtof(midi), rec=bassGet(ctx,f), v=clamp(vel,0.05,1), d=Math.max(0.05,dur||0.25);
-  const s=ctx.createBufferSource(); s.buffer=rec.buf; s.playbackRate.value=f*rec.N/ctx.sampleRate;
+  const s=ctx.createBufferSource(); s.buffer=rec.buf; s.playbackRate.value=f*rec.loop/ctx.sampleRate;
   const g=ctx.createGain(); const amp=0.5*(0.3+0.7*v);
   g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(amp,t+0.004); g.gain.setTargetAtTime(0,t+d,0.03);
   s.connect(g); g.connect(bassIn); s.start(t); s.stop(t+d+0.3);
@@ -1509,11 +1603,31 @@ function scheduleStep(i,time){
   const drawAt=(time-AC.currentTime)*1000;
   setTimeout(()=>highlight(ci), Math.max(0,drawAt));
 }
+/* クリック。
+   以前は正弦波1本を 0.18 / 0.10 の固定音量で鳴らしていた。
+   正弦波は倍音が無いぶん、同じピーク値でもいちばん聞こえにくい波形で、
+   ドラムが入ると埋もれる。しかも音量を変える手段が無かった。
+
+   ここでは (a) 倍音を少し足し (b) 頭に短いノイズのチクッを置き
+   (c) クリッパー経由にして音量を上げられるようにしている。
+   SND.metro が 1.0 のときが従来と同じ大きさ。上限は 2.0。 */
 function click(time, accent){
-  const o=AC.createOscillator(), g=AC.createGain();
-  o.frequency.value=accent?1600:1100;
-  g.gain.setValueAtTime(accent?0.18:0.1,time); g.gain.exponentialRampToValueAtTime(0.001,time+0.04);
-  o.connect(g).connect(masterOut); o.start(time); o.stop(time+0.05);
+  const amp=(accent?0.18:0.10)*SND.metro;
+  if(amp<=0 || !metroBus) return;
+  const g=AC.createGain();
+  g.gain.setValueAtTime(amp,time);
+  g.gain.exponentialRampToValueAtTime(0.0008,time+(accent?0.05:0.04));
+  g.connect(metroBus);
+  const f=accent?1600:1100;
+  [[f,1],[f*2,0.3],[f*3,0.14]].forEach(h=>{
+    const o=AC.createOscillator(); o.type="sine"; o.frequency.value=h[0];
+    const og=AC.createGain(); og.gain.value=h[1];
+    o.connect(og); og.connect(g); o.start(time); o.stop(time+0.08);
+  });
+  const nb=AC.createBufferSource(); nb.buffer=pickBuf(AC);
+  const nf=AC.createBiquadFilter(); nf.type="bandpass"; nf.frequency.value=accent?3600:2800; nf.Q.value=0.9;
+  const ng=AC.createGain(); ng.gain.value=0.45;
+  nb.connect(nf); nf.connect(ng); ng.connect(g); nb.start(time);
 }
 function highlight(ci){
   if(lastChip>=0){ const p=progEl.children[lastChip]; if(p)p.classList.remove("playing"); }
@@ -1577,9 +1691,11 @@ styleSel.onchange=()=>{
 ["Drums","Bass","Piano","Guitar"].forEach(k=>{ const el=$("vl"+k); if(!el) return; el.value=Math.round(SND.mix[k]*100);
   el.oninput=()=>{ SND.mix[k]=el.value/100; if(busG[k]) busG[k].gain.value=SND.mix[k]; saveSnd(); }; });
 $("sndVol").value=Math.round(SND.vol*100); $("sndVerb").value=Math.round(SND.verb*100);
+$("sndMetro").value=Math.round((SND.metro!=null?SND.metro:1)*100);
 $("sndHuman").checked=SND.human; $("countChk").checked=SND.countIn; $("sndKeys").value=SND.keys; $("sndGtr").value=SND.gtr;
 $("sndVol").oninput=()=>{ SND.vol=+$("sndVol").value/100; if(masterOut) masterOut.gain.value=SND.vol; saveSnd(); };
 $("sndVerb").oninput=()=>{ SND.verb=+$("sndVerb").value/100; if(verbSend) verbSend.gain.value=0.44*SND.verb; saveSnd(); };
+$("sndMetro").oninput=()=>{ SND.metro=+$("sndMetro").value/100; saveSnd(); };
 $("sndHuman").onchange=()=>{ SND.human=$("sndHuman").checked; saveSnd(); };
 $("countChk").onchange=()=>{ SND.countIn=$("countChk").checked; saveSnd(); };
 $("sndKeys").onchange=()=>{ SND.keys=$("sndKeys").value; saveSnd(); };
@@ -1647,7 +1763,14 @@ function audio(){
   AC = new (window.AudioContext||window.webkitAudioContext)();
   master = AC.createGain();
   master.gain.value = 0.85 * 0.9;
-  master.connect(AC.destination);
+  /* 出口のソフトクリッパー。
+     キック(0.95)＋スネア(0.81)＋クラッシュ＋ハイハットが同じ拍に来ると
+     合計は軽く 1.0 を超える。そのまま destination に出すと容赦なく
+     頭が切り落とされ、耳には「バリッ」という歪みとして届く。
+     ここで丸めておけば、同じ音量でも歪まない。 */
+  const clip = AC.createWaveShaper(); clip.curve = window.StudioKit.tanhCurve(1.6);
+  try{ clip.oversample="2x"; }catch(e){}
+  master.connect(clip); clip.connect(AC.destination);
   drumBus = window.StudioKit.makeDrumBus(AC, master);   // dry + パラレルコンプ + ルーム残響
   window.StudioKit.prewarm(AC.sampleRate);
   return AC;
@@ -1971,7 +2094,15 @@ let AC=null, master=null, drumBus=null;
 function audio(){
   if(AC) return AC;
   AC = new (window.AudioContext||window.webkitAudioContext)();
-  master = AC.createGain(); master.gain.value = 0.85*0.9; master.connect(AC.destination);
+  master = AC.createGain(); master.gain.value = 0.85*0.9;
+  /* 出口にソフトクリッパーを置く。
+     WaveShaper のカーブは入力 [-1,1] に対して定義され、それを超える入力は
+     端の値に張り付く。つまり何を入れても出力は 1.0 を超えない。
+     おかげで VOL を 100 より上に伸ばしても、耳障りなデジタル歪みにならない。
+     クリックを 2 倍近くまで上げられるようになったのはこれが理由。 */
+  const clip = AC.createWaveShaper(); clip.curve = K.tanhCurve(1.6);
+  try{ clip.oversample="2x"; }catch(e){}
+  master.connect(clip); clip.connect(AC.destination);
   drumBus = K.makeDrumBus(AC, master).input;   // makeDrumBus は {input,room} を返す。鳴らす先は .input
   K.prewarm(AC.sampleRate);
   return AC;
@@ -2184,6 +2315,8 @@ function setBpm(v){
 }
 $("rtPlay").onclick=toggle;
 $("rtBpm").oninput=()=>setBpm(+$("rtBpm").value);
+/* 0〜100 は従来どおりの音量（保存済みの設定がそのままの大きさで鳴る）。
+   100〜200 はその先の増幅。出口のソフトクリッパーが受け止める。 */
 $("rtVol").oninput=()=>{ cfg.vol=+$("rtVol").value; if(master) master.gain.value=cfg.vol/100*0.9; save(); };
 $("rtSwing").oninput=()=>{ cfg.swing=+$("rtSwing").value; $("rtSwingVal").textContent=cfg.swing; save(); };
 $("rtThin").oninput=()=>{ cfg.thin=+$("rtThin").value; $("rtThinVal").textContent=cfg.thin+"%"; save(); };

@@ -20,28 +20,28 @@ function url(p){ return ROOT + p; }
 
 /* ── サイトマップ ── */
 var APPS = [
-  { id:"home", icon:"🏠", name:"Home", desc:"アプリ一覧", href:"index.html" },
-  { id:"tuner", icon:"🎚", name:"Tuner", desc:"チューニング / 音の分析", href:"tuner/index.html", subs:[
+  { id:"home", icon:"⌂", name:"Home", desc:"アプリ一覧", href:"index.html" },
+  { id:"tuner", icon:"◎", name:"Tuner", desc:"チューニング / 音の分析", href:"tuner/index.html", subs:[
       { name:"チューナー",             href:"tuner/index.html#tuner" },
       { name:"ストロボ",               href:"tuner/index.html#strobe" },
       { name:"ビジュアライザー",       href:"tuner/index.html#visualizer" },
       { name:"ミックス",               href:"tuner/index.html#mix" },
       { name:"アドバイザー（音作り）", href:"tuner/index.html#advisor" }
     ]},
-  { id:"fretboard", icon:"🎸", name:"Fretboard", desc:"指板 / スケール / 練習", href:"fretboard/index.html", byFile:true, subs:[
+  { id:"fretboard", icon:"♮", name:"Fretboard", desc:"指板 / スケール / 練習", href:"fretboard/index.html", byFile:true, subs:[
       { name:"指板マップ",   href:"fretboard/index.html" },
       { name:"練習ツール",   href:"fretboard/practice.html" }
     ]},
-  { id:"theory", icon:"🎼", name:"Theory", desc:"音楽理論 / 作曲", href:"theory/index.html", byFile:true, subs:[
+  { id:"theory", icon:"♯", name:"Theory", desc:"音楽理論 / 作曲", href:"theory/index.html", byFile:true, subs:[
       { name:"音楽理論",           href:"theory/index.html" },
-      { name:"コード進行（作曲）", href:"theory/compose.html" }
+      { name:"コード進行（作曲）", tab:"コード進行", href:"theory/compose.html" }
     ]},
-  { id:"studio", icon:"🎹", name:"Studio", desc:"伴奏 / ドラム / リズム練習", href:"studio/index.html", subs:[
+  { id:"studio", icon:"♫", name:"Studio", desc:"伴奏 / ドラム / リズム練習", href:"studio/index.html", subs:[
       { name:"コードプレイヤー",     href:"studio/index.html#chord" },
       { name:"ドラムマシーン",       href:"studio/index.html#drum" },
       { name:"リズム練習（裏拍）",   href:"studio/index.html#rhythm" }
     ]},
-  { id:"bookmark", icon:"🔖", name:"Bookmark", desc:"YouTube ループ / 練習動画", href:"bookmark/index.html" }
+  { id:"bookmark", icon:"▶", name:"Bookmark", desc:"YouTube ループ / 練習動画", href:"bookmark/index.html" }
 ];
 
 /* ── 現在地の判定 ──
@@ -64,9 +64,9 @@ else if(/^\/bookmark\//.test(here)) CUR="bookmark";
 var CSS = [
 "#gnavBtn{position:relative; z-index:60; display:inline-flex; flex-direction:column; justify-content:center;",
 "  align-items:center; gap:4px; width:42px; height:38px; padding:0; flex:0 0 auto;",
-"  background:rgba(33,42,59,.85); border:1px solid #2e3852; border-radius:10px; cursor:pointer;",
+"  background:var(--ui-s2,#1e222b); border:1px solid var(--ui-line2,#3a4150); border-radius:10px; cursor:pointer;",
 "  -webkit-tap-highlight-color:transparent;}",
-"#gnavBtn:hover{border-color:#4a5a82; background:#263047;}",
+"#gnavBtn:hover{border-color:rgba(var(--ui-accent-rgb,143,168,216),.75); background:var(--ui-s3,#272c37);}",
 "#gnavBtn i{display:block; width:18px; height:2px; border-radius:2px; background:#cfd9ea; transition:.18s;}",
 "#gnavBtn.on i:nth-child(1){transform:translateY(6px) rotate(45deg);}",
 "#gnavBtn.on i:nth-child(2){opacity:0;}",
@@ -76,7 +76,7 @@ var CSS = [
 "  transition:opacity .18s; z-index:9998;}",
 "#gnavOv.on{opacity:1; pointer-events:auto;}",
 "#gnavDr{position:fixed; top:0; left:0; bottom:0; width:290px; max-width:86vw; z-index:9999;",
-"  background:#141a26; border-right:1px solid #2e3852; box-shadow:12px 0 40px rgba(0,0,0,.5);",
+"  background:var(--ui-s1,#161920); border-right:1px solid var(--ui-line,#2a2f3a); box-shadow:12px 0 40px rgba(0,0,0,.5);",
 "  transform:translateX(-102%); transition:transform .22s cubic-bezier(.4,0,.2,1);",
 "  overflow-y:auto; -webkit-overflow-scrolling:touch;",
 "  padding:calc(14px + env(safe-area-inset-top,0px)) 0 calc(20px + env(safe-area-inset-bottom,0px));",
@@ -85,27 +85,40 @@ var CSS = [
 "#gnavDr .gh{display:flex; align-items:center; justify-content:space-between; padding:2px 14px 12px;",
 "  font-size:11px; letter-spacing:.28em; color:#7d8ea9; text-transform:uppercase; font-weight:700;}",
 "#gnavDr .gx{background:none; border:none; color:#7d8ea9; font-size:20px; line-height:1; cursor:pointer; padding:4px 6px;}",
-"#gnavDr a{display:block; text-decoration:none; color:#e7edf6;}",
+"#gnavDr a{display:block; text-decoration:none; color:var(--ui-text,#e9edf3);}",
 "#gnavDr .ga{display:flex; align-items:center; gap:11px; padding:9px 14px; border-left:3px solid transparent;}",
-"#gnavDr .ga:hover{background:#1c2434;}",
-"#gnavDr .ga .gi{font-size:19px; width:24px; text-align:center; flex:0 0 auto;}",
+"#gnavDr .ga:hover{background:var(--ui-s2,#1e222b);}",
+"#gnavDr .ga .gi{width:28px; height:28px; border-radius:8px; font-size:15px; flex:0 0 auto;",
+"  display:inline-flex; align-items:center; justify-content:center; color:#fff; font-style:normal;",
+"  background:linear-gradient(135deg,var(--t-a,#3a4150),var(--t-b,#262b36));}",
 "#gnavDr .ga .gt{display:block; font-size:15px; font-weight:700; letter-spacing:.02em;}",
-"#gnavDr .ga .gd{display:block; font-size:10.5px; color:#8a9ab5; font-weight:400; margin-top:2px;}",
-"#gnavDr .ga.cur{border-left-color:#ff8a4d; background:#1a2130;}",
-"#gnavDr .ga.cur .gt{color:#ffb454;}",
+"#gnavDr .ga .gd{display:block; font-size:10.5px; color:var(--ui-sub,#8d97a8); font-weight:400; margin-top:2px;}",
+"#gnavDr .ga.cur{border-left-color:var(--ui-accent,#ff8a4d); background:rgba(var(--ui-accent-rgb,255,138,77),.09);}",
+"#gnavDr .ga.cur .gt{color:var(--ui-accent,#ffb454);}",
 "#gnavDr .gsubs{padding:0 0 5px;}",
-"#gnavDr .gs{display:block; padding:6px 14px 6px 52px; font-size:12px; color:#8b9bb4; border-left:3px solid transparent;}",
-"#gnavDr .gsubs.cur .gs{color:#b9c7dc;}",
-"#gnavDr .gs:hover{background:#1c2434; color:#fff;}",
-"#gnavDr .gsubs .gs.cur{color:#4db6ff; border-left-color:#4db6ff; background:#18202e; font-weight:700;}",   /* .gsubs.cur .gs より詳細度を下げないこと */
-"#gnavDr .gsep{height:1px; background:#232c3d; margin:6px 14px;}",
+"#gnavDr .gs{display:block; padding:6px 14px 6px 53px; font-size:12px; color:var(--ui-faint,#7b879a); border-left:3px solid transparent;}",
+"#gnavDr .gsubs.cur .gs{color:var(--ui-sub,#b9c7dc);}",
+"#gnavDr .gs:hover{background:var(--ui-s2,#1e222b); color:var(--ui-text,#fff);}",
+"#gnavDr .gsubs .gs.cur{color:var(--ui-accent,#4db6ff); border-left-color:var(--ui-accent,#4db6ff); background:rgba(var(--ui-accent-rgb,77,182,255),.07); font-weight:700;}",   /* .gsubs.cur .gs より詳細度を下げないこと */
+"#gnavDr .gsep{height:1px; background:var(--ui-line,#2a2f3a); margin:6px 14px;}",
 "#gnavDr .gf{padding:12px 16px 0; font-size:10.5px; line-height:1.7; color:#6f7f99;}",
+"#gnavDr .gf a{display:inline; color:var(--ui-sub,#8d97a8); text-decoration:underline;}",
 "#gnavDr .gf kbd{background:#212a3b; border:1px solid #2e3852; border-radius:4px; padding:1px 5px; font-size:10px;}",
 /* 旧・横並びリンクはドロワーに統合したので隠す */
 ".app-nav{display:none !important;}",
 "nav.site-nav>a{display:none !important;}",
 "nav.site-nav{display:flex; align-items:center; gap:8px;}",
 /* 縦が短い端末では、全部入りでもスクロールせずに収まるよう説明文を省く */
+/* ページ単位のアプリ（fretboard / theory）の切り替えタブ。studio の .tabs .tab と同じ寸法 */
+"#gnavTabs{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}",
+"#gnavTabs a{font-family:inherit; font-size:14px; font-weight:700; line-height:1.2; white-space:nowrap;",
+"  padding:8px 14px; border-radius:10px; text-decoration:none; transition:.1s;",
+"  color:var(--ui-sub,#8d97a8); background:transparent; border:1px solid var(--ui-line2,#3a4150);}",
+"#gnavTabs a:hover{color:var(--ui-text,#e9edf3); border-color:rgba(var(--ui-accent-rgb,143,168,216),.6);}",
+"#gnavTabs a.on{color:#fff; border-color:transparent; text-shadow:0 1px 1px rgba(0,0,0,.25);",
+"  background:linear-gradient(135deg,var(--t-a,#6f8cc4),var(--t-b,#3b5690));",
+"  box-shadow:0 3px 12px rgba(var(--ui-accent-rgb,143,168,216),.28);}",
+"@media (max-width:520px){ #gnavTabs a{padding:7px 11px; font-size:13px;} }",
 "@media (max-height:780px){",
 "  #gnavDr .ga .gd{display:none;}",            /* ← 基本ルールと同じ詳細度にしないと負ける */
 "  #gnavDr .ga{padding:7px 14px;}",
@@ -119,7 +132,7 @@ var CSS = [
 /* アプリごとの設置場所の微調整（☰ を必ず左端に置く） */
 var FIT = {
   tuner:     "body>header{justify-content:flex-start !important;}\nbody>header>.title{margin-right:auto;}",
-  bookmark:  "#gnavBtn{margin-bottom:10px;}",
+  bookmark:  "#gnavRow{display:flex; align-items:center; gap:12px; margin:0 0 14px;}\n#gnavRow .brand{margin:0;}",
   studio:    ".tabs #gnavBtn{margin-right:2px;}",
   fretboard: "nav.site-nav{padding-top:8px; padding-bottom:8px;}",
   theory:    "nav.site-nav{padding-top:8px; padding-bottom:8px;}"
@@ -146,7 +159,7 @@ function build(){
   APPS.forEach(function(app,i){
     var cur = app.id===CUR;
     h+='<a class="ga'+(cur?" cur":"")+'" href="'+url(app.href)+'">'+
-         '<span class="gi">'+app.icon+'</span>'+
+         '<span class="gi ui-tile" data-tile="'+app.id+'">'+app.icon+'</span>'+
          '<span><span class="gt">'+app.name+'</span><span class="gd">'+app.desc+'</span></span>'+
        '</a>';
     if(app.subs){
@@ -160,7 +173,9 @@ function build(){
     }
     if(i===0) h+='<div class="gsep"></div>';
   });
-  h+='<div class="gf">すべてブラウザ内で完結（通信なし）。<kbd>Esc</kbd> で閉じる。</div>';
+  h+='<div class="gf">すべてブラウザ内で完結（通信なし）。<kbd>Esc</kbd> で閉じる。<br>'+
+     'ギター音源：<a href="https://github.com/nbrosowsky/tonejs-instruments" target="_blank" rel="noopener">tonejs-instruments</a>'+
+     '（<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC-BY 3.0</a>）</div>';
   dr.innerHTML=h;
 
   /* 現在地のサブページに印を付ける。
@@ -193,6 +208,47 @@ function build(){
   var mount = sel ? document.querySelector(sel) : null;
   if(mount) mount.insertBefore(btn, mount.firstChild);
   else { btn.classList.add("fixed"); document.body.appendChild(btn); }
+
+  /* 全アプリで「☰ ＋ アプリの顔（色タイル＋名前）」を上端の1行に揃える。
+     tuner / studio は元から同じ行にある。残りの2つはここで寄せる。 */
+  if(mount && (CUR==="fretboard" || CUR==="theory")){
+    // ページ見出し（.logo）を ☰ のバーへ移す。見出ししか無かったヘッダーは畳む
+    var logo = document.querySelector(".app > header .logo");
+    if(logo){
+      var hdr = logo.parentNode;
+      mount.appendChild(logo);
+      if(!hdr.children.length) hdr.style.display = "none";
+    }
+  }
+  /* 1つのアプリが複数の HTML ページでできている場合（fretboard / theory）は、
+     tuner のモードボタンや studio のタブと同じく、画面上でページを切り替えられるようにする。
+     中身はサイトマップ（APPS）から作るので、ページを足せばドロワーとタブが一緒に増える。 */
+  var curApp = null;
+  APPS.forEach(function(a){ if(a.id===CUR) curApp = a; });
+  if(mount && curApp && curApp.byFile && curApp.subs && curApp.subs.length > 1){
+    var tabs = document.createElement("div");
+    tabs.id = "gnavTabs";
+    tabs.setAttribute("aria-label", curApp.name + " のページ");
+    curApp.subs.forEach(function(s){
+      var f = (s.href.match(/[^\/]*$/)||[""])[0].split("#")[0];
+      var a = document.createElement("a");
+      a.href = url(s.href);
+      a.textContent = s.tab || s.name;
+      if(f === CURFILE){ a.className = "on"; a.setAttribute("aria-current", "page"); }
+      tabs.appendChild(a);
+    });
+    mount.appendChild(tabs);
+  }
+
+  if(mount && CUR==="bookmark"){
+    // ☰ とロゴ（h1）を横並びの行にまとめる（h1 の中にボタンを入れない）
+    var brand = mount.querySelector(".brand");
+    if(brand){
+      var row = document.createElement("div"); row.id = "gnavRow";
+      mount.insertBefore(row, mount.firstChild);
+      row.appendChild(btn); row.appendChild(brand);
+    }
+  }
 
   /* 開閉 */
   var open=false;

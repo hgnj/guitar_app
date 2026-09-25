@@ -1,0 +1,174 @@
+/* ═══════════════════════════════════════════════════════════════
+   ui.css — Guitar Apps 共通の見た目
+   方針は「同じ部屋、違う照明」。
+
+   共通にするもの
+     ・地の色 / 面 / 線 / 文字色（全アプリ同じ段階）
+     ・アプリの"顔"＝ 色タイル＋記号 ＋ 名前 ＋ 小さな説明
+       （ホームのカード・☰ ドロワー・各アプリのヘッダーで同じ形）
+     ・☰ が乗る上端のバー、フォーカス枠、選択色、スクロールバー
+   アプリごとに変えるもの
+     ・アクセント色（タイル、上端の光、選択中のタブ）
+     ・書体の声（tuner＝等幅のオシロ画面、bookmark＝明朝のロゴ）
+     ・中身のデザイン（指板の木目、スコープの緑 など）
+
+   使い方: 各ページの <html data-app="…"> と、</head> 直前の
+   <link rel="stylesheet" href="../ui.css">。ページ固有の CSS 変数は
+   下の「ブリッジ」で共通トークンに付け替えるので、ページ側はほぼ無改造。
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 共通トークン ── */
+:root{
+  --ui-bg:#0f1116;   --ui-s1:#161920;  --ui-s2:#1e222b;  --ui-s3:#272c37;
+  --ui-line:#2a2f3a; --ui-line2:#3a4150;
+  --ui-text:#e9edf3; --ui-sub:#8d97a8;  --ui-faint:#5d6677;
+  --ui-font:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+  --ui-bar:rgba(22,25,32,.86);
+}
+
+/* ── アプリごとの色（アクセント＝文字・線・光用 / タイル＝白い記号が読める深めの2色） ──
+   html[data-app] はそのページの色、[data-tile] はホームやドロワーで他アプリの顔を出すとき用 */
+html[data-app="home"],     [data-tile="home"]     {--ui-accent:#8fa8d8; --ui-accent-rgb:143,168,216; --t-a:#6f8cc4; --t-b:#3b5690;}
+html[data-app="tuner"],    [data-tile="tuner"]    {--ui-accent:#19e68c; --ui-accent-rgb:25,230,140;  --t-a:#15b873; --t-b:#066b43;}
+html[data-app="fretboard"],[data-tile="fretboard"]{--ui-accent:#ef4b5a; --ui-accent-rgb:239,75,90;   --t-a:#ec4655; --t-b:#a01d33;}
+html[data-app="theory"],   [data-tile="theory"]   {--ui-accent:#a594ff; --ui-accent-rgb:165,148,255; --t-a:#8e7bff; --t-b:#5238c4;}
+html[data-app="studio"],   [data-tile="studio"]   {--ui-accent:#ffad42; --ui-accent-rgb:255,173,66;  --t-a:#f59a2e; --t-b:#b94a14;}
+html[data-app="bookmark"], [data-tile="bookmark"] {--ui-accent:#d9ab5f; --ui-accent-rgb:217,171,95;  --t-a:#c99a4e; --t-b:#7d5825;}
+
+/* ── 地：全アプリ同じ色、上端だけアプリの色でほのかに照らす ── */
+html[data-app]{ background:var(--ui-bg); }
+html[data-app] body{
+  background:
+    radial-gradient(1200px 520px at 4% -160px, rgba(var(--ui-accent-rgb),.20), transparent 68%),
+    var(--ui-bg);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+html[data-app] ::selection{ background:rgba(var(--ui-accent-rgb),.34); color:#fff; }
+html[data-app] :focus-visible{ outline:2px solid rgba(var(--ui-accent-rgb),.85); outline-offset:2px; }
+html[data-app]{ scrollbar-color:var(--ui-line2) transparent; }
+
+/* ── アプリの顔：色タイル（中は白い記号1文字） ── */
+.ui-tile{
+  width:32px; height:32px; border-radius:9px; flex:0 0 auto;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--t-a),var(--t-b));
+  color:#fff; font:700 17px/1 var(--ui-font); font-style:normal; letter-spacing:0;
+  text-shadow:0 1px 1px rgba(0,0,0,.28);
+  box-shadow:0 4px 14px rgba(var(--ui-accent-rgb),.30), inset 0 1px 0 rgba(255,255,255,.22);
+  -webkit-text-fill-color:#fff;   /* 親がグラデーション文字でも白で出す */
+}
+/* 名前＋小さな説明 */
+.ui-chip{ display:flex; align-items:center; gap:10px; min-width:0; }
+.ui-chip > b{ font:700 15px/1.2 var(--ui-font); letter-spacing:.01em; color:var(--ui-text); white-space:nowrap; -webkit-text-fill-color:currentColor; }
+.ui-chip > small{ font:400 11px/1.2 var(--ui-font); color:var(--ui-sub); white-space:nowrap; letter-spacing:.02em; }
+
+/* ══════════ ブリッジ：各アプリ固有の変数を共通トークンへ ══════════ */
+
+/* ── home ── */
+html[data-app="home"]{ --bg:var(--ui-bg); --panel:var(--ui-s1); --line:var(--ui-line); --txt:var(--ui-text); --sub:var(--ui-sub); }
+
+/* ── fretboard / theory（同じ土台の CSS を共有している） ──
+   --root は「ルート音」の色＝音楽の意味なので触らない。タイルとタブだけアプリ色にする。 */
+html[data-app="fretboard"], html[data-app="theory"]{
+  --bg:var(--ui-bg); --sf:var(--ui-s1); --sf2:var(--ui-s2); --tx:var(--ui-text); --txd:var(--ui-sub);
+}
+html[data-app="fretboard"] body, html[data-app="theory"] body{ font-family:var(--ui-font); }
+html[data-app="fretboard"] .logo i, html[data-app="theory"] .logo i{
+  width:32px; height:32px; border-radius:9px; font-size:17px;
+  background:linear-gradient(135deg,var(--t-a),var(--t-b));
+  box-shadow:0 4px 14px rgba(var(--ui-accent-rgb),.30), inset 0 1px 0 rgba(255,255,255,.22);
+  text-shadow:0 1px 1px rgba(0,0,0,.28);
+}
+html[data-app="fretboard"] h1, html[data-app="theory"] h1{ font-size:15px; letter-spacing:.01em; color:var(--ui-text); }
+html[data-app="fretboard"] h1 em, html[data-app="theory"] h1 em{ font-size:11px; color:var(--ui-sub); margin-left:8px; }
+/* ☰ が乗る上端のバー（他アプリと同じ見た目にする） */
+html[data-app="fretboard"] nav.site-nav, html[data-app="theory"] nav.site-nav{
+  max-width:none; margin:0; padding:10px 16px;
+  background:var(--ui-bar); border-bottom:1px solid var(--ui-line);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+}
+/* theory の選択中タブは紫（fretboard は赤＝ --root のまま） */
+html[data-app="theory"] .tab.on{ color:var(--ui-accent); background:rgba(var(--ui-accent-rgb),.12); border-bottom-color:var(--ui-accent); }
+html[data-app="theory"] .gtab.on{ color:var(--ui-accent); background:rgba(var(--ui-accent-rgb),.12); border-color:var(--ui-accent); }
+
+/* ── tuner ──
+   外枠（ヘッダー・地）は共通、パネルの中＝緑のスコープ画面はそのまま残す。
+   "共通の筐体に、tuner だけの計器がはめ込まれている" イメージ。 */
+html[data-app="tuner"] body{ font-family:'Courier New',monospace; }
+html[data-app="tuner"] body > header{
+  background:var(--ui-bar); border-bottom:1px solid var(--ui-line);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+}
+html[data-app="tuner"] body > header > .title.ui-chip{
+  font-size:inherit; letter-spacing:0; text-transform:none; color:var(--ui-text);
+}
+html[data-app="tuner"] .panel{ border-color:#12331f; box-shadow:0 0 0 1px rgba(0,0,0,.35), inset 0 0 40px rgba(0,255,136,.025); border-radius:8px; }
+
+/* ── studio ── */
+html[data-app="studio"]{ --bg:var(--ui-bg); --panel:var(--ui-s1); --panel2:var(--ui-s2); --line:var(--ui-line); --txt:var(--ui-text); --sub:var(--ui-sub); }
+html[data-app="studio"] .tabs{ background:var(--ui-bar); border-bottom-color:var(--ui-line); }
+html[data-app="studio"] .tabs .brand.ui-chip{
+  background:none; -webkit-text-fill-color:currentColor; color:var(--ui-text);
+  letter-spacing:0; padding:0; margin-right:6px;
+}
+
+/* ── bookmark ──
+   明朝のロゴと真鍮色は bookmark の声なので残す。地と面だけ共通に。 */
+html[data-app="bookmark"]{
+  --bg-0:var(--ui-bg); --bg-1:var(--ui-s1); --bg-2:var(--ui-s2);
+  --border:var(--ui-line); --border-strong:var(--ui-line2);
+  --text:var(--ui-text); --text-dim:var(--ui-sub); --text-faint:var(--ui-faint);
+}
+html[data-app="bookmark"] .sidebar{ background:linear-gradient(180deg, rgba(22,25,32,.92), rgba(15,17,22,.96)); }
+html[data-app="bookmark"] .brand{ gap:10px; }
+/* 下端のステータスバーもヘッダーと同じ"筐体"側に。数値（緑）はスコープ側の声なのでそのまま */
+html[data-app="tuner"] body > footer{
+  background:var(--ui-bar); border-top:1px solid var(--ui-line);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+}
+html[data-app="tuner"] #tunerCanvas{ border-color:#12331f; border-radius:8px; }
+
+/* ── theory：「選択中・操作」の赤を theory の紫に ──
+   赤のまま残すもの＝音楽の意味：ルート音の丸(.nd.root)、トニック(.c5-ch.t)、調号のルート(.ks-nn.rt)、
+   誤りの印(.ng)、赤い注意書き(.ks-callout.red)、削除ボタン(.cdel＝破壊的操作) */
+html[data-app="theory"] select:focus{ border-color:var(--ui-accent); box-shadow:0 0 0 3px rgba(var(--ui-accent-rgb),.18); }
+html[data-app="theory"] .cc.on{ border-color:var(--ui-accent); background:rgba(var(--ui-accent-rgb),.10); box-shadow:0 4px 16px rgba(var(--ui-accent-rgb),.18); }
+html[data-app="theory"] .cstg:hover{ border-color:var(--ui-accent); color:var(--ui-accent); }
+html[data-app="theory"] .cstg.on{ background:rgba(var(--ui-accent-rgb),.15); border-color:var(--ui-accent); color:var(--ui-accent); }
+html[data-app="theory"] .c5-ch:hover{ border-color:var(--ui-accent); }
+html[data-app="theory"] .c5-btn:hover{ border-color:var(--ui-accent); color:var(--ui-accent); }
+html[data-app="theory"] .ks-slider-row input[type=range]{ accent-color:var(--ui-accent); }
+/* compose（theory の2ページ目） */
+html[data-app="theory"] .pi.on{ border-color:var(--ui-accent); background:rgba(var(--ui-accent-rgb),.08); }
+html[data-app="theory"] .cadd:hover{ border-color:var(--ui-accent); color:var(--ui-accent); }
+html[data-app="theory"] .pbtn{ background:linear-gradient(135deg,var(--t-a),var(--t-b)); }
+html[data-app="theory"] .db.on{ background:rgba(var(--ui-accent-rgb),.15); border-color:var(--ui-accent); color:var(--ui-accent); }
+html[data-app="theory"] .btn-ok{ background:linear-gradient(135deg,var(--t-a),var(--t-b)); }
+
+/* ── bookmark：タイルが入ったので旧来の ✦ 飾りは外す ── */
+html[data-app="bookmark"] .brand::before{ display:none; }
+
+/* ── fretboard / theory：☰ のバーに「顔」を載せたときの間隔 ── */
+html[data-app="fretboard"] nav.site-nav, html[data-app="theory"] nav.site-nav{ gap:12px; }
+html[data-app="fretboard"] nav.site-nav .logo, html[data-app="theory"] nav.site-nav .logo{ gap:10px; }
+html[data-app="fretboard"] nav.site-nav h1, html[data-app="theory"] nav.site-nav h1{ margin:0; }
+
+/* ドロワー内のフォーカス枠は内側に描く（外側だとドロワーの端で左右が切れ、線だけ残って見える） */
+#gnavDr a:focus-visible, #gnavDr button:focus-visible{ outline-offset:-2px; border-radius:6px; }
+
+/* studio：元の CSS は 520px 以下でロゴ（.brand）を丸ごと隠す。
+   顔（色タイル）はどの幅でも残し、狭いときは名前の文字だけ省く */
+@media (max-width:520px){
+  html[data-app="studio"] .tabs .brand.ui-chip{ display:flex; margin-right:2px; }
+  html[data-app="studio"] .tabs .brand.ui-chip > b{ display:none; }
+}
+/* tuner：狭いときは説明の小さい文字を省いて1行に収める */
+@media (max-width:560px){
+  html[data-app="tuner"] body > header > .title.ui-chip > small{ display:none; }
+}
+/* tuner：元の CSS は 860px 以下で .title を width:100% にして1行占有させる → ☰ だけ上の行に残る。
+   顔は ☰ と同じ行に置き、操作部（.controls）だけを次の行へ回す */
+@media (max-width:860px){
+  html[data-app="tuner"] body > header > .title.ui-chip{ width:auto; flex:1 1 auto; }
+}

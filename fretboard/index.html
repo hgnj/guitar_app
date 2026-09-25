@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-app="fretboard">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -200,6 +200,8 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 .fbw::-webkit-scrollbar-thumb{background:#4a4038;border-radius:4px}
 .fbw::-webkit-scrollbar-track{background:transparent}
 </style>
+<link rel="stylesheet" href="../ui.css">
+<script src="../sound/guitar.js"></script>
 </head>
 <body>
 <nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a>
@@ -215,7 +217,7 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
   <header>
     <div class="logo">
       <i>♮</i>
-      <h1>Fretboard Visualizer <em>/ スケール＆コード</em></h1>
+      <h1>Fretboard <em>指板 / スケール / 練習</em></h1>
     </div>
     <div class="ctrls">
       <div class="cg"><label>Mode</label>
@@ -379,6 +381,7 @@ function ac(){if(!ax)try{ax=new(window.AudioContext||window.webkitAudioContext)}
 function pn(si,f){
   var c=ac();if(!c)return;var T=ns===7?T7:T6,fq=T.h[si]*Math.pow(2,f/12);
   var v=document.getElementById('vol').value/100*.4,t=c.currentTime;
+  if(window.GuitarRec&&GuitarRec.isReady()){GuitarRec.now(c,GuitarRec.freqToMidi(fq),{gain:v*3.3});return}  // 録音したギター
   var m=c.createGain();m.connect(c.destination);
   m.gain.setValueAtTime(0,t);m.gain.linearRampToValueAtTime(v,t+.008);
   m.gain.exponentialRampToValueAtTime(Math.max(v*.6,.001),t+.08);

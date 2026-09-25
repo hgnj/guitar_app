@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-app="theory">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -179,6 +179,8 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
 .fbw::-webkit-scrollbar-thumb{background:#4a4038;border-radius:4px}
 .fbw::-webkit-scrollbar-track{background:transparent}
 </style>
+<link rel="stylesheet" href="../ui.css">
+<script src="../sound/guitar.js"></script>
 </head>
 <body>
 <nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a>
@@ -191,7 +193,7 @@ select:focus{outline:none;border-color:var(--root);box-shadow:0 0 0 3px rgba(230
   <a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a>
 </nav>
 <div class="app">
-  <header><div class="logo"><i>♯</i><h1>Theory Tools <em>/ 音楽理論</em></h1></div></header>
+  <header><div class="logo"><i>♯</i><h1>Theory <em>音楽理論 / 作曲</em></h1></div></header>
   <div class="tabs">
     <button class="tab on" onclick="stab('dia',this)">🎹 ダイアトニック</button>
     <button class="tab" onclick="stab('cs',this)">📖 コード⇔スケール</button>
@@ -331,7 +333,9 @@ var CSM={'Maj':['Major / メジャー','Lydian / リディアン','Mixolydian / 
 // Audio
 var ax=null;
 function ac(){if(!ax)try{ax=new(window.AudioContext||window.webkitAudioContext)}catch(e){return null}if(ax.state==='suspended')ax.resume();return ax}
-function pf(fq,v){var c=ac();if(!c)return;v=v||.2;var t=c.currentTime,m=c.createGain();m.connect(c.destination);m.gain.setValueAtTime(0,t);m.gain.linearRampToValueAtTime(v,t+.008);m.gain.exponentialRampToValueAtTime(Math.max(v*.6,.001),t+.08);m.gain.exponentialRampToValueAtTime(Math.max(v*.3,.001),t+.4);m.gain.exponentialRampToValueAtTime(.001,t+1.8);[{r:1,g:1},{r:2,g:.5},{r:3,g:.25},{r:4,g:.15},{r:5,g:.08}].forEach(function(h){var o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.setValueAtTime(fq*h.r,t);g.gain.setValueAtTime(h.g,t);o.connect(g);g.connect(m);o.start(t);o.stop(t+2)})}
+/* 録音したギターで鳴らす（sound/guitar.js）。準備前・読み込み失敗時は従来の合成音 */
+function pf(fq,v){var c=ac();if(!c)return;if(window.GuitarRec&&GuitarRec.isReady()){GuitarRec.now(c,GuitarRec.freqToMidi(fq),{gain:(v||.2)*3.3});return}pfSynth(fq,v)}
+function pfSynth(fq,v){var c=ac();if(!c)return;v=v||.2;var t=c.currentTime,m=c.createGain();m.connect(c.destination);m.gain.setValueAtTime(0,t);m.gain.linearRampToValueAtTime(v,t+.008);m.gain.exponentialRampToValueAtTime(Math.max(v*.6,.001),t+.08);m.gain.exponentialRampToValueAtTime(Math.max(v*.3,.001),t+.4);m.gain.exponentialRampToValueAtTime(.001,t+1.8);[{r:1,g:1},{r:2,g:.5},{r:3,g:.25},{r:4,g:.15},{r:5,g:.08}].forEach(function(h){var o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.setValueAtTime(fq*h.r,t);g.gain.setValueAtTime(h.g,t);o.connect(g);g.connect(m);o.start(t);o.stop(t+2)})}
 function ps(ns,si,f,v){var T=+ns===7?T7:T6;pf(T.h[si]*Math.pow(2,f/12),v||.2)}
 function bnd(d,ns,si,f,v){var tc=false;d.addEventListener('touchstart',function(e){e.preventDefault();tc=true;ps(ns,si,f,v);d.classList.add('pl');setTimeout(function(){d.classList.remove('pl')},300)},{passive:false});d.addEventListener('click',function(){if(tc){tc=false;return}ps(ns,si,f,v);d.classList.add('pl');setTimeout(function(){d.classList.remove('pl')},300)})}
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-app="studio">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -279,10 +279,12 @@
     .pulse .meta{gap:10px; font-size:11px;}
   }
 </style>
+<link rel="stylesheet" href="../ui.css">
+<script src="../sound/guitar.js"></script>
 </head>
 <body>
 <div class="tabs">
-  <div class="brand">🎼 STUDIO</div>
+  <div class="brand ui-chip"><i class="ui-tile">♫</i><b>Studio</b></div>
   <button class="tab active" data-app="chord">🎸 コードプレイヤー</button>
   <button class="tab" data-app="drum">🥁 ドラムマシーン</button>
   <button class="tab" data-app="rhythm">🕗 リズム練習</button>
@@ -331,7 +333,7 @@
     <label class="mx"><input type="checkbox" id="tgDrums" checked><span>🥁 ドラム</span><input type="range" id="vlDrums" min="0" max="100" value="90" title="ドラム音量"></label>
     <label class="mx"><input type="checkbox" id="tgBass" checked><span>🎸 ベース</span><input type="range" id="vlBass" min="0" max="100" value="85" title="ベース音量"></label>
     <label class="mx"><input type="checkbox" id="tgPiano" checked><span>🎹 鍵盤</span><input type="range" id="vlPiano" min="0" max="100" value="70" title="ピアノ/エレピ音量"></label>
-    <label class="mx"><input type="checkbox" id="tgGuitar" checked><span>🎼 ギター</span><input type="range" id="vlGuitar" min="0" max="100" value="90" title="ギター音量"></label>
+    <label class="mx"><input type="checkbox" id="tgGuitar"><span>🎼 ギター</span><input type="range" id="vlGuitar" min="0" max="100" value="90" title="ギター音量"></label>
   </div>
   <div class="row2">
     <label class="toggle"><input type="checkbox" id="loopChk" checked> ループ</label>
@@ -351,7 +353,7 @@
       <label title="100 までが従来の範囲。そこから先も歪まないようクリッパーを通します">クリック音量 <input type="range" id="sndMetro" min="0" max="200" value="100"></label>
       <label class="toggle"><input type="checkbox" id="sndHuman" checked> ヒューマナイズ（タイミング/強弱の揺らぎ）</label>
       <label>鍵盤 <select id="sndKeys"><option value="auto">スタイル自動</option><option value="piano">アコースティック・ピアノ</option><option value="ep">エレピ(Rhodes系)</option></select></label>
-      <label>ギター <select id="sndGtr"><option value="auto">スタイル自動</option><option value="ac">アコースティック(スチール弦)</option><option value="ny">ナイロン弦</option><option value="el">エレキ(クリーン)</option></select></label>
+      <label>ギター <select id="sndGtr"><option value="auto">録音（エレキ・クリーン）</option><option value="ac">合成：アコースティック(スチール弦)</option><option value="ny">合成：ナイロン弦</option><option value="el">合成：エレキ(クリーン)</option></select></label>
     </div>
   </details>
 
@@ -367,13 +369,15 @@
       ドラムのフィルイン（4小節ごと）、ジャズのウォーキングベース、ピアノのボイスリーディング（前の和音から最小の動きで転回）を自動で行います。選ぶと推奨テンポに切り替わります。<br>
       ・<b>🥁🎸🎹🎼</b> のチェックで楽器の ON/OFF、隣のスライダーで音量バランスを調整できます。<br>
       ・<b>サウンド設定</b>：マスター音量・リバーブ量・ヒューマナイズ（人間らしい揺らぎ）・鍵盤とギターの音色をスタイルと別に固定できます。<br>
-      ・音はすべてブラウザ内で合成（ドラム＝物理モデル風の事前レンダリング音源、ギター/ベース＝弦モデル＋ボディ共鳴、ピアノ＝倍音加算モデル、エレピ＝FM）。読み込み無し＝途切れません。<br>
+      ・<b>ギターは録音した本物のエレキ（クリーン）</b>の音です。ドラム・ベース・ピアノ・エレピはブラウザ内で合成しています（ドラム＝物理モデル風、ベース＝弦モデル、ピアノ＝倍音加算、エレピ＝FM）。<br>
+      ・<b>ギター</b>は初期状態で OFF です（弾くのはあなたのパートなので）。🎼 のチェックで鳴らせます。合成のギターは「サウンド設定」で選べます。<br>
       ・進行はこの端末に自動保存されます。
     </div>
   </details>
 
   <div class="footnote">
-    すべてブラウザ内で音を合成（外部ファイル・通信なし）。ネットが不安定でも止まりません。<br>
+    音源はすべてこのアプリの中にあります（通信なし）。ネットが不安定でも止まりません。<br>
+    ギター音源：<a href="https://github.com/nbrosowsky/tonejs-instruments" target="_blank" rel="noopener">tonejs-instruments</a>（Nicholaus P. Brosowsky／録音 Karoryfer Samples）<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC-BY 3.0</a>、MP3 に変換して収録。<br>
     iPhone / iPad は最初に一度どこかをタップすると音が出ます。
   </div>
 </div>
@@ -931,7 +935,7 @@ function saveSnd(){ try{ localStorage.setItem("chord.snd",JSON.stringify(SND)); 
    melodic bus: piano/guitar → hall reverb send
    drums: StudioKit drum bus（パラレルコンプ＋ルーム） / bass: 弦モデル → アンプ段 */
 let AC=null, mix=null, masterOut=null, melodic=null, verbSend=null, drumBus=null, metroBus=null;
-let bassIn=null, subIn=null, pianoBus=null, epBus=null, gtrAc=null, gtrEl=null;
+let bassIn=null, subIn=null, pianoBus=null, epBus=null, gtrAc=null, gtrEl=null, gtrRec=null;
 const busG={};
 function audio(){
   if(AC) return AC;
@@ -1007,6 +1011,12 @@ function audio(){
   const elLp=ctx.createBiquadFilter(); elLp.type="lowpass"; elLp.frequency.value=4800; elLp.Q.value=0.8;
   const elOut=ctx.createGain(); elOut.gain.value=0.75;
   gtrEl.connect(elPk); elPk.connect(elSat); elSat.connect(elLp); elLp.connect(elOut); elOut.connect(busG.Guitar);
+  // 録音したギター（sound/guitar.js）。録音自体が本物のクリーントーンなので、胴鳴りやアンプの歪みは足さない。
+  // 低域の濁りだけ切り、ストロークの粒をそろえる軽いコンプだけ通す
+  gtrRec=ctx.createGain();
+  const rcHp=ctx.createBiquadFilter(); rcHp.type="highpass"; rcHp.frequency.value=70; rcHp.Q.value=0.6;
+  const rcComp=ctx.createDynamicsCompressor(); rcComp.threshold.value=-20; rcComp.knee.value=8; rcComp.ratio.value=2.5; rcComp.attack.value=0.006; rcComp.release.value=0.14;
+  gtrRec.connect(rcHp); rcHp.connect(rcComp); rcComp.connect(busG.Guitar);
 
   K.prewarm(ctx.sampleRate);
   return AC;
@@ -1177,8 +1187,26 @@ let gVoices=[], pVoices=[];
 function gtrDamp(t,fast){ gVoices=dampVoices(gVoices,t,fast?0.006:0.02); }
 function pianoDamp(t){ pVoices=dampVoices(pVoices,t,0.04); }
 
+const REC_GAIN=0.35;   // 録音ギターの音量合わせ（合成のギターと同じ大きさ）
 function pluck(midi,t,vel,pan,opt){
-  const ctx=AC, tone=(opt&&opt.tone)||"ac", mute=opt&&opt.mute;
+  const ctx=AC, mute=opt&&opt.mute; let tone=(opt&&opt.tone)||"ac";
+  if(tone==="rec"){
+    if(window.GuitarRec && GuitarRec.isReady()){
+      const v=clamp(vel,0.05,1);
+      const r=GuitarRec.voice(ctx,midi,t,{vel:v,gain:REC_GAIN,mute:mute,dur:opt&&opt.dur,
+        pan:pan!=null?pan:clamp((midi-52)/60,-0.3,0.3),dest:gtrRec});
+      // ストロークの持ち替え・左手ミュートで止められるよう、合成のときと同じ一覧に入れる
+      if(r){ gVoices.push({g:r.gain,src:r.src,end:r.end}); if(gVoices.length>80) gVoices=gVoices.filter(x=>x.end>ctx.currentTime); }
+      if(mute==="chuck"){ // 左手で弦を押さえて弾く「チャッ」は、ピックが弦を擦る音が主役
+        const nb=ctx.createBufferSource(); nb.buffer=pickBuf(ctx);
+        const nf=ctx.createBiquadFilter(); nf.type="highpass"; nf.frequency.value=2500;
+        const ng=ctx.createGain(); ng.gain.value=v*0.16;
+        nb.connect(nf); nf.connect(ng); ng.connect(gtrRec); nb.start(t);
+      }
+      return;
+    }
+    tone="el";   // 録音の準備ができるまでは、合成のクリーンで代役
+  }
   const f=mtof(midi), rec=ksGet(ctx,f,tone), v=clamp(vel,0.05,1);
   const s=ctx.createBufferSource(); s.buffer=rec.buf;
   s.playbackRate.value=f*rec.loop/ctx.sampleRate*(1+(Math.random()-0.5)*0.002);
@@ -1358,7 +1386,7 @@ const STYLES={
     bass:"W---W---W---W---", piano:"C-....C-......C-", guitar:"m...m...m...m..." },
 };
 const STYLE_ORDER=["guitar","ballad","folk","rock8","shuffle","funk","citypop","bossa","jazz"];
-let curStyle="guitar";
+let curStyle="ballad";   // 初期は ドラム＋ベース＋ピアノ（ギターは弾く本人のパート）
 function walkNote(chord,next,beat,beats){ // ウォーキングベース: 1拍目ルート → コードトーン → 次コードへの経過音
   const r=bassMidi(chord.root), pcs=chordPCs(chord.qual);
   const third=pcs.includes(4)?4:pcs.includes(3)?3:pcs.includes(2)?2:5;
@@ -1390,7 +1418,7 @@ function strum(root,qid,time,dir,vel,opt){
     pluck(nt.midi,time+i*spread+jit,vv,pan,{tone,mute});
   });
 }
-function styleTone(){ const st=STYLES[curStyle]||STYLES.guitar; return SND.gtr!=="auto"?SND.gtr:(st.gtr||"ac"); }
+function styleTone(){ return SND.gtr!=="auto"?SND.gtr:"rec"; }   // 既定＝録音ギター（エレキ・クリーン）
 
 /* ── UI: pickers ── */
 const rootsEl=$("roots");
@@ -1532,7 +1560,7 @@ function holds(pat,pos){ let n=0; for(let k=pos+1;k<pat.length&&pat[k]==="-";k++
 function hum(t){ return SND.human? t+(Math.random()-0.5)*0.006 : t; }
 function humv(v,amt){ return SND.human? v*(1+(Math.random()-0.5)*(amt||0.14)) : v; }
 function keysMode(st){ return SND.keys!=="auto"? SND.keys : (st.keys||"piano"); }
-function gtrTone(st){ return SND.gtr!=="auto"? SND.gtr : (st.gtr||"ac"); }
+function gtrTone(st){ return SND.gtr!=="auto"? SND.gtr : "rec"; }   // 既定＝録音ギター
 
 function scheduleStep(i,time){
   const ci=stepChord[i]; if(ci==null) return;
@@ -1682,6 +1710,7 @@ STYLE_ORDER.forEach(id=>{ const o=document.createElement("option"); o.value=id; 
 styleSel.value=curStyle;
 styleSel.onchange=()=>{
   curStyle=styleSel.value;
+  if(curStyle==="guitar"){ const g=$("tgGuitar"); if(g&&!g.checked) g.checked=true; }   // 「ギターのみ」でギター OFF だと無音になるため
   const b=STYLES[curStyle] && STYLES[curStyle].bpm;
   if(b){ bpm=b; bpmEl.value=b; bpmVal.textContent=b; }
   lastPv=null; save();
@@ -1740,7 +1769,7 @@ function load(){ let s=null; try{ s=localStorage.getItem("chord.prog"); }catch(e
 load();
 try{ const k=localStorage.getItem("chord.key"); if(k!=null && ROOTS[+k]!=null) keyPc=+k; }catch(e){}
 keySel.value=String(keyPc);
-styleSel.value = STYLES[curStyle] ? curStyle : "guitar";
+styleSel.value = STYLES[curStyle] ? curStyle : "ballad";
 syncPickers(); refreshDia(); updateNow(); renderProg();
 ["touchstart","mousedown","keydown"].forEach(ev=>
   document.addEventListener(ev,()=>{ if(window.__STUDIO_ACTIVE!=="chord")return; if(AC && AC.state==="suspended") AC.resume(); },{passive:true}));

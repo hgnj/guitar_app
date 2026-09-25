@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-app="home">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -23,24 +23,26 @@
     background:var(--panel); border:1px solid var(--line); border-radius:14px;
     padding:18px 22px; font-size:17px; font-weight:700; letter-spacing:.02em;
     transition:border-color .12s, background .12s;}
-  .app:hover{border-color:#4a5a82; background:#1c2434;}
-  .app .ico{font-size:24px; line-height:1; width:32px; text-align:center;}
+  .app:hover{border-color:rgba(var(--ui-accent-rgb),.55);
+    background:linear-gradient(90deg, rgba(var(--ui-accent-rgb),.12), transparent 70%), var(--panel);}
+  .app .ui-tile{width:36px; height:36px; font-size:18px;}
   .app small{margin-left:auto; color:var(--sub); font-size:12px; font-weight:400;}
   @media(max-width:480px){
     .app{padding:16px 18px; font-size:16px;}
     .app small{display:none;}
   }
 </style>
+<link rel="stylesheet" href="ui.css">
 </head>
 <body>
 <div class="wrap">
   <h1>Guitar Apps</h1>
   <nav class="apps">
-    <a class="app" href="tuner/index.html"><span class="ico">🎚</span>Tuner<small>チューナー / 音の分析</small></a>
-    <a class="app" href="fretboard/index.html"><span class="ico">🎸</span>Fretboard<small>指板 / スケール / 練習</small></a>
-    <a class="app" href="theory/index.html"><span class="ico">🎼</span>Theory<small>音楽理論 / 作曲</small></a>
-    <a class="app" href="studio/index.html"><span class="ico">🎹</span>Studio<small>伴奏 / ドラム / リズム練習</small></a>
-    <a class="app" href="bookmark/index.html"><span class="ico">🔖</span>Bookmark<small>YouTube ループ</small></a>
+    <a class="app" data-tile="tuner" href="tuner/index.html"><span class="ui-tile">◎</span>Tuner<small>チューナー / 音の分析</small></a>
+    <a class="app" data-tile="fretboard" href="fretboard/index.html"><span class="ui-tile">♮</span>Fretboard<small>指板 / スケール / 練習</small></a>
+    <a class="app" data-tile="theory" href="theory/index.html"><span class="ui-tile">♯</span>Theory<small>音楽理論 / 作曲</small></a>
+    <a class="app" data-tile="studio" href="studio/index.html"><span class="ui-tile">♫</span>Studio<small>伴奏 / ドラム / リズム練習</small></a>
+    <a class="app" data-tile="bookmark" href="bookmark/index.html"><span class="ui-tile">▶</span>Bookmark<small>YouTube ループ</small></a>
   </nav>
 </div>
 <script src="nav.js" defer></script>

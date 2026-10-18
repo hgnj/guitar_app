@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ja" data-app="theory">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1116">
+<title>五線譜 — タブ譜・指板とつなぐ</title>
+<style>
+/* 色・地は ui.css の共通トークン（--ui-*）。このページ固有の部品だけここに書く */
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+body{color:var(--ui-text,#e9edf3);font-family:var(--ui-font,sans-serif);min-height:100vh;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+.site-nav{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px}
+.nav-link{color:var(--ui-sub);text-decoration:none;font-size:.75rem;padding:6px 12px;border:1px solid var(--ui-line);border-radius:8px}
+.app{max-width:1100px;margin:0 auto;padding:16px 20px 48px}
+header{display:flex;align-items:center;margin-bottom:12px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo i{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;color:#fff}
+h1{font-size:15px;font-weight:700}
+h1 em{font-style:normal;font-weight:400;font-size:11px;color:var(--ui-sub);margin-left:8px}
+
+.panel{background:var(--ui-s1);border:1px solid var(--ui-line);border-radius:14px;padding:12px 14px;margin-top:12px}
+.lbl{font-size:11px;letter-spacing:.14em;color:var(--ui-sub);text-transform:uppercase;margin-bottom:6px;
+  display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.lbl .hint{letter-spacing:.02em;text-transform:none;font-size:11.5px}
+
+/* いま選んでいる音 */
+.readout{display:flex;align-items:center;gap:6px 18px;flex-wrap:wrap}
+.readout .nm{font-size:38px;font-weight:800;letter-spacing:.01em;min-width:150px}
+.readout .where{font-size:15px;font-weight:700}
+.readout .sub{font-size:12.5px;color:var(--ui-sub);margin-top:3px;line-height:1.6}
+.readout .tip{font-size:12.5px;color:var(--ui-accent);margin-top:3px;line-height:1.6}
+
+/* ボタン類 */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.btn{font:inherit;font-size:13px;font-weight:700;color:var(--ui-text);background:var(--ui-s2);border:1px solid var(--ui-line2);
+  border-radius:9px;padding:8px 12px;cursor:pointer;white-space:nowrap;transition:.1s}
+.btn:hover{border-color:rgba(var(--ui-accent-rgb),.6)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.38;cursor:default;transform:none}
+.btn.on{background:linear-gradient(135deg,var(--t-a),var(--t-b));border-color:transparent;color:#fff}
+.btn.big{font-size:16px;padding:8px 14px;min-width:44px}
+.seg{display:inline-flex;border:1px solid var(--ui-line2);border-radius:9px;overflow:hidden}
+.seg .btn{border:0;border-radius:0}
+.seg .btn+.btn{border-left:1px solid var(--ui-line2)}
+.grow{flex:1}
+.set{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:12.5px;color:var(--ui-sub)}
+.set label{display:flex;align-items:center;gap:6px}
+.set .k{font-size:11px;letter-spacing:.08em}
+select.btn{padding:8px 10px}
+
+/* 五線譜・タブ譜・指板（SVG） */
+svg{display:block;width:100%;height:auto;touch-action:manipulation}
+svg text{font-family:var(--ui-font,sans-serif)}
+.st-line{stroke:#a8b2c4;stroke-width:1.2}
+.st-ledger{stroke:#a8b2c4;stroke-width:1.4}
+.clef{font-family:"Segoe UI Symbol","Noto Music","Apple Symbols","Bravura",serif !important;font-size:78px;fill:#cfd6e2}
+.oct8{font-size:13px;font-weight:700;fill:#cfd6e2}
+.lb{font-size:10.5px;fill:#6f7a8e}
+.lb.ln{fill:#8f9bb0}
+.lb.hl{fill:var(--ui-accent);font-weight:700}
+.lb-h{font-size:9.5px;fill:#5d6677;letter-spacing:.1em}
+.nh{fill:#e9edf3}
+.nh.cur{fill:var(--ui-accent)}
+.nhi{fill:var(--ui-s1)}
+.acc{font-size:21px;fill:#e9edf3}
+.acc.cur{fill:var(--ui-accent)}
+.ott{font-size:12px;font-style:italic;font-weight:700;fill:#cfd6e2}
+.curband{fill:rgba(var(--ui-accent-rgb),.10)}
+.tab-line{stroke:#8792a6;stroke-width:1}
+.tab-lbl{font-size:11px;fill:#8f9bb0;font-weight:700}
+.tab-T{font-size:13px;font-weight:800;fill:#cfd6e2;letter-spacing:0}
+.tab-bg{fill:var(--ui-s1)}
+.tab-num{font-size:15px;font-weight:800;fill:#e9edf3}
+.tab-cur-bg{fill:rgba(var(--ui-accent-rgb),.22);stroke:var(--ui-accent);stroke-width:1.2}
+.tab-cur-num{fill:#fff}
+.tab-out{font-size:11px;fill:#6f7a8e}
+.hit{cursor:pointer}
+.fbwrap,.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.fb-wood{fill:url(#wood)}
+.fb-open{fill:#1a1d24}
+.fb-fret{stroke:#b9b2a6;stroke-width:1.6}
+.fb-nut{stroke:#ece6da;stroke-width:5}
+.fb-str{stroke:#d7d2c8}
+.fb-inlay{fill:rgba(255,255,255,.22)}
+.fb-num{font-size:10.5px;fill:#7b8597}
+.fb-name{font-size:9px;fill:rgba(255,255,255,.38);font-weight:700}
+.fb-pos{fill:rgba(var(--ui-accent-rgb),.28);stroke:var(--ui-accent);stroke-width:2}
+.fb-pos-t{font-size:10.5px;font-weight:800;fill:#fff}
+.fb-sel{fill:var(--ui-accent);stroke:#fff;stroke-width:2}
+.fb-cell{fill:transparent;cursor:pointer}
+.fb-cell:hover{fill:rgba(255,255,255,.06)}
+.fb-wrong{fill:none;stroke:#ff6b6b;stroke-width:2.4}
+
+/* 練習（読譜クイズ） */
+.qbox{margin-top:10px;border-top:1px solid var(--ui-line);padding-top:10px}
+.ans{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:stretch}
+.nbtn{min-width:62px;padding:8px 10px;font-size:17px;line-height:1.15;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nbtn small{font-size:11px;font-weight:600;color:var(--ui-sub)}
+.nbtn.ok{background:#1d5c3c;border-color:#46d18a}
+.nbtn.ng{background:#5c1d27;border-color:#ff6b6b}
+.qfb{margin-top:10px;font-size:15px;font-weight:700;line-height:1.6;min-height:24px}
+.qfb.ok{color:#46d18a}
+.qfb.ng{color:#ff8a8a}
+.qfb small{display:block;font-size:12.5px;font-weight:500;color:var(--ui-sub)}
+.qstat{font-size:12.5px;color:var(--ui-sub)}
+.qstat b{color:var(--ui-text)}
+.weak{font-size:12.5px;color:var(--ui-sub);margin-top:6px}
+.weak b{color:#ffb4b4}
+.chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ui-sub)}
+.nh.ok,.acc.ok{fill:#46d18a}
+.nh.ng,.acc.ng{fill:#ff6b6b}
+.ksig{font-size:21px;fill:#e9edf3}
+
+/* 読み方のきほん */
+.guide{font-size:13px;line-height:1.85;color:#c7cfdc}
+.guide b{color:var(--ui-text)}
+.guide .em{color:var(--ui-accent);font-weight:700}
+.guide table{border-collapse:collapse;margin:6px 0 4px;font-size:12.5px}
+.guide td,.guide th{border-bottom:1px solid var(--ui-line);padding:5px 12px 5px 0;text-align:left;vertical-align:top}
+.guide th{color:var(--ui-sub);font-weight:600;font-size:11.5px}
+.guide tr.hl td{color:var(--ui-accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:820px){.two{grid-template-columns:1fr}}
+@media(max-width:520px){
+  .app{padding:12px 12px 40px}
+  .readout .nm{font-size:30px;min-width:0}
+  .btn{padding:7px 10px;font-size:12.5px}
+}
+</style>
+<link rel="stylesheet" href="../ui.css">
+<script src="../sound/guitar.js"></script>
+</head>
+<body>
+<nav class="site-nav"><a href="../index.html" class="nav-link">🏠 Home</a>
+  <a href="index.html" class="nav-link">📖 Theory</a>
+  <a href="compose.html" class="nav-link">🎼 Compose</a>
+  <a href="staff.html" class="nav-link active">𝄞 五線譜</a>
+  <a href="../fretboard/index.html" class="nav-link" style="margin-left:auto">🎸 Fretboard</a>
+  <a href="../fretboard/practice.html" class="nav-link">🎵 Practice</a>
+  <a href="../tuner/index.html" class="nav-link">🎚 Tuner</a>
+  <a href="../studio/index.html" class="nav-link">🎹 Studio</a>
+  <a href="../bookmark/index.html" class="nav-link">🔖 Bookmark</a>
+</nav>
+<div class="app">
+  <header><div class="logo"><i>♯</i><h1>Theory <em>音楽理論 / 作曲 / 五線譜</em></h1></div></header>
+
+  <!-- いま選んでいる音 -->
+  <div class="panel">
+    <div class="readout">
+      <div class="nm" id="rdName">G（ソ）</div>
+      <div>
+        <div class="where" id="rdWhere">下から2本目の線</div>
+        <div class="sub" id="rdSub"></div>
+        <div class="tip" id="rdTip"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 五線譜 -->
+  <div class="panel">
+    <div class="lbl"><span>五線譜（ト音記号・ギター譜）</span><span class="hint" id="staffHint">クリックした高さに音が移ります　↑↓キーでも</span></div>
+    <div class="scrollx" id="staffWrap"><div id="staff"></div></div>
+    <div class="toolbar">
+      <button class="btn big" id="btnUp" title="1つ上の線／間へ（↑）">▲</button>
+      <button class="btn big" id="btnDown" title="1つ下の線／間へ（↓）">▼</button>
+      <div class="seg" id="accSeg" title="臨時記号">
+        <button class="btn" data-acc="1">♯</button><button class="btn" data-acc="0">♮</button><button class="btn" data-acc="-1">♭</button>
+      </div>
+      <button class="btn" id="btnPlay1" title="いまの音を鳴らす（Space）">🔊 鳴らす</button>
+      <div class="grow"></div>
+      <select class="btn" id="presetSel" title="お手本のフレーズを並べて、五線譜とタブ譜で見る">
+        <option value="">お手本を並べる…</option>
+        <option value="open">開放弦（低い方から）</option>
+        <option value="cmaj">Cメジャー・スケール（ファーストポジション）</option>
+        <option value="empent">Eマイナー・ペンタ（開放ポジション）</option>
+      </select>
+      <div class="seg" id="modeSeg">
+        <button class="btn" data-mode="one">1音</button><button class="btn" data-mode="phrase">並べる</button><button class="btn" data-mode="quiz">練習</button>
+      </div>
+    </div>
+    <div class="toolbar" id="phraseBar">
+      <button class="btn" id="btnPlayAll">▶ 並べた音を再生</button>
+      <button class="btn" id="btnBack">⌫ 1つ消す</button>
+      <button class="btn" id="btnClear">クリア</button>
+      <span class="hint" style="font-size:12px;color:var(--ui-sub)">指板をタップすると右に並んでいきます</span>
+    </div>
+    <!-- 練習（読譜クイズ） -->
+    <div class="qbox" id="quizBox" hidden>
+      <div class="toolbar" style="margin-top:0">
+        <div class="seg" id="lvSeg" title="段階">
+          <button class="btn" data-lv="1">① 五線の中</button><button class="btn" data-lv="2">② 加線も</button><button class="btn" data-lv="3">③ ♯♭も</button><button class="btn" data-lv="4">④ 調号つき</button>
+        </div>
+        <label class="chk" title="ヒント中の答えは成績に数えません"><input type="checkbox" id="chkHint"> ヒント（線と間の名前）</label>
+        <label class="chk"><input type="checkbox" id="chkAuto"> 正解したら自動で次へ</label>
+      </div>
+      <div class="ans">
+        <div class="seg" id="qAccSeg" title="♯・♭ のついた音は、先にこちらを選んでから音名を押す">
+          <button class="btn nbtn" data-qacc="-1">♭</button><button class="btn nbtn" data-qacc="0">♮</button><button class="btn nbtn" data-qacc="1">♯</button>
+        </div>
+        <div class="ans" id="qNames" style="margin-top:0"></div>
+      </div>
+      <div class="qfb" id="qFeedback"></div>
+      <div class="toolbar">
+        <button class="btn" id="btnNext">次の問題 ▶ <small style="font-weight:500;opacity:.7">Enter</small></button>
+        <button class="btn" id="btnHear">🔊 もう一度聴く</button>
+        <div class="grow"></div>
+        <span class="qstat" id="qStats"></span>
+        <button class="btn" id="btnReset">成績をリセット</button>
+      </div>
+      <div class="weak" id="qWeak"></div>
+    </div>
+  </div>
+
+  <!-- タブ譜 -->
+  <div class="panel">
+    <div class="lbl"><span>タブ譜</span><span class="hint">数字＝押さえるフレット。五線譜の音のうち「どこで弾くか」を1つに決めたもの</span></div>
+    <div class="scrollx" id="tabWrap"><div id="tab"></div></div>
+  </div>
+
+  <!-- 指板 -->
+  <div class="panel">
+    <div class="lbl"><span>指板</span><span class="hint" id="fbHint">光っている所はどれも同じ高さの音。タップするとそこで弾く（タブ譜が変わる）</span></div>
+    <div class="fbwrap"><div id="board"></div></div>
+  </div>
+
+  <!-- 設定 -->
+  <div class="panel">
+    <div class="set">
+      <span class="k">弦</span>
+      <div class="seg" id="strSeg"><button class="btn" data-v="6">6弦</button><button class="btn" data-v="7">7弦</button></div>
+      <span class="k">フレット</span>
+      <div class="seg" id="fretSeg"><button class="btn" data-v="12">12</button><button class="btn" data-v="15">15</button><button class="btn" data-v="24">24</button></div>
+      <span class="k">音の名前</span>
+      <div class="seg" id="nameSeg"><button class="btn" data-v="both">両方</button><button class="btn" data-v="en">英語</button><button class="btn" data-v="jp">ドレミ</button></div>
+      <span class="k">黒鍵の書き方</span>
+      <div class="seg" id="prefSeg"><button class="btn" data-v="sharp">♯</button><button class="btn" data-v="flat">♭</button></div>
+      <label><input type="checkbox" id="chkLabels"> 五線に線と間の名前</label>
+      <label><input type="checkbox" id="chkFbNames"> 指板に音名（幹音）</label>
+      <label><input type="checkbox" id="chkSound"> 音を鳴らす</label>
+    </div>
+  </div>
+
+  <!-- 読み方のきほん -->
+  <div class="two">
+    <div class="panel guide">
+      <div class="lbl"><span>読み方のきほん</span></div>
+      <b>線</b>は下から <span class="em">ミ・ソ・シ・レ・ファ</span>（E G B D F）。<br>
+      <b>間</b>は下から <span class="em">ファ・ラ・ド・ミ</span>（F A C E）。<br>
+      線の上の音と間の音が交互に並んでいて、<b>1つ上がるごとに「ドレミ」が1つ進みます</b>。<br>
+      五線からはみ出す音は、<b>加線</b>（短い線）を足して書きます。<br>
+      ト音記号の渦巻きの中心は <b>下から2本目の線＝ソ（G）</b>。「ト」は日本の音名でソのことです。<br><br>
+      <b>ギター譜は、実際の音より1オクターブ高く書く</b>決まりです（ト音記号の下の小さな「8」がその印）。
+      そのまま書くと低音弦が五線のずっと下になってしまうためです。<br>
+      五線譜の1つの音は、<b>指板では何か所にもあります</b>。タブ譜はその中から「ここで弾く」を1つ決めたもの。
+      五線譜を読めるようになると、どのポジションでも同じ曲を弾けるようになります。
+    </div>
+    <div class="panel guide">
+      <div class="lbl"><span>開放弦は五線のどこ？</span></div>
+      <table id="openTable"></table>
+      まずは<b>開放弦の位置</b>を目印に覚えると、そこから数えて読めるようになります。
+      「並べる」→「お手本：開放弦」で、五線とタブ譜を並べて見られます。
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+
+/* ── 音の基本データ ── */
+const LETTERS = ["C","D","E","F","G","A","B"];
+const DOREMI  = ["ド","レ","ミ","ファ","ソ","ラ","シ"];
+const OFFS    = [0,2,4,5,7,9,11];                 // 幹音の半音位置
+const OPEN    = [64,59,55,50,45,40,35];           // 1弦〜7弦の開放（実際に鳴る高さ・MIDI）
+const STR_LBL = ["e","B","G","D","A","E","B"];
+const E4      = 30;                               // 五線のいちばん下の線（記譜の E4）の全音階番号（4×7＋2）
+const GUITAR_OCT = 12;                            // ギター譜は実音より1オクターブ高く書く
+
+/* ── 設定（この端末に保存） ── */
+const DEF = { strings:6, frets:15, names:"both", labels:true, mode:"one", sound:true, pref:"sharp", fbNames:false, qlevel:1, qauto:true };
+let cfg = Object.assign({}, DEF);
+try{ Object.assign(cfg, JSON.parse(localStorage.getItem("staff.cfg") || "{}")); }catch(e){}
+function save(){ try{ localStorage.setItem("staff.cfg", JSON.stringify(cfg)); }catch(e){} }
+
+/* ── 状態：並べた音（1音モードは1つだけ） ── */
+let notes = [], cur = 0;
+
+/* ── 練習（読譜クイズ）の状態 ── */
+const QZ = { q:null, answered:false, ok:null, t0:0, accSel:0, given:null, hint:false,
+             key:null, map:[0,0,0,0,0,0,0], keyLeft:0, saved:null, autoTimer:null,
+             n:0, okN:0, streak:0, times:[], fb:"", fbCls:"" };
+const isQuiz = () => cfg.mode === "quiz";
+const hidden = () => isQuiz() && !QZ.answered;        // 答える前は答えにつながる表示を隠す
+
+/* ── 調号（④ 調号つき） ── */
+const KEYS = [ {name:"G",n:1,t:"♯"},{name:"D",n:2,t:"♯"},{name:"A",n:3,t:"♯"},{name:"E",n:4,t:"♯"},
+               {name:"F",n:1,t:"♭"},{name:"B♭",n:2,t:"♭"},{name:"E♭",n:3,t:"♭"},{name:"A♭",n:4,t:"♭"} ];
+const SHARP_L = [3,0,4,1,5,2,6], FLAT_L = [6,2,5,1,4,0,3];   // 調号がつく順の音名（F C G D A E B ／ B E A D G C F）
+const SHARP_Y = [8,5,9,6,3,7,4], FLAT_Y = [4,7,3,6,2,5,1];   // ト音記号の五線で、調号を書く高さ
+function keyMap(k){ const m = [0,0,0,0,0,0,0], L = k.t === "♯" ? SHARP_L : FLAT_L; for(let i = 0; i < k.n; i++) m[L[i]] = k.t === "♯" ? 1 : -1; return m; }
+
+/* ── 音の計算 ── */
+// 全音階番号（五線上の高さ。0＝いちばん下の線、1つ上がると線↔間を1つ）→ 記譜の MIDI（幹音）
+function stepToMidi(step){ const d = step + E4, o = Math.floor(d / 7), l = ((d % 7) + 7) % 7; return 12 * (o + 1) + OFFS[l]; }
+function letterOf(step){ const d = step + E4; return ((d % 7) + 7) % 7; }
+// 記譜の MIDI → 五線上の高さと臨時記号（黒鍵は設定に合わせて ♯ か ♭ で書く）
+function spell(midi){
+  const pc = ((midi % 12) + 12) % 12, o = Math.floor(midi / 12) - 1;
+  const SH = [[0,0],[0,1],[1,0],[1,1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[5,1],[6,0]];
+  const FL = [[0,0],[1,-1],[1,0],[2,-1],[2,0],[3,0],[4,-1],[4,0],[5,-1],[5,0],[6,-1],[6,0]];
+  const [l, a] = (cfg.pref === "flat" ? FL : SH)[pc];
+  return { step: o * 7 + l - E4, acc: a };
+}
+const writtenOf  = n => stepToMidi(n.step) + n.acc;
+const soundingOf = n => writtenOf(n) - GUITAR_OCT;
+function nameOf(n){
+  const l = letterOf(n.step), a = n.acc > 0 ? "♯" : n.acc < 0 ? "♭" : "";
+  const en = LETTERS[l] + a, jp = DOREMI[l] + a;
+  return cfg.names === "en" ? en : cfg.names === "jp" ? jp : en + "（" + jp + "）";
+}
+// その高さの音を弾ける場所（指板上）すべて
+function positions(sounding){
+  const out = [];
+  for(let s = 0; s < cfg.strings; s++){ const f = sounding - OPEN[s]; if(f >= 0 && f <= cfg.frets) out.push({ s, f }); }
+  return out;
+}
+// 候補が複数あるときは、直前の場所にいちばん近い所（＝手を動かさずに弾ける所）を選ぶ
+function nearestPos(sounding, prev){
+  const ps = positions(sounding);
+  if(!ps.length) return null;
+  if(prev && prev.s != null) ps.sort((a, b) => Math.abs(a.f - prev.f) - Math.abs(b.f - prev.f) || Math.abs(a.s - prev.s) - Math.abs(b.s - prev.s));
+  else ps.sort((a, b) => a.f - b.f || b.s - a.s);
+  return ps[0];
+}
+function rangeSteps(){
+  return { lo: spell(OPEN[cfg.strings - 1] + GUITAR_OCT).step, hi: spell(OPEN[0] + cfg.frets + GUITAR_OCT).step };
+}
+function fromFret(s, f){ const sp = spell(OPEN[s] + f + GUITAR_OCT); return { step: sp.step, acc: sp.acc, s, f }; }
+function fromStep(step, acc, prev){
+  const n = { step, acc, s: null, f: null };
+  const p = nearestPos(soundingOf(n), prev);
+  if(p){ n.s = p.s; n.f = p.f; }
+  return n;
+}
+
+/* ── 五線のどこかを言葉で ── */
+function describe(step){
+  if(step >= 0 && step <= 8) return step % 2 === 0 ? `下から${step / 2 + 1}本目の線` : `${(step - 1) / 2 + 1}本目と${(step + 1) / 2 + 1}本目の線の間`;
+  if(step === -1) return "五線のすぐ下（いちばん下の線の下）";
+  if(step === 9)  return "五線のすぐ上（いちばん上の線の上）";
+  if(step < 0){ const k = -step; return k % 2 === 0 ? `下の加線 ${k / 2}本目（線の上）` : `下の加線 ${(k - 1) / 2}本目のさらに下（間）`; }
+  const k = step - 8; return k % 2 === 0 ? `上の加線 ${k / 2}本目（線の上）` : `上の加線 ${(k - 1) / 2}本目のさらに上（間）`;
+}
+function tipOf(n){
+  if(n.acc === 0){
+    if(n.step === 2)  return "ト音記号の渦が巻きついている線。ト音記号の「ト」は、日本の音名でソのこと。";
+    if(n.step === -2) return "「真ん中のド」。加線1本のドは、ピアノの鍵盤のちょうど真ん中のドです（ギターでは実際は1オクターブ下）。";
+    if(n.step === 0)  return "いちばん下の線＝ミ。ここを起点に「ミ・ソ・シ・レ・ファ」と数えられます。";
+    if(n.step === 8)  return "いちばん上の線＝ファ。";
+  }
+  for(let s = 0; s < cfg.strings; s++) if(OPEN[s] + GUITAR_OCT === writtenOf(n)) return `${s + 1}弦の開放弦と同じ高さ。`;
+  return "";
+}
+
+/* ── 描画：五線譜 ── */
+let SW = 680, NARROW = false;                         // 描く幅（狭い画面では等倍＝縮めない）
+const HS = 6;                                         // 半ステップ（線↔間）の高さ
+let SH = 160, BOT = 100;                              // 五線の高さと、いちばん下の線の y（描くたびに決め直す）
+const yOf = step => BOT - step * HS;
+const showLabels = () => isQuiz() ? QZ.hint : cfg.labels;   // 練習中はヒントのときだけ
+const LBL_W = () => showLabels() ? 98 : 16;
+let X0 = 100;
+function layout(){
+  const cw = Math.max(280, $("staffWrap").clientWidth || 680);
+  NARROW = cw < 680;
+  X0 = NARROW ? 78 : 100;
+  const need = cfg.mode === "phrase" ? X0 + notes.length * 42 + LBL_W() + 12 : 0;
+  SW = NARROW ? Math.max(cw, need) : 680;
+}
+const svgW = () => NARROW ? ` style="width:${SW}px"` : "";
+function noteX(i){
+  const x1 = SW - LBL_W();
+  if(cfg.mode !== "phrase") return X0 + 70;
+  const n = Math.max(notes.length, 1), dx = Math.min(62, (x1 - X0) / n);
+  return X0 + dx * (i + 0.5);
+}
+function staffSvg(){
+  // 縦の範囲：低い側は弾ける最低音まで常に確保（音を下げるたびに枠が伸び縮みしないように）、
+  // 高い側はふだんは詰め、高い音があるときだけ広げる
+  const drawn = notes.map(n => n.step > 16 ? n.step - 7 : n.step);
+  const lo = Math.min(-5, rangeSteps().lo - 2, ...drawn.map(v => v - 3));
+  const hi = Math.max(13, ...drawn.map(v => v + 3)), PAD = 6;
+  BOT = PAD + hi * HS; SH = BOT - lo * HS + PAD;
+  let h = `<svg viewBox="0 0 ${SW} ${SH}" id="staffSvg" role="img" aria-label="五線譜"${svgW()}>`;
+  const c = notes[cur];
+  // いま選んでいる音の高さに薄い帯
+  if(c && !isQuiz()){ const st = c.step > 16 ? c.step - 7 : c.step; h += `<rect class="curband" x="${X0 - 8}" y="${yOf(st) - HS}" width="${SW - LBL_W() - X0 + 4}" height="${HS * 2}" rx="3"/>`; }
+  for(let i = 0; i < 5; i++){ const y = yOf(i * 2); h += `<line class="st-line" x1="10" x2="${SW - LBL_W() + 6}" y1="${y}" y2="${y}"/>`; }
+  // ト音記号と、その下の小さな「8」（ギター譜＝1オクターブ下で鳴る印）
+  h += `<text class="clef" x="14" y="${yOf(0) + 15}">𝄞</text>`;
+  h += `<text class="oct8" x="35" y="${yOf(0) + 44}" text-anchor="middle">8</text>`;
+  // 調号（④ 調号つき）
+  if(isQuiz() && cfg.qlevel === 4 && QZ.key){
+    const sh = QZ.key.t === "♯", Y = sh ? SHARP_Y : FLAT_Y;
+    for(let i = 0; i < QZ.key.n; i++) h += `<text class="ksig" x="${62 + i * 11}" y="${yOf(Y[i]) + (sh ? 7 : 5)}" text-anchor="middle">${QZ.key.t}</text>`;
+  }
+  // 右端に、線（右の列）と間（左の列）の名前
+  if(showLabels()){
+    const xL = SW - 10, xS = SW - 54;
+    h += `<text class="lb-h" x="${xS}" y="${yOf(8) - 12}" text-anchor="end">間</text><text class="lb-h" x="${xL}" y="${yOf(8) - 12}" text-anchor="end">線</text>`;
+    for(let st = -1; st <= 9; st++){
+      const l = letterOf(st), onLine = st % 2 === 0, hl = c && !hidden() && (c.step > 16 ? c.step - 7 : c.step) === st ? " hl" : "";
+      h += `<text class="lb ${onLine ? "ln" : "sp"}${hl}" x="${onLine ? xL : xS}" y="${yOf(st) + 3.6}" text-anchor="end">${LETTERS[l]} ${DOREMI[l]}</text>`;
+    }
+  }
+  notes.forEach((n, i) => { h += noteSvg(n, noteX(i), i === cur); });
+  h += `<rect class="hit" id="staffHit" x="0" y="0" width="${SW}" height="${SH}" fill="transparent"/>`;
+  return h + "</svg>";
+}
+function noteSvg(n, x, isCur){
+  let st = n.step, ott = false;
+  if(st > 16){ st -= 7; ott = true; }             // 高すぎる音は 8va（1オクターブ上で弾く）で書く
+  const y = yOf(st), cls = isQuiz() ? (QZ.answered ? (QZ.ok ? " ok" : " ng") : "") : isCur ? " cur" : "";
+  let h = "";
+  if(st <= -2) for(let k = -2; k >= st; k -= 2) h += `<line class="st-ledger" x1="${x - 15}" x2="${x + 15}" y1="${yOf(k)}" y2="${yOf(k)}"/>`;
+  if(st >= 10) for(let k = 10; k <= st; k += 2) h += `<line class="st-ledger" x1="${x - 15}" x2="${x + 15}" y1="${yOf(k)}" y2="${yOf(k)}"/>`;
+  if(n.acc && !n.keyed) h += `<text class="acc${cls}" x="${x - 19}" y="${y + 7}" text-anchor="middle">${n.acc > 0 ? "♯" : "♭"}</text>`;
+  // 全音符（白抜きの符頭）
+  h += `<ellipse class="nh${cls}" cx="${x}" cy="${y}" rx="9" ry="6.4" transform="rotate(-16 ${x} ${y})"/>`;
+  h += `<ellipse class="nhi" cx="${x}" cy="${y}" rx="4.3" ry="2.9" transform="rotate(42 ${x} ${y})"/>`;
+  if(ott) h += `<text class="ott" x="${x}" y="${Math.min(y, yOf(8)) - 16}" text-anchor="middle">8va</text>`;
+  return h;
+}
+
+/* ── 描画：タブ譜 ── */
+function tabSvg(){
+  const n = cfg.strings, TG = 17, top = 14, H = top * 2 + (n - 1) * TG;
+  let h = `<svg viewBox="0 0 ${SW} ${H}" id="tabSvg" role="img" aria-label="タブ譜"${svgW()}>`;
+  const mid = top + (n - 1) * TG / 2;
+  h += `<text class="tab-T" x="30" y="${mid - 14}" text-anchor="middle">T</text><text class="tab-T" x="30" y="${mid + 4}" text-anchor="middle">A</text><text class="tab-T" x="30" y="${mid + 22}" text-anchor="middle">B</text>`;
+  for(let s = 0; s < n; s++){
+    const y = top + s * TG;
+    h += `<line class="tab-line" x1="56" x2="${SW - LBL_W() + 6}" y1="${y}" y2="${y}"/>`;
+    h += `<text class="tab-lbl" x="50" y="${y + 4}" text-anchor="end">${STR_LBL[s]}</text>`;
+  }
+  notes.forEach((nt, i) => {
+    const x = noteX(i);
+    if(hidden()){ h += `<text class="tab-out" x="${x}" y="${mid + 5}" text-anchor="middle" style="font-size:18px;font-weight:800">？</text>`; return; }
+    if(nt.s == null){ h += `<text class="tab-out" x="${x}" y="${mid + 4}" text-anchor="middle">範囲外</text>`; return; }
+    const y = top + nt.s * TG, t = String(nt.f), w = t.length > 1 ? 24 : 17;
+    if(i === cur) h += `<rect class="tab-cur-bg" x="${x - w / 2 - 2}" y="${y - 10}" width="${w + 4}" height="20" rx="6"/>`;
+    else h += `<rect class="tab-bg" x="${x - w / 2}" y="${y - 8}" width="${w}" height="16"/>`;
+    h += `<text class="tab-num${i === cur ? " tab-cur-num" : ""}" x="${x}" y="${y + 5}" text-anchor="middle" data-i="${i}">${t}</text>`;
+  });
+  h += `<rect class="hit" id="tabHit" x="56" y="0" width="${SW - 56}" height="${H}" fill="transparent"/>`;
+  return h + "</svg>";
+}
+
+/* ── 描画：指板 ── */
+function boardSvg(){
+  const n = cfg.strings, F = cfg.frets, nut = 44, fw = F > 15 ? 40 : 46, W = nut + F * fw + 12;
+  const top = 18, SG = 25, bottom = top + (n - 1) * SG, H = bottom + 34;
+  const fx = k => nut + k * fw, cx = k => k === 0 ? nut / 2 : nut + (k - 0.5) * fw, sy = s => top + s * SG;
+  let h = `<svg viewBox="0 0 ${W} ${H}" id="boardSvg" role="img" aria-label="指板" style="min-width:${Math.min(W, F > 15 ? W : 660)}px">`;
+  h += `<defs><linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b2516"/><stop offset=".5" stop-color="#2d1b10"/><stop offset="1" stop-color="#22140b"/></linearGradient></defs>`;
+  h += `<rect class="fb-open" x="0" y="${top - 12}" width="${nut}" height="${bottom - top + 24}" rx="6"/>`;
+  h += `<rect class="fb-wood" x="${nut}" y="${top - 12}" width="${F * fw}" height="${bottom - top + 24}" rx="4"/>`;
+  // ポジションマーク
+  const midY = (top + bottom) / 2;
+  [3, 5, 7, 9, 15, 17, 19, 21].forEach(k => { if(k <= F) h += `<circle class="fb-inlay" cx="${cx(k)}" cy="${midY}" r="5"/>`; });
+  [12, 24].forEach(k => { if(k <= F) h += `<circle class="fb-inlay" cx="${cx(k)}" cy="${midY - SG}" r="5"/><circle class="fb-inlay" cx="${cx(k)}" cy="${midY + SG}" r="5"/>`; });
+  for(let k = 1; k <= F; k++) h += `<line class="fb-fret" x1="${fx(k)}" x2="${fx(k)}" y1="${top - 10}" y2="${bottom + 10}"/>`;
+  h += `<line class="fb-nut" x1="${nut}" x2="${nut}" y1="${top - 12}" y2="${bottom + 12}"/>`;
+  for(let s = 0; s < n; s++) h += `<line class="fb-str" x1="4" x2="${W - 6}" y1="${sy(s)}" y2="${sy(s)}" stroke-width="${0.8 + s * 0.35}"/>`;
+  for(let k = 0; k <= F; k++) h += `<text class="fb-num" x="${cx(k)}" y="${H - 6}" text-anchor="middle">${k}</text>`;
+  // 指板の音名（幹音だけ、うっすら）
+  if(cfg.fbNames && !isQuiz()){
+    for(let s = 0; s < n; s++) for(let k = 0; k <= F; k++){
+      const sp = spell(OPEN[s] + k + GUITAR_OCT);
+      if(sp.acc === 0) h += `<text class="fb-name" x="${cx(k)}" y="${sy(s) - 4}" text-anchor="middle">${LETTERS[letterOf(sp.step)]}</text>`;
+    }
+  }
+  // いまの音を弾ける場所（全部）と、いま選んでいる場所
+  const c = notes[cur];
+  // 指板で答えて外れたときは、押した場所に赤い輪
+  if(isQuiz() && QZ.answered && !QZ.ok && QZ.given && QZ.given.s != null)
+    h += `<circle class="fb-wrong" cx="${cx(QZ.given.f)}" cy="${sy(QZ.given.s)}" r="12"/>`;
+  if(c && !hidden()){
+    const lt = LETTERS[letterOf(c.step)] + (c.acc > 0 ? "♯" : c.acc < 0 ? "♭" : "");
+    positions(soundingOf(c)).forEach(p => {
+      const sel = p.s === c.s && p.f === c.f;
+      h += `<circle class="${sel ? "fb-sel" : "fb-pos"}" cx="${cx(p.f)}" cy="${sy(p.s)}" r="${sel ? 11.5 : 10.5}"/>`;
+      h += `<text class="fb-pos-t" x="${cx(p.f)}" y="${sy(p.s) + 3.8}" text-anchor="middle">${sel ? p.f : lt}</text>`;
+    });
+  }
+  // タップ用のマス
+  for(let s = 0; s < n; s++) for(let k = 0; k <= F; k++){
+    const x = k === 0 ? 0 : fx(k - 1), w = k === 0 ? nut : fw;
+    h += `<rect class="fb-cell" x="${x}" y="${sy(s) - SG / 2}" width="${w}" height="${SG}" data-s="${s}" data-f="${k}"/>`;
+  }
+  return h + "</svg>";
+}
+
+/* ── 表示の更新 ── */
+function render(){
+  layout();
+  const c = notes[cur];
+  $("staff").innerHTML = staffSvg();
+  $("tab").innerHTML = tabSvg();
+  $("board").innerHTML = boardSvg();
+  if(c && hidden()){
+    $("rdName").textContent = "？";
+    $("rdWhere").textContent = "この音の名前は？";
+    $("rdSub").textContent = "下のボタンで答えるか、指板の「同じ高さ」の場所をタップ（どこでも正解）。";
+    $("rdTip").textContent = cfg.qlevel === 4 && QZ.key
+      ? `調号（${QZ.key.t}が${QZ.key.n}つ）がついています。` + (QZ.hint ? `${QZ.key.t}がつく音：` + (QZ.key.t === "♯" ? SHARP_L : FLAT_L).slice(0, QZ.key.n).map(l => LETTERS[l]).join("・") : "")
+      : cfg.qlevel === 3 ? "♯・♭のついた音は、先に ♯／♭ を選んでから音名を押してください。" : "";
+  } else if(c){
+    $("rdName").textContent = nameOf(c);
+    const drawn = c.step > 16 ? c.step - 7 : c.step;   // 高すぎる音は 8va で1オクターブ下に書いている
+    $("rdWhere").textContent = describe(drawn) + (c.step > 16 ? "（8va＝書いた位置の1オクターブ上で弾く）" : "");
+    const ps = positions(soundingOf(c));
+    $("rdSub").textContent = ps.length
+      ? `指板では ${ps.length} か所で弾けます（下の光っている所）。` + (c.s != null ? `いまタブ譜は ${c.s + 1}弦 ${c.f}フレット。` : "")
+      : "この音は、いまの弦の数・フレット数では弾けません。";
+    $("rdTip").textContent = tipOf(c);
+  }
+  // ボタンの状態
+  const seg = (id, v) => Array.prototype.forEach.call($(id).children, b => b.classList.toggle("on", String(b.dataset.v ?? b.dataset.mode ?? b.dataset.acc) === String(v)));
+  seg("modeSeg", cfg.mode); seg("strSeg", cfg.strings); seg("fretSeg", cfg.frets); seg("nameSeg", cfg.names); seg("prefSeg", cfg.pref);
+  seg("accSeg", c ? c.acc : 0);
+  $("phraseBar").hidden = cfg.mode !== "phrase";
+  ["btnUp","btnDown","accSeg","btnPlay1","presetSel"].forEach(id => $(id).hidden = isQuiz());
+  $("quizBox").hidden = !isQuiz();
+  $("staffHint").textContent = isQuiz() ? "音符の高さを読んで、名前を答えてください" : "クリックした高さに音が移ります　↑↓キーでも";
+  $("fbHint").textContent = isQuiz() && !QZ.answered ? "指板で答える：五線譜の音と「同じ高さ」の場所をタップ（どの弦でも正解）"
+                          : "光っている所はどれも同じ高さの音。タップするとそこで弾く（タブ譜が変わる）";
+  if(isQuiz()) renderQuiz();
+  $("chkLabels").checked = cfg.labels; $("chkFbNames").checked = cfg.fbNames; $("chkSound").checked = cfg.sound;
+  renderOpenTable();
+}
+function renderOpenTable(){
+  let h = "<tr><th>弦</th><th>音</th><th>五線のどこ</th></tr>";
+  const c = notes[cur];
+  for(let s = cfg.strings - 1; s >= 0; s--){
+    const sp = spell(OPEN[s] + GUITAR_OCT), n = { step: sp.step, acc: sp.acc };
+    const hl = c && writtenOf(c) === writtenOf(n) ? " class=\"hl\"" : "";
+    h += `<tr${hl}><td>${s + 1}弦</td><td>${nameOf(n)}</td><td>${describe(sp.step)}</td></tr>`;
+  }
+  $("openTable").innerHTML = h;
+}
+
+/* ── 音を鳴らす（録音ギター。準備前は短い合成音で代役） ── */
+let ctx = null;
+function ac(){
+  if(!ctx){ try{ ctx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(ctx.state === "suspended") ctx.resume();
+  return ctx;
+}
+function play(n){
+  if(!cfg.sound || !n) return;
+  const c = ac(); if(!c) return;
+  const m = soundingOf(n);
+  if(window.GuitarRec && GuitarRec.isReady()){ GuitarRec.now(c, m, { gain: 0.66 }); return; }
+  const t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+  o.type = "triangle"; o.frequency.value = 440 * Math.pow(2, (m - 69) / 12);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + 0.01); g.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 1.3);
+}
+
+/* ── 操作 ── */
+const MAX = 16;
+function setCurrent(n, append){
+  if(cfg.mode === "phrase" && append){ notes.push(n); if(notes.length > MAX) notes.shift(); cur = notes.length - 1; }
+  else { notes[cur] = n; }
+  render(); play(n);
+}
+function moveStep(d){
+  const c = notes[cur]; if(!c) return;
+  const r = rangeSteps(), step = Math.max(r.lo, Math.min(r.hi, c.step + d));
+  if(step === c.step && c.acc === 0) return;
+  setCurrent(fromStep(step, 0, c), false);
+}
+function setAcc(a){
+  const c = notes[cur]; if(!c) return;
+  const n = fromStep(c.step, a, c);
+  if(soundingOf(n) < OPEN[cfg.strings - 1]) return;   // いちばん低い開放弦より下には行かない
+  setCurrent(n, false);
+}
+// 五線譜をクリック：その高さへ（並べるモードでは、近い列の音を選んで動かす）
+$("staff").addEventListener("click", e => {
+  if(isQuiz()) return;                                // 練習中は五線をさわっても動かさない
+  const svg = $("staffSvg"); if(!svg) return;
+  const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * SW / r.width, y = (e.clientY - r.top) * SH / r.height;
+  if(cfg.mode === "phrase" && notes.length > 1){
+    let best = cur, bd = Infinity;
+    notes.forEach((n, i) => { const d = Math.abs(noteX(i) - x); if(d < bd){ bd = d; best = i; } });
+    cur = best;
+  }
+  const c = notes[cur], rg = rangeSteps();
+  let step = Math.round((BOT - y) / HS);
+  if(c && c.step > 16) step += 7;
+  step = Math.max(rg.lo, Math.min(rg.hi, step));
+  if(c && step === c.step){ render(); play(c); return; }   // 同じ高さ＝選んで鳴らすだけ
+  setCurrent(fromStep(step, 0, c), false);
+});
+// タブ譜をクリック：その列の音を選んで鳴らす
+$("tab").addEventListener("click", e => {
+  if(hidden()) return;
+  const svg = $("tabSvg"); if(!svg || !notes.length) return;
+  const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * SW / r.width;
+  let best = cur, bd = Infinity;
+  notes.forEach((n, i) => { const d = Math.abs(noteX(i) - x); if(d < bd){ bd = d; best = i; } });
+  cur = best; render(); play(notes[cur]);
+});
+// 指板をタップ：その場所で弾く（並べるモードでは右に足していく）
+$("board").addEventListener("click", e => {
+  const cell = e.target.closest("[data-s]"); if(!cell) return;
+  const s = +cell.dataset.s, f = +cell.dataset.f, c = notes[cur];
+  if(isQuiz()){                                       // 練習：答える前は「指板で答える」、答えたあとは同じ高さの場所だけ鳴らせる
+    if(!QZ.answered){ answer({ s, f }); return; }
+    if(c && OPEN[s] + f === soundingOf(c)){ c.s = s; c.f = f; render(); play(c); }
+    return;
+  }
+  // 光っている場所（いまの音と同じ高さ）をタップ → 弾く場所だけ変える
+  if(c && OPEN[s] + f === soundingOf(c)){ c.s = s; c.f = f; render(); play(c); return; }
+  setCurrent(fromFret(s, f), true);
+});
+$("btnUp").onclick = () => moveStep(1);
+$("btnDown").onclick = () => moveStep(-1);
+$("accSeg").addEventListener("click", e => { const b = e.target.closest("[data-acc]"); if(b) setAcc(+b.dataset.acc); });
+$("btnPlay1").onclick = () => play(notes[cur]);
+document.addEventListener("keydown", e => {
+  if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if(isQuiz()){                                       // 練習：C〜B キーで答える、Enter で次、Space でもう一度聴く
+    const k = e.key.toUpperCase(), l = LETTERS.indexOf(k);
+    if(l >= 0 && e.key.length === 1 && !QZ.answered){ e.preventDefault(); answer({ letter: l, acc: cfg.qlevel >= 3 ? QZ.accSel : 0 }); }
+    else if(e.key === "Enter"){ e.preventDefault(); newQuestion(); }
+    else if(e.code === "Space" && QZ.answered){ e.preventDefault(); play(QZ.q); }
+    return;
+  }
+  if(e.key === "ArrowUp"){ e.preventDefault(); moveStep(1); }
+  else if(e.key === "ArrowDown"){ e.preventDefault(); moveStep(-1); }
+  else if(e.code === "Space"){ e.preventDefault(); play(notes[cur]); }
+});
+
+/* 1音 ／ 並べる */
+$("modeSeg").addEventListener("click", e => {
+  const b = e.target.closest("[data-mode]"); if(!b) return;
+  const was = cfg.mode;
+  cfg.mode = b.dataset.mode; save(); stopPhrase(); clearTimeout(QZ.autoTimer);
+  if(cfg.mode === "quiz"){                            // 練習に入る：いまの音は取っておき、戻ったら元に戻す
+    if(was !== "quiz") QZ.saved = { notes: notes.slice(), cur };
+    newQuestion(); return;
+  }
+  if(was === "quiz"){ const sv = QZ.saved; notes = sv && sv.notes.length ? sv.notes : [fromFret(2, 0)]; cur = sv ? Math.min(sv.cur, notes.length - 1) : 0; }
+  if(cfg.mode === "one"){ notes = [notes[cur] || fromFret(2, 0)]; cur = 0; }
+  render();
+});
+let playTimer = null;
+function stopPhrase(){ clearTimeout(playTimer); playTimer = null; $("btnPlayAll").textContent = "▶ 並べた音を再生"; }
+$("btnPlayAll").onclick = () => {
+  if(playTimer){ stopPhrase(); return; }
+  if(!notes.length) return;
+  let i = 0;
+  const step = () => { if(i >= notes.length){ stopPhrase(); return; } cur = i; render(); play(notes[i]); i++; playTimer = setTimeout(step, 520); };
+  $("btnPlayAll").textContent = "■ 停止"; step();
+};
+$("btnBack").onclick = () => { if(notes.length > 1){ notes.pop(); cur = Math.min(cur, notes.length - 1); render(); } };
+$("btnClear").onclick = () => { notes = [notes[cur]]; cur = 0; render(); };
+const PRESETS = {
+  open:   () => { const a = []; for(let s = cfg.strings - 1; s >= 0; s--) a.push([s, 0]); return a; },
+  cmaj:   () => [[4,3],[3,0],[3,2],[3,3],[2,0],[2,2],[1,0],[1,1]],
+  empent: () => [[5,0],[5,3],[4,0],[4,2],[3,0],[3,2],[2,0],[2,2],[1,0],[1,3],[0,0],[0,3]]
+};
+$("presetSel").onchange = e => {
+  const p = PRESETS[e.target.value]; e.target.value = ""; if(!p) return;
+  cfg.mode = "phrase"; save(); stopPhrase();
+  notes = p().map(([s, f]) => fromFret(s, f)); cur = 0; render(); $("btnPlayAll").click();
+};
+
+/* ════════ 練習（読譜クイズ） ════════ */
+function qStats(){ try{ return JSON.parse(localStorage.getItem("staff.quiz") || "{}"); }catch(e){ return {}; } }
+function saveStats(S){ try{ localStorage.setItem("staff.quiz", JSON.stringify(S)); }catch(e){} }
+const qKey = n => cfg.qlevel + ":" + n.step + ":" + n.acc;
+// 出題する音の一覧（段階ごと）。ギターで弾ける高さだけ
+function qPool(){
+  const lv = cfg.qlevel, r = rangeSteps();
+  const lo = lv === 1 ? 0 : Math.max(r.lo, -10), hi = lv === 1 ? 8 : Math.min(r.hi, 12);
+  const out = [];
+  for(let st = lo; st <= hi; st++){
+    const l = letterOf(st);
+    if(lv <= 2) out.push({ step: st, acc: 0 });
+    else if(lv === 3){
+      out.push({ step: st, acc: 0 });
+      if(l !== 2 && l !== 6) out.push({ step: st, acc: 1 });    // E♯・B♯ は出さない
+      if(l !== 0 && l !== 3) out.push({ step: st, acc: -1 });   // C♭・F♭ は出さない
+    }
+    else out.push({ step: st, acc: QZ.map[l], keyed: true });   // 調号で決まる（音符の横には書かない）
+  }
+  const lowS = OPEN[cfg.strings - 1], highS = OPEN[0] + cfg.frets;
+  return out.filter(n => { const sd = soundingOf(n); return sd >= lowS && sd <= highS; });
+}
+// 習得度 m（0〜1）。最近の出来で決まる：間違えると半分に、正解すると 1 に近づく
+// （通算の回数で決めると、昔たくさん間違えた音がいつまでも出続けるため）
+const mOf = st => st.m != null ? st.m : (st.ok + 1) / (st.ok + st.ng + 2);
+// 習得度が低い音ほど多く出す。まだ出ていない音もやや多め
+const qWeight = st => !st ? 2 : 0.4 + 5 * Math.pow(1 - mOf(st), 1.5);
+function pickQ(){
+  const pool = qPool(), S = qStats();
+  const cand = pool.filter(n => !QZ.q || pool.length < 3 || n.step !== QZ.q.step);   // 同じ高さを続けない
+  let tot = 0; const w = cand.map(n => { const v = qWeight(S[qKey(n)]); tot += v; return v; });
+  let r = Math.random() * tot;
+  for(let i = 0; i < cand.length; i++){ r -= w[i]; if(r <= 0) return Object.assign({}, cand[i]); }
+  return Object.assign({}, cand[cand.length - 1]);
+}
+function newQuestion(){
+  clearTimeout(QZ.autoTimer);
+  if(cfg.qlevel === 4){
+    if(!QZ.key || QZ.keyLeft <= 0){   // 調号は 6 問ごとに変える
+      let k; do{ k = KEYS[(Math.random() * KEYS.length) | 0]; }while(QZ.key && k === QZ.key);
+      QZ.key = k; QZ.map = keyMap(k); QZ.keyLeft = 6;
+    }
+    QZ.keyLeft--;
+  }
+  const q = pickQ(); q.s = null; q.f = null;
+  Object.assign(QZ, { q, answered:false, ok:null, given:null, accSel:0, t0:performance.now(), fb:"", fbCls:"" });
+  notes = [q]; cur = 0; render();
+}
+const plainName = (l, a) => { const t = a > 0 ? "♯" : a < 0 ? "♭" : ""; return cfg.names === "en" ? LETTERS[l] + t : cfg.names === "jp" ? DOREMI[l] + t : LETTERS[l] + t + "（" + DOREMI[l] + t + "）"; };
+function answer(g){
+  if(!QZ.q || QZ.answered) return;
+  const q = QZ.q, secs = (performance.now() - QZ.t0) / 1000, want = soundingOf(q);
+  let ok, extra = "", yours = "";
+  if(g.s != null){                                   // 指板で答えた
+    const got = OPEN[g.s] + g.f;
+    ok = got === want;
+    const sp = spell(got + GUITAR_OCT);
+    yours = `${g.s + 1}弦 ${g.f}フレット＝${nameOf(sp)}`;
+    if(ok){ q.s = g.s; q.f = g.f; }
+    else{
+      const p = nearestPos(want, { s: g.s, f: g.f }); if(p){ q.s = p.s; q.f = p.f; }
+      if((((got - want) % 12) + 12) % 12 === 0) extra = "音名は合っていますが、高さ（オクターブ）が違います。ギター譜は実際より1オクターブ高く書くことを思い出して。";
+    }
+  } else {                                           // 音名で答えた
+    ok = g.letter === letterOf(q.step) && g.acc === q.acc;
+    yours = plainName(g.letter, g.acc);
+    const p = nearestPos(want, null); if(p){ q.s = p.s; q.f = p.f; }
+    if(!ok && g.letter === letterOf(q.step)) extra = q.keyed ? "音名は合っています。調号の ♯／♭ を忘れずに。" : "音名は合っています。♯・♭ が違います。";
+  }
+  QZ.given = g; QZ.answered = true; QZ.ok = ok;
+  if(!QZ.hint){                                      // ヒントを使った答えは成績に数えない
+    const S = qStats(), k = qKey(q); S[k] = S[k] || { ok:0, ng:0 };
+    const m0 = mOf(S[k]);
+    if(ok){ S[k].ok++; S[k].m = 0.6 * m0 + 0.4; } else { S[k].ng++; S[k].m = 0.5 * m0; }
+    saveStats(S);
+    QZ.n++; if(ok){ QZ.okN++; QZ.streak++; QZ.times.push(secs); } else QZ.streak = 0;
+  }
+  const drawn = q.step > 16 ? q.step - 7 : q.step;
+  const keyNote = q.keyed && q.acc ? `（調号の${q.acc > 0 ? "♯" : "♭"}がつく音）` : "";
+  if(ok){ QZ.fb = `✔ 正解！ ${nameOf(q)}${keyNote}　<small>${describe(drawn)}　${secs.toFixed(1)}秒</small>`; QZ.fbCls = "ok"; }
+  else  { QZ.fb = `✖ 正解は ${nameOf(q)}${keyNote}　<small>${describe(drawn)}。あなたの答え：${yours}。${extra}</small>`; QZ.fbCls = "ng"; }
+  render(); play(q);
+  if(ok && cfg.qauto) QZ.autoTimer = setTimeout(newQuestion, 1400);
+}
+function renderQuiz(){
+  Array.prototype.forEach.call($("lvSeg").children, b => b.classList.toggle("on", +b.dataset.lv === cfg.qlevel));
+  $("qAccSeg").hidden = cfg.qlevel < 3;
+  Array.prototype.forEach.call($("qAccSeg").children, b => b.classList.toggle("on", +b.dataset.qacc === QZ.accSel));
+  // 音名ボタン（答えたあとは、正解と自分の答えに色）
+  let h = "";
+  for(let l = 0; l < 7; l++){
+    let cls = "";
+    if(QZ.answered && QZ.q){
+      if(l === letterOf(QZ.q.step)) cls = " ok";
+      else if(QZ.given && QZ.given.letter === l) cls = " ng";
+    }
+    const top = cfg.names === "jp" ? DOREMI[l] : LETTERS[l], sub = cfg.names === "both" ? `<small>${DOREMI[l]}</small>` : "";
+    h += `<button class="btn nbtn${cls}" data-l="${l}">${top}${sub}</button>`;
+  }
+  $("qNames").innerHTML = h;
+  $("chkHint").checked = QZ.hint; $("chkAuto").checked = cfg.qauto;
+  const fb = $("qFeedback"); fb.innerHTML = QZ.fb; fb.className = "qfb " + QZ.fbCls;
+  $("btnNext").disabled = false; $("btnHear").disabled = !QZ.answered;
+  const avg = QZ.times.length ? (QZ.times.reduce((a, b) => a + b, 0) / QZ.times.length).toFixed(1) + "秒" : "—";
+  $("qStats").innerHTML = `今回 <b>${QZ.okN}/${QZ.n}</b>　連続 <b>${QZ.streak}</b>　正解までの平均 <b>${avg}</b>`;
+  // 苦手な音（この段階で間違いの多い順に3つ）
+  const S = qStats(), lv = cfg.qlevel + ":";
+  const weak = Object.keys(S).filter(k => k.startsWith(lv) && S[k].ng > 0 && mOf(S[k]) < 0.6)
+    .sort((a, b) => mOf(S[a]) - mOf(S[b])).slice(0, 3)
+    .map(k => { const [, st, ac] = k.split(":").map(Number); return nameOf({ step: st, acc: ac }) + "（" + describe(st > 16 ? st - 7 : st) + "）"; });
+  $("qWeak").innerHTML = weak.length ? `苦手な音：<b>${weak.join("　")}</b>　— 最近間違えた音ほど多めに出題しています（続けて正解すると減ります）` : "最近間違えた音ほど多めに出題します。";
+}
+$("qNames").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if(b) answer({ letter: +b.dataset.l, acc: cfg.qlevel >= 3 ? QZ.accSel : 0 }); });
+$("qAccSeg").addEventListener("click", e => { const b = e.target.closest("[data-qacc]"); if(!b || QZ.answered) return; QZ.accSel = +b.dataset.qacc; renderQuiz(); });
+$("lvSeg").addEventListener("click", e => { const b = e.target.closest("[data-lv]"); if(!b) return; cfg.qlevel = +b.dataset.lv; save(); QZ.key = null; newQuestion(); });
+$("chkHint").onchange = e => { QZ.hint = e.target.checked; render(); };
+$("chkAuto").onchange = e => { cfg.qauto = e.target.checked; save(); };
+$("btnNext").onclick = () => newQuestion();
+$("btnHear").onclick = () => { if(QZ.answered) play(QZ.q); };
+let resetArm = 0;
+$("btnReset").onclick = () => {   // 2回押しで確定（うっかり消さないように）
+  if(Date.now() - resetArm > 3000){ resetArm = Date.now(); $("btnReset").textContent = "もう一度押すとリセット"; setTimeout(() => { $("btnReset").textContent = "成績をリセット"; }, 3000); return; }
+  try{ localStorage.removeItem("staff.quiz"); }catch(e){}
+  Object.assign(QZ, { n:0, okN:0, streak:0, times:[] }); resetArm = 0; $("btnReset").textContent = "成績をリセット"; render();
+};
+
+/* 設定 */
+function reposition(){   // 弦やフレットの数が変わったら、音の高さは保ったまま弾く場所を決め直す
+  notes = notes.map(n => { const m = fromStep(n.step, n.acc, n.s != null && n.s < cfg.strings && n.f <= cfg.frets ? n : null); return m; });
+}
+function bindSeg(id, key, num, after){
+  $(id).addEventListener("click", e => {
+    const b = e.target.closest("[data-v]"); if(!b) return;
+    cfg[key] = num ? +b.dataset.v : b.dataset.v; save();
+    if(after) after(); render();
+  });
+}
+bindSeg("strSeg", "strings", true, reposition);
+bindSeg("fretSeg", "frets", true, reposition);
+bindSeg("nameSeg", "names", false);
+bindSeg("prefSeg", "pref", false, () => { notes = notes.map(n => { const sp = spell(writtenOf(n)); return { step: sp.step, acc: sp.acc, s: n.s, f: n.f }; }); });
+$("chkLabels").onchange  = e => { cfg.labels  = e.target.checked; save(); render(); };
+$("chkFbNames").onchange = e => { cfg.fbNames = e.target.checked; save(); render(); };
+$("chkSound").onchange   = e => { cfg.sound   = e.target.checked; save(); };
+
+/* 五線譜とタブ譜の横スクロールを連動させる（狭い画面で列がずれないように） */
+let syncing = false;
+[["staffWrap","tabWrap"],["tabWrap","staffWrap"]].forEach(([a, b]) => $(a).addEventListener("scroll", () => {
+  if(syncing) return; syncing = true; $(b).scrollLeft = $(a).scrollLeft; requestAnimationFrame(() => syncing = false);
+}));
+window.addEventListener("resize", () => render());
+
+/* はじめは 3弦の開放＝ソ（G）。ト音記号の渦の線で、いちばん覚えやすい */
+cfg.mode = cfg.mode === "phrase" ? "one" : cfg.mode;   // 開き直したときは 1音モードから（練習中だったら練習から）
+notes = [fromFret(2, 0)]; cur = 0;
+if(cfg.mode === "quiz"){ QZ.saved = { notes: notes.slice(), cur: 0 }; newQuestion(); } else render();
+})();
+</script>
+<script src="../nav.js" defer></script>
+</body>
+</html>

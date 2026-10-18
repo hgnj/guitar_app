@@ -32,9 +32,10 @@ var APPS = [
       { name:"指板マップ",   href:"fretboard/index.html" },
       { name:"練習ツール",   href:"fretboard/practice.html" }
     ]},
-  { id:"theory", icon:"♯", name:"Theory", desc:"音楽理論 / 作曲", href:"theory/index.html", byFile:true, subs:[
+  { id:"theory", icon:"♯", name:"Theory", desc:"音楽理論 / 作曲 / 五線譜", href:"theory/index.html", byFile:true, subs:[
       { name:"音楽理論",           href:"theory/index.html" },
-      { name:"コード進行（作曲）", tab:"コード進行", href:"theory/compose.html" }
+      { name:"コード進行（作曲）", tab:"コード進行", href:"theory/compose.html" },
+      { name:"五線譜（タブ譜・指板とつなぐ）", tab:"五線譜", href:"theory/staff.html" }
     ]},
   { id:"studio", icon:"♫", name:"Studio", desc:"伴奏 / ドラム / リズム練習", href:"studio/index.html", subs:[
       { name:"コードプレイヤー",     href:"studio/index.html#chord" },
